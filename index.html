@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atelier OS — Protótipo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-lockup">
+          <div class="brand-mark">AO</div>
+          <div>
+            <strong>Atelier OS</strong>
+            <span>Operação automotiva</span>
+          </div>
+        </div>
+
+        <nav class="main-nav" aria-label="Navegação principal">
+          <button class="nav-item active" data-section="visao-geral">Visão geral</button>
+          <button class="nav-item" data-section="atendimentos">Atendimentos</button>
+          <button class="nav-item" data-section="agenda">Agenda</button>
+          <button class="nav-item" data-section="clientes">Clientes e veículos</button>
+          <button class="nav-item" data-section="servicos">Serviços e preços</button>
+          <button class="nav-item" data-section="equipe">Equipe</button>
+          <button class="nav-item" data-section="conversas">Conversas</button>
+          <button class="nav-item" data-section="relatorios">Relat&oacute;rios</button>
+          <button class="nav-item" data-section="configuracoes">Configura&ccedil;&otilde;es</button>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="workspace-label">Empresa demonstrativa</div>
+          <button class="profile-button"><span class="avatar">MC</span><span><b>Marina Costa</b><small>Administradora</small></span><span class="chevron">⌄</span></button>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="mobile-brand"><span class="brand-mark">AO</span><b>Atelier OS</b></div>
+          <div class="topbar-actions"><button class="outline-button" id="employee-preview">Ver painel do funcionário</button><button class="outline-button" id="client-preview">Ver portal do cliente</button><button class="icon-button" aria-label="Notificações">◌</button><span class="avatar avatar-small">MC</span></div>
+        </header>
+
+        <section class="page-section" id="dashboard-section">
+          <div class="page-heading">
+            <div><p class="eyebrow">QUINTA-FEIRA, 07 DE AGOSTO</p><h1>Bom dia, Marina.</h1><p class="muted">A operação de hoje está concentrada nos serviços em andamento.</p></div>
+            <button class="primary-button" id="new-service">+ Novo atendimento</button>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric-block"><span>Em atendimento</span><strong>08</strong><small class="positive">+2 desde ontem</small></article>
+            <article class="metric-block"><span>Aguardando aprovação</span><strong>03</strong><small>R$ 1.840 em propostas</small></article>
+            <article class="metric-block"><span>Prontos para retirada</span><strong>04</strong><small>2 clientes já avisados</small></article>
+            <article class="metric-block"><span>Faturamento do mês</span><strong>R$ 18,7k</strong><small class="positive">+12,4% vs. julho</small></article>
+          </div>
+
+          <div class="content-grid">
+            <section class="panel service-panel">
+              <div class="panel-heading"><div><p class="eyebrow">OPERAÇÃO DE HOJE</p><h2>Atendimentos recentes</h2></div><button class="text-button" data-section="atendimentos">Ver todos →</button></div>
+              <div class="service-list" id="service-list"></div>
+            </section>
+            <aside class="panel side-panel">
+              <div class="panel-heading"><div><p class="eyebrow">ACOMPANHAMENTO</p><h2>Links enviados</h2></div><span class="counter">12</span></div>
+              <p class="muted">Clientes acessaram o portal depois de receber o link.</p>
+              <div class="progress-row"><span>Visualizados</span><b>9 de 12</b></div><div class="progress-track"><span style="width:75%"></span></div>
+              <div class="mini-notice"><span class="status-dot green"></span><div><b>Portal ativo</b><small>Todos os links podem ser reabertos pelo atendimento.</small></div></div>
+              <button class="secondary-button" id="open-client-link">Abrir exemplo de link</button>
+            </aside>
+          </div>
+        </section>
+
+        <section class="page-section hidden" id="clients-section"><div class="page-heading"><div><p class="eyebrow">BASE DE RELACIONAMENTO</p><h1>Clientes e veículos</h1><p class="muted">Cada veículo possui histórico e acompanhamento próprios.</p></div><button class="primary-button" id="new-client">+ Novo cliente</button></div><div class="panel table-panel"><div class="table-toolbar"><input placeholder="Buscar cliente, placa ou modelo" /><span>24 clientes cadastrados</span></div><div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Veículo</th><th>Último serviço</th><th>Status</th><th></th></tr></thead><tbody id="client-table"></tbody></table></div></div></section>
+
+        <section class="page-section hidden" id="generic-section"><div class="page-heading"><div><p class="eyebrow" id="generic-eyebrow">MÓDULO DO SISTEMA</p><h1 id="generic-title">Atendimentos</h1><p class="muted" id="generic-description">Organize as ordens de serviço e acompanhe cada veículo.</p></div><button class="primary-button" id="generic-action">+ Criar registro</button></div><div id="module-content"></div></section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop hidden" id="service-modal"><div class="modal"><button class="close-button" data-close="service-modal">×</button><p class="eyebrow">NOVA ORDEM DE SERVIÇO</p><h2>Registrar atendimento</h2><p class="muted">Ao salvar, o sistema gera automaticamente o link exclusivo para o cliente.</p><form id="service-form"><label>Nome do cliente<input name="client" required placeholder="Ex.: Rafael Nogueira" /></label><label>Veículo<input name="vehicle" required placeholder="Ex.: Honda Civic · RGT-4B21" /></label><label>Serviço<select name="service"><option>Detalhamento interno</option><option>Polimento técnico</option><option>Higienização completa</option><option>Proteção cerâmica</option></select></label><div class="form-actions"><button type="button" class="outline-button" data-close="service-modal">Cancelar</button><button class="primary-button">Criar e gerar link</button></div></form></div></div>
+
+    <div class="modal-backdrop hidden" id="client-modal"><div class="client-portal"><button class="close-button" data-close="client-modal">×</button><div class="portal-brand"><span class="brand-mark">AO</span><div><b>Atelier OS</b><small>Acompanhamento do veículo</small></div></div><div class="portal-vehicle"><div><p class="eyebrow">ORDEM #AO-2048</p><h2>Honda Civic Touring</h2><p class="muted">RGT-4B21 · Rafael Nogueira</p></div><span class="status-pill in-progress">Em andamento</span></div><div class="timeline"><div class="timeline-item done"><span>✓</span><div><b>Veículo recebido</b><small>Hoje, 08:42</small></div></div><div class="timeline-item done"><span>✓</span><div><b>Avaliação inicial</b><small>Hoje, 09:05</small></div></div><div class="timeline-item current"><span>03</span><div><b>Detalhamento interno</b><small>Serviço em andamento</small></div></div><div class="timeline-item"><span>04</span><div><b>Inspeção e acabamento</b><small>Aguardando próxima etapa</small></div></div><div class="timeline-item"><span>05</span><div><b>Pronto para retirada</b><small>Previsão: hoje, 17:30</small></div></div></div><div class="portal-footer"><span>Alguma dúvida?</span><button class="text-button">Falar com a equipe →</button></div></div></div>
+    <div class="modal-backdrop hidden" id="detail-modal"><div class="modal detail-modal"><button class="close-button" data-close="detail-modal">×</button><p class="eyebrow">ORDEM DE SERVIÇO #AO-2048</p><h2>Honda Civic Touring</h2><p class="muted">Rafael Nogueira · RGT-4B21</p><div class="detail-status"><span class="status-pill in-progress">Em andamento</span><button class="outline-button" id="copy-link">Copiar link do cliente</button></div><div class="detail-progress"><div class="progress-label"><span>Etapa atual: <b>Detalhamento interno</b></span><span>3 de 5</span></div><div class="progress-track"><span style="width:60%"></span></div></div><div class="stage-list"><button class="stage active"><span>03</span><b>Detalhamento interno</b><small>Equipe responsável: Lucas</small></button><button class="stage"><span>04</span><b>Inspeção e acabamento</b><small>Aguardando conclusão da etapa anterior</small></button><button class="stage"><span>05</span><b>Pronto para retirada</b><small>Cliente será avisado pelo WhatsApp</small></button></div><div class="detail-actions"><button class="secondary-button" id="add-photo">Adicionar foto</button><button class="primary-button" id="advance-stage">Avançar etapa</button></div></div></div>
+    <div class="modal-backdrop hidden" id="employee-modal"><div class="employee-portal"><button class="close-button" data-close="employee-modal">×</button><div class="employee-heading"><div><p class="eyebrow">PAINEL OPERACIONAL</p><h2>Bom dia, Lucas.</h2><p class="muted">Aqui estão os veículos sob sua responsabilidade hoje.</p></div><span class="role-tag">Funcionário</span></div><div class="employee-metrics"><div><b>03</b><small>Em atendimento</small></div><div><b>01</b><small>Aguardando foto</small></div><div><b>02</b><small>Prontos hoje</small></div></div><div class="employee-list"><div class="employee-job"><div><b>Honda Civic Touring</b><small>RGT-4B21 · Rafael Nogueira</small><span class="status-pill in-progress">Detalhamento interno</span></div><button class="primary-button employee-action" data-action="Abrir ordem do Honda Civic">Abrir ordem</button></div><div class="employee-job"><div><b>BMW 320i M Sport</b><small>GHA-5D92 · Marina Albuquerque</small><span class="status-pill waiting">Aguardando inspeção</span></div><button class="primary-button employee-action" data-action="Abrir ordem da BMW">Abrir ordem</button></div><div class="employee-job"><div><b>Jeep Compass Limited</b><small>EKW-1C73 · João Vitor Mendes</small><span class="status-pill ready">Pronto para retirada</span></div><button class="secondary-button employee-action" data-action="Registrar entrega">Registrar entrega</button></div></div><div class="employee-note"><b>O que o funcionário pode fazer</b><span>Atualizar etapas, adicionar fotos, registrar observações e marcar o veículo como pronto.</span></div></div></div>
+    <div class="role-screen hidden" id="role-screen"><header class="role-screen-header"><div class="brand-lockup"><div class="brand-mark">AO</div><div><strong id="role-screen-title">Painel do funcionário</strong><span id="role-screen-subtitle">Atendimento e operação</span></div></div><button class="outline-button" id="return-admin">← Voltar ao painel da administradora</button></header><main class="role-screen-content" id="role-screen-content"></main></div>
+    <div class="toast hidden" id="toast"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
