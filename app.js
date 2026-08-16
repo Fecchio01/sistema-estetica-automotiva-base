@@ -95,9 +95,9 @@ function refreshGlobalCounts() {
   if (metricBlocks[1]) metricBlocks[1].querySelector('small').textContent = `${counts.waiting} ordem aguardando retorno`;
   if (metricBlocks[2]) metricBlocks[2].querySelector('small').textContent = `${counts.ready} cliente para avisar`;
   if (metricBlocks[3]) {
-    metricBlocks[3].querySelector('span').textContent = 'Ordens no mes';
-    metricBlocks[3].querySelector('strong').textContent = String(counts.total).padStart(2, '0');
-    metricBlocks[3].querySelector('small').textContent = 'registros ativos no prototipo';
+    metricBlocks[3].querySelector('span').textContent = 'Faturamento do mês';
+    metricBlocks[3].querySelector('strong').textContent = 'R$ 18,7k';
+    metricBlocks[3].querySelector('small').textContent = '+12,4% vs. julho';
   }
   const attendanceValues = document.querySelectorAll('.attendance-summary b');
   [counts.total, counts.active, counts.waiting, counts.ready].forEach((value, index) => { if (attendanceValues[index]) attendanceValues[index].textContent = String(value).padStart(2, '0'); });
