@@ -1,12 +1,12 @@
 const services = [
   { initials: 'HN', client: 'Rafael Nogueira', vehicle: 'Honda Civic Touring ¬∑ RGT-4B21', service: 'Detalhamento interno', status: 'Em andamento', tone: 'in-progress', time: 'Entrada 08:42' },
-  { initials: 'TM', client: 'Camila Bittencourt', vehicle: 'Toyota Corolla XEi ¬∑ FDL-8A06', service: 'Polimento t√©cnico', status: 'Aguardando aprova√ß√£o', tone: 'waiting', time: 'Entrada 09:18' },
+  { initials: 'TM', client: 'Camila Bittencourt', vehicle: 'Toyota Corolla XEi ¬∑ FDL-8A06', service: 'Polimento t√©cnico', status: 'Em andamento', tone: 'in-progress', time: 'Entrada 09:18' },
   { initials: 'JV', client: 'Jo√£o Vitor Mendes', vehicle: 'Jeep Compass Limited ¬∑ EKW-1C73', service: 'Higieniza√ß√£o completa', status: 'Pronto para retirada', tone: 'ready', time: 'Entrada 07:55' },
   { initials: 'MA', client: 'Marina Albuquerque', vehicle: 'BMW 320i M Sport ¬∑ GHA-5D92', service: 'Prote√ß√£o cer√¢mica', status: 'Em andamento', tone: 'in-progress', time: 'Entrada ontem' }
 ];
 const clients = [
   ['Rafael Nogueira', 'Honda Civic Touring ¬∑ RGT-4B21', 'Detalhamento interno', 'Em andamento', 'in-progress'],
-  ['Camila Bittencourt', 'Toyota Corolla XEi ¬∑ FDL-8A06', 'Polimento t√©cnico', 'Aguardando aprova√ß√£o', 'waiting'],
+  ['Camila Bittencourt', 'Toyota Corolla XEi ¬∑ FDL-8A06', 'Polimento t√©cnico', 'Em andamento', 'in-progress'],
   ['Jo√£o Vitor Mendes', 'Jeep Compass Limited ¬∑ EKW-1C73', 'Higieniza√ß√£o completa', 'Pronto para retirada', 'ready'],
   ['Marina Albuquerque', 'BMW 320i M Sport ¬∑ GHA-5D92', 'Prote√ß√£o cer√¢mica', 'Em andamento', 'in-progress']
 ];
@@ -14,9 +14,16 @@ const stageNames = ['Entrada registrada', 'Avalia√ß√£o inicial', 'Execu√ß√£o do 
 const teamMembers = [
   { name: 'Lucas Sampaio', role: 'Funcion√°rio' },
   { name: 'Fernanda Cardoso', role: 'Atendente' },
-  { name: 'Marina Costa', role: 'Administradora' }
+  { name: 'Marina Costa', role: 'Administrador(a)' }
 ];
 const serviceCatalogExtras = [];
+const serviceCatalogFallback = [
+  { id: 'detalhamento-interno', name: 'Detalhamento interno', description: 'Limpeza detalhada de painel, bancos e portas', price: 280 },
+  { id: 'polimento-tecnico', name: 'Polimento t√©cnico', description: 'Corre√ß√£o de marcas e prote√ß√£o da pintura', price: 690 },
+  { id: 'higienizacao-completa', name: 'Higieniza√ß√£o completa', description: 'Estofados, carpetes e teto', price: 420 },
+  { id: 'protecao-ceramica', name: 'Prote√ß√£o cer√¢mica', description: 'Aplica√ß√£o e cura com acompanhamento', price: 1280 },
+];
+const getCatalog = () => globalThis.__serviceCatalog || [...serviceCatalogFallback, ...serviceCatalogExtras];
 const serviceStates = services.map((item, index) => ({ stage: index === 0 ? 0 : item.tone === 'waiting' ? 1 : item.tone === 'ready' ? 4 : 2, status: index === 0 ? 'received' : item.tone === 'waiting' ? 'waiting' : item.tone === 'ready' ? 'ready' : 'in-progress', responsible: ['Lucas Sampaio', 'Fernanda Cardoso', 'Lucas Sampaio', 'Lucas Sampaio'][index] || 'N√£o atribu√≠do' }));
 const serviceEstimates = [
   { date: '', time: '' },
@@ -80,7 +87,7 @@ function getServicePresentation(index) {
   const state = serviceStates[index];
   if (state.status === 'delivered') return { label: 'Entregue', tone: 'delivered', action: 'view', actionLabel: 'Ver entrega' };
   if (state.status === 'ready') return { label: 'Pronto para retirada', tone: 'ready', action: 'delivery', actionLabel: 'Registrar entrega' };
-  if (state.status === 'waiting') return { label: 'Aguardando aprova√ß√£o', tone: 'waiting', action: 'open', actionLabel: 'Abrir ordem' };
+  if (state.status === 'waiting') return { label: 'Em andamento', tone: 'in-progress', action: 'open', actionLabel: 'Abrir ordem' };
   if (state.status === 'received') return { label: 'Recebido', tone: 'received', action: 'open', actionLabel: 'Abrir ordem' };
   return { label: 'Em andamento', tone: 'in-progress', action: 'open', actionLabel: 'Abrir ordem' };
 }
@@ -88,21 +95,22 @@ function refreshGlobalCounts() {
   const counts = getServiceCounts();
   const metricValues = document.querySelectorAll('.metric-grid .metric-block strong');
   if (metricValues[0]) metricValues[0].textContent = String(counts.active).padStart(2, '0');
-  if (metricValues[1]) metricValues[1].textContent = String(counts.waiting).padStart(2, '0');
-  if (metricValues[2]) metricValues[2].textContent = String(counts.ready).padStart(2, '0');
+  if (metricValues[1]) metricValues[1].textContent = String(counts.ready).padStart(2, '0');
+  if (metricValues[2]) metricValues[2].textContent = String(counts.total).padStart(2, '0');
   const metricBlocks = document.querySelectorAll('.metric-grid .metric-block');
   if (metricBlocks[0]) metricBlocks[0].querySelector('small').textContent = `${counts.active} ordem em execu√ß√£o`;
-  if (metricBlocks[1]) metricBlocks[1].querySelector('small').textContent = `${counts.waiting} ordem aguardando retorno`;
-  if (metricBlocks[2]) metricBlocks[2].querySelector('small').textContent = `${counts.ready} cliente para avisar`;
+  if (metricBlocks[1]) metricBlocks[1].querySelector('small').textContent = `${counts.ready} cliente para retirada`;
+  if (metricBlocks[2]) metricBlocks[2].querySelector('small').textContent = `${counts.total} ordem no m√™s`;
   if (metricBlocks[3]) {
-    metricBlocks[3].querySelector('span').textContent = 'Faturamento do m√™s';
-    metricBlocks[3].querySelector('strong').textContent = 'R$ 18,7k';
-    metricBlocks[3].querySelector('small').textContent = '+12,4% vs. julho';
+    const billing = services.reduce((total, item, index) => total + Number(item.amount || 0), 0);
+    metricBlocks[3].querySelector('span').textContent = 'Faturamento';
+    metricBlocks[3].querySelector('strong').textContent = `R$ ${billing.toLocaleString('pt-BR')}`;
+    metricBlocks[3].querySelector('small').textContent = 'valor das ordens cadastradas';
   }
   const attendanceValues = document.querySelectorAll('.attendance-summary b');
-  [counts.total, counts.active, counts.waiting, counts.ready].forEach((value, index) => { if (attendanceValues[index]) attendanceValues[index].textContent = String(value).padStart(2, '0'); });
+  [counts.total, counts.active, counts.ready].forEach((value, index) => { if (attendanceValues[index]) attendanceValues[index].textContent = String(value).padStart(2, '0'); });
   const attendanceFilters = document.querySelectorAll('.attendance-filters .filter-tab span');
-  [counts.total, counts.active, counts.waiting, counts.ready].forEach((value, index) => { if (attendanceFilters[index]) attendanceFilters[index].textContent = String(value).padStart(2, '0'); });
+  [counts.total, counts.active, counts.ready].forEach((value, index) => { if (attendanceFilters[index]) attendanceFilters[index].textContent = String(value).padStart(2, '0'); });
   const clientValues = document.querySelectorAll('.client-summary b');
   if (clientValues[0]) clientValues[0].textContent = String(clients.length).padStart(2, '0');
   if (clientValues[1]) clientValues[1].textContent = String(services.length).padStart(2, '0');
@@ -115,7 +123,8 @@ function refreshGlobalCounts() {
   if (linkProgressBar) linkProgressBar.style.width = counts.total ? `${(Math.max(0, counts.total - 1) / counts.total) * 100}%` : '0%';
   document.querySelectorAll('.employee-portal').forEach((portal) => {
     const metrics = portal.querySelectorAll('.employee-metrics b');
-    const assigned = services.map((item, index) => index).filter((index) => serviceStates[index].responsible === 'Lucas Sampaio');
+    const profile = globalThis.__sessionProfile;
+    const assigned = services.map((item, index) => index).filter((index) => serviceStates[index].responsible === profile?.id || serviceStates[index].responsible === profile?.full_name || (!profile && serviceStates[index].responsible === 'Lucas Sampaio'));
     const assignedActive = assigned.filter((index) => serviceStates[index].status === 'in-progress').length;
     const assignedWithoutPhotos = assigned.filter((index) => !(servicePhotos[index] || []).length).length;
     const assignedReady = assigned.filter((index) => serviceStates[index].status === 'ready').length;
@@ -146,6 +155,11 @@ document.querySelector('#client-table').innerHTML = clients.map((item) => `<tr><
 
 document.querySelectorAll('.service-row').forEach((row) => { const stage = document.createElement('small'); stage.className = 'service-stage'; stage.textContent = `Etapa: ${stageNames[serviceStates[Number(row.dataset.serviceIndex)].stage]}`; row.querySelector('.service-main').appendChild(stage); });
 const sections = { 'visao-geral': 'dashboard-section', clientes: 'clients-section' };
+function canViewCurrentSection(section) {
+  const role = globalThis.__activeRole;
+  if (!role || !globalThis.__canViewSection) return true;
+  return globalThis.__canViewSection(role, section);
+}
 const moduleCopy = {
   atendimentos: ['ATENDIMENTOS', 'Atendimentos', 'Ordens de servi√ßo, etapas, fotos e links de acompanhamento.'],
   agenda: ['AGENDA OPERACIONAL', 'Agenda', 'Visualize entradas, retiradas e a carga de trabalho da equipe.'],
@@ -153,14 +167,17 @@ const moduleCopy = {
   equipe: ['ACESSOS E PERMISS√ïES', 'Equipe', 'Defina o que cada pessoa pode visualizar e alterar no sistema.'],
   conversas: ['RELACIONAMENTO', 'Conversas', 'Centralize os retornos dos clientes e mantenha cada conversa ligada √† ordem certa.'],
   relatorios: ['GEST√ÉO DA OPERA√á√ÉO', 'Relat√≥rios', 'Acompanhe volume, status e gargalos com base nos registros atuais.'],
-  configuracoes: ['CONFIGURA√á√ïES', 'Configura√ß√µes', 'Ajuste acessos, prefer√™ncias e regras da opera√ß√£o.']
+  configuracoes: ['CONFIGURA√á√ïES', 'Configura√ß√µes', 'Ajuste acessos, prefer√™ncias e regras da opera√ß√£o.'],
+  faturamento: ['GEST√ÉO FINANCEIRA', 'Faturamento', 'Acompanhe receitas, pagamentos, ordens e resultados por per√≠odo.']
 };
 function showSection(section) {
+  if (!canViewCurrentSection(section)) { showToast('Este m√É¬≥dulo n√É¬£o est√É¬° dispon√É¬≠vel para o seu perfil.'); return; }
   document.querySelectorAll('.page-section').forEach((el) => el.classList.add('hidden'));
   const target = sections[section] || 'generic-section';
   document.querySelector(`#${target}`).classList.remove('hidden');
   if (section === 'clientes') renderClients();
   if (target === 'generic-section') renderModule(section);
+  if (section === 'agenda') window.dispatchEvent(new CustomEvent('agenda-requested'));
   document.querySelectorAll('.nav-item').forEach((item) => item.classList.toggle('active', item.dataset.section === section));
 }
 function openClientFicha(index) {
@@ -183,6 +200,7 @@ function openClientFicha(index) {
 }
 function renderClients() {
   const section = document.querySelector('#clients-section');
+  if (globalThis.__renderLiveClients) { globalThis.__renderLiveClients(section); return; }
   section.innerHTML = `<div class="page-heading"><div><p class="eyebrow">BASE DE RELACIONAMENTO</p><h1>Clientes e ve√≠culos</h1><p class="muted">Cadastros, ve√≠culos vinculados e hist√≥rico de servi√ßos.</p></div><button class="primary-button" id="client-new-record">+ Cadastrar cliente</button></div><div class="client-summary"><div><span>Clientes ativos</span><b>24</b><small>com cadastro completo</small></div><div><span>Ve√≠culos registrados</span><b>31</b><small>5 retornaram este m√™s</small></div><div><span>Retornos previstos</span><b>07</b><small>nos pr√≥ximos 30 dias</small></div></div><div class="client-directory"><div class="directory-toolbar"><div><h2>Diret√≥rio de clientes</h2><p>Use o hist√≥rico para consultar rapidamente qualquer ve√≠culo.</p></div><input id="client-search" placeholder="Buscar nome, telefone ou placa" /></div><div class="client-directory-heading"><span>CLIENTE</span><span>VE√çCULOS</span><span>√öLTIMA VISITA</span><span>HIST√ìRICO</span><span></span></div>${clients.map((item, index) => `<button class="client-record" data-client-index="${index}"><div class="client-identity"><span class="avatar">${item[0].split(' ').map((name) => name[0]).join('').slice(0,2)}</span><div><b>${item[0]}</b><small>cliente desde 2025 ¬∑ WhatsApp cadastrado</small></div></div><div><b>1 ve√≠culo</b><small>${item[1]}</small></div><div><b>${index === 0 ? 'Hoje' : index === 1 ? '12 jun' : index === 2 ? '28 mai' : '04 mai'}</b><small>${item[2]}</small></div><div><span class="history-count">${index + 2} servi√ßos</span><small>${index === 0 ? 'retorno em 30 dias' : '√∫ltimo or√ßamento aprovado'}</small></div><span class="attendance-arrow">‚Üí</span></button>`).join('')}</div>`;
   const records = section.querySelectorAll('.client-record');
   refreshGlobalCounts();
@@ -201,7 +219,10 @@ function openServicePriceModal() {
     modal.querySelector('#service-price-form').addEventListener('submit', (event) => {
       event.preventDefault();
       const data = new FormData(event.currentTarget);
-      serviceCatalogExtras.push({ name: data.get('name'), description: data.get('description'), price: `R$ ${data.get('price')}` });
+      const price = Number(String(data.get('price') || '').replace(',', '.')) || 0;
+      const newService = { id: `custom-${Date.now()}`, name: data.get('name'), description: data.get('description'), price };
+      serviceCatalogExtras.push(newService);
+      globalThis.__serviceCatalog = [...getCatalog(), newService].filter((item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index);
       closeModal('service-price-modal');
       showSection('servicos');
       showToast('Servi√ßo adicionado ao cat√°logo.');
@@ -216,409 +237,346 @@ function renderModule(section) {
   document.querySelector('#generic-title').textContent = copy[1];
   document.querySelector('#generic-description').textContent = copy[2];
   const genericAction = document.querySelector('#generic-action');
-  const actionLabels = { agenda: '+ Reservar hor√°rio', equipe: '+ Adicionar membro', servicos: '+ Novo servi√ßo', atendimentos: '+ Novo atendimento', conversas: '+ Nova conversa', relatorios: 'Exportar resumo', configuracoes: 'Salvar configura√ß√µes' };
+  const actionLabels = { agenda: '+ Reservar hor√°rio', equipe: '+ Adicionar membro', servicos: '+ Novo servi√ßo', atendimentos: '+ Novo atendimento', conversas: '+ Nova conversa', relatorios: 'Exportar resumo', faturamento: 'Atualizar faturamento', configuracoes: 'Salvar configura√ß√µes' };
   genericAction.textContent = actionLabels[section] || '+ Adicionar registro';
   genericAction.dataset.module = section;
   genericAction.classList.toggle('hidden', section === 'atendimentos');
   const content = document.querySelector('#module-content');
   if (section === 'agenda') {
-    content.innerHTML = `<div class="module-panel"><div class="module-toolbar"><h2>Agenda ¬∑ 07 a 11 de agosto</h2><button class="outline-button" id="new-booking">+ Novo agendamento</button></div><div class="calendar-grid"><div class="calendar-day"><strong>Qui ¬∑ 07</strong><small>4 hor√°rios</small><div class="calendar-event"><b>08:30 ¬∑ Rafael N.</b>Honda Civic</div><div class="calendar-event"><b>14:00 ¬∑ Marina A.</b>BMW 320i</div></div><div class="calendar-day"><strong>Sex ¬∑ 08</strong><small>3 hor√°rios</small><div class="calendar-event"><b>09:00 ¬∑ Bruno S.</b>Jeep Renegade</div></div><div class="calendar-day"><strong>S√°b ¬∑ 09</strong><small>2 hor√°rios</small><div class="calendar-event"><b>10:30 ¬∑ Ana P.</b>Corolla XEi</div></div><div class="calendar-day"><strong>Dom ¬∑ 10</strong><small>Fechado</small></div><div class="calendar-day"><strong>Seg ¬∑ 11</strong><small>5 hor√°rios</small><div class="calendar-event"><b>08:00 ¬∑ Lucas M.</b>Onix Premier</div></div></div></div>`;
-    content.querySelector('#new-booking').textContent = '+ Reservar hor√°rio';
+    content.innerHTML = '<div id="agenda-root"></div>';
   } else if (section === 'equipe') {
-    content.innerHTML = `<div class="module-grid"><div class="module-panel"><div class="module-toolbar"><h2>Pessoas cadastradas</h2><button class="outline-button" id="new-member">+ Adicionar pessoa</button></div><div class="permission-list"><div class="permission-item"><span class="avatar">MC</span><div><b>Marina Costa</b><small>Acesso completo ao sistema</small></div><span class="role-tag">Administradora</span></div><div class="permission-item"><span class="avatar">LS</span><div><b>Lucas Sampaio</b><small>Atualiza etapas e adiciona fotos</small></div><span class="role-tag">Funcion√°rio</span></div><div class="permission-item"><span class="avatar">FC</span><div><b>Fernanda Cardoso</b><small>Agenda e atendimento</small></div><span class="role-tag">Atendente</span></div></div></div><div class="module-panel"><h2>Permiss√µes por fun√ß√£o</h2><div class="data-line"><div><b>Administradora</b><small>Todos os m√≥dulos, configura√ß√µes e faturamento</small></div><span class="status-pill in-progress">Completo</span></div><div class="data-line"><div><b>Funcion√°rio</b><small>Ordens, etapas, fotos e observa√ß√µes</small></div><span class="status-pill ready">Operacional</span></div><div class="data-line"><div><b>Atendente</b><small>Clientes, agenda e or√ßamentos</small></div><span class="status-pill waiting">Restrito</span></div></div></div>`;
-  } else if (section === 'servicos') {
-    content.innerHTML = `<div class="module-grid"><div class="module-panel"><div class="module-toolbar"><h2>Servi√ßos oferecidos</h2><button class="outline-button" id="new-price">+ Novo servi√ßo</button></div><div class="service-price"><div><b>Detalhamento interno</b><small>Limpeza detalhada de painel, bancos e portas</small></div><span>R$ 280</span></div><div class="service-price"><div><b>Polimento t√©cnico</b><small>Corre√ß√£o de marcas e prote√ß√£o da pintura</small></div><span>R$ 690</span></div><div class="service-price"><div><b>Higieniza√ß√£o completa</b><small>Estofados, carpetes e teto</small></div><span>R$ 420</span></div><div class="service-price"><div><b>Prote√ß√£o cer√¢mica</b><small>Aplica√ß√£o e cura com acompanhamento</small></div><span>R$ 1.280</span></div></div><div class="module-panel"><h2>Como o cat√°logo √© usado</h2><p class="muted">A equipe seleciona os servi√ßos na cria√ß√£o do or√ßamento. Os mesmos dados aparecem para o cliente antes da aprova√ß√£o.</p><div class="mini-notice"><span class="status-dot green"></span><div><b>Cat√°logo ativo</b><small>Pre√ßos podem ser alterados sem mudar o hist√≥rico de ordens.</small></div></div></div></div>`;
-  } else if (section === 'conversas') {
-    content.innerHTML = `<div class="module-grid"><div class="module-panel conversation-panel"><div class="module-toolbar"><h2>Conversas recentes</h2><span class="status-pill in-progress">${getServiceCounts().total} ordens com link</span></div>${services.map((item, index) => `<button class="data-line conversation-row" data-service-index="${index}"><div><b>${item.client}</b><small>${item.vehicle} ¬∑ ${item.status}</small></div><span class="text-button">Abrir ordem</span></button>`).join('') || '<p class="dashboard-empty">Nenhuma conversa vinculada ainda.</p>'}</div><div class="module-panel"><h2>Fila de retorno</h2><p class="muted">Use o status da ordem para priorizar quem precisa de resposta.</p><div class="data-line"><div><b>${getServiceCounts().waiting}</b><small>Aguardando aprova&ccedil;&atilde;o</small></div><span class="status-pill waiting">Priorizar</span></div><div class="data-line"><div><b>${getServiceCounts().ready}</b><small>Prontos para retirada</small></div><span class="status-pill ready">Avisar</span></div></div></div>`;
-  } else if (section === 'relatorios') {
-    const reportCounts = getServiceCounts();
-    content.innerHTML = `<div class="module-grid"><div class="module-panel"><div class="module-toolbar"><h2>Resumo operacional</h2><button class="outline-button" id="export-report">Exportar CSV</button></div><div class="data-line"><div><b>${reportCounts.total}</b><small>Total de ordens</small></div><span>Base atual</span></div><div class="data-line"><div><b>${reportCounts.active}</b><small>Em opera&ccedil;&atilde;o</small></div><span class="status-pill in-progress">Abertas</span></div><div class="data-line"><div><b>${reportCounts.waiting}</b><small>Aguardando retorno</small></div><span class="status-pill waiting">Aten&ccedil;&atilde;o</span></div><div class="data-line"><div><b>${reportCounts.ready}</b><small>Prontos para retirada</small></div><span class="status-pill ready">Avisar</span></div></div><div class="module-panel"><h2>Leitura da opera&ccedil;&atilde;o</h2><p class="muted">Os n&uacute;meros deste resumo s&atilde;o calculados diretamente das ordens cadastradas, sem metas ou valores fict&iacute;cios.</p><div class="mini-notice"><span class="status-dot green"></span><div><b>Dados atualizados</b><small>O resumo muda quando uma etapa ou entrega &eacute; registrada.</small></div></div></div></div>`;
-    content.querySelector('#export-report').addEventListener('click', () => showToast('Resumo pronto para exporta&ccedil;&atilde;o quando o banco de dados estiver conectado.'));
-  } else if (section === 'configuracoes') {
-    content.innerHTML = `<div class="module-grid"><div class="module-panel"><div class="module-toolbar"><h2>Prefer&ecirc;ncias da opera&ccedil;&atilde;o</h2><button class="outline-button" id="save-settings">Salvar altera&ccedil;&otilde;es</button></div><label class="settings-toggle"><span><b>Avisar cliente ao mudar etapa</b><small>Mostra a atualiza&ccedil;&atilde;o no portal e prepara o envio pelo WhatsApp.</small></span><input type="checkbox" checked /></label><label class="settings-toggle"><span><b>Exigir respons&aacute;vel na ordem</b><small>Evita atendimentos sem algu&eacute;m definido na equipe.</small></span><input type="checkbox" checked /></label><label class="settings-toggle"><span><b>Solicitar fotos na finaliza&ccedil;&atilde;o</b><small>Ajuda a manter o hist&oacute;rico visual do ve&iacute;culo.</small></span><input type="checkbox" checked /></label></div><div class="module-panel"><h2>Perfis de acesso</h2><div class="data-line"><div><b>Administradora</b><small>Todos os dados e configura&ccedil;&otilde;es</small></div><span class="status-pill in-progress">Completo</span></div><div class="data-line"><div><b>Recep&ccedil;&atilde;o</b><small>Clientes, agenda, ordens e entregas</small></div><span class="status-pill waiting">Restrito</span></div><div class="data-line"><div><b>Execu&ccedil;&atilde;o</b><small>Etapas, fotos e observa&ccedil;&otilde;es</small></div><span class="status-pill ready">Operacional</span></div></div></div>`;
-    content.querySelector('#save-settings').addEventListener('click', () => showToast('Prefer&ecirc;ncias salvas neste prot&oacute;tipo.'));
-  } else if (section === 'atendimentos') {
-    content.innerHTML = `<div class="attendances-shell"><div class="attendance-summary"><div><span>Todos</span><b>12</b><small>ordens abertas</small></div><div><span>Em andamento</span><b>08</b><small>na opera√ß√£o</small></div><div><span>Aguardando aprova√ß√£o</span><b>03</b><small>precisam de retorno</small></div><div><span>Prontos</span><b>04</b><small>para retirada</small></div></div><div class="attendance-toolbar"><div class="attendance-filters"><button class="filter-tab active" data-filter="todos">Todos <span>12</span></button><button class="filter-tab" data-filter="andamento">Em andamento <span>08</span></button><button class="filter-tab" data-filter="aprovacao">Aguardando aprova√ß√£o <span>03</span></button><button class="filter-tab" data-filter="prontos">Prontos <span>04</span></button></div><div class="attendance-tools"><input id="attendance-search" placeholder="Buscar cliente ou placa" /><button class="primary-button" id="attendance-new">+ Novo atendimento</button></div></div><div class="attendance-list"><div class="attendance-list-heading"><span>ATENDIMENTO</span><span>ETAPA ATUAL</span><span>RESPONS√ÅVEL</span><span>PREVIS√ÉO</span><span></span></div>${services.map((item, index) => `<button class="attendance-item" data-service-index="${index}" data-status="${item.tone === 'in-progress' ? 'andamento' : item.tone === 'waiting' ? 'aprovacao' : 'prontos'}"><div class="attendance-client"><span class="car-icon">${item.initials}</span><div><b>${item.client}</b><small>${item.vehicle}</small></div></div><div><span class="status-pill ${item.tone}">${item.status}</span><small class="attendance-service">${item.service}</small></div><div class="attendance-person"><span class="avatar">${item.initials[0]}${item.initials[1]}</span><span>Equipe Atelier</span></div><div class="attendance-time"><b>${item.time.replace('Entrada ', '')}</b><small>previs√£o hoje</small></div><span class="attendance-arrow">‚Üí</span></button>`).join('')}</div></div>`;
-    const attendanceHeading = content.querySelector('.attendance-list-heading');
-    refreshGlobalCounts();
-    content.querySelectorAll('.attendance-item').forEach((row) => { const index = Number(row.dataset.serviceIndex); const vehicleMark = row.querySelector('.attendance-client .car-icon'); if (vehicleMark) vehicleMark.outerHTML = vehicleVisual(services[index].vehicle); const personMark = row.querySelector('.attendance-person .avatar'); if (personMark) personMark.outerHTML = '<span class="person-mark" aria-hidden="true"></span>'; });
-    content.querySelectorAll('.attendance-item').forEach((row) => {
-      const index = Number(row.dataset.serviceIndex);
-      const estimate = row.querySelector('.attendance-time b');
-      const estimateLabel = row.querySelector('.attendance-time small');
-      if (estimate) estimate.textContent = formatEstimate(index);
-      if (estimateLabel) estimateLabel.textContent = 'previs√£o de entrega';
-    });
-    attendanceHeading.innerHTML = '<span>ATENDIMENTO</span><span>STATUS</span><span>ETAPA ATUAL</span><span>RESPONS√ÅVEL</span><span>PREVIS√ÉO</span><span></span>';
-    content.querySelectorAll('.attendance-item').forEach((row) => { const detailCell = row.children[1]; const statusCell = document.createElement('div'); statusCell.className = 'attendance-status'; statusCell.appendChild(detailCell.querySelector('.status-pill')); row.insertBefore(statusCell, detailCell); detailCell.className = 'attendance-stage-cell'; const stage = document.createElement('small'); stage.className = 'attendance-stage'; stage.textContent = stageNames[serviceStates[Number(row.dataset.serviceIndex)].stage]; row.querySelector('.attendance-service').before(stage); });
-    const filterButtons = content.querySelectorAll('.filter-tab');
-    const attendanceItems = content.querySelectorAll('.attendance-item');
-    filterButtons.forEach((filter) => filter.addEventListener('click', () => { filterButtons.forEach((button) => button.classList.remove('active')); filter.classList.add('active'); attendanceItems.forEach((item) => { item.classList.toggle('filtered-out', filter.dataset.filter !== 'todos' && item.dataset.status !== filter.dataset.filter); }); }));
-    content.querySelector('#attendance-search').addEventListener('input', (event) => { const query = event.target.value.toLowerCase(); attendanceItems.forEach((item) => item.classList.toggle('filtered-out', !item.textContent.toLowerCase().includes(query))); });
-    content.querySelector('#attendance-new').addEventListener('click', () => openModal('service-modal'));
-  } else {
-    content.innerHTML = `<div class="module-grid"><div class="module-panel"><div class="module-toolbar"><h2>Ordens de servi√ßo</h2><input placeholder="Buscar cliente ou placa" /></div>${services.map((item, index) => `<button class="data-line" data-service-index="${index}"><div><b>${item.client} ¬∑ ${item.vehicle}</b><small>${item.service} ¬∑ ${item.time}</small></div><span class="status-pill ${item.tone}">${item.status}</span></button>`).join('')}</div><div class="module-panel"><h2>Resumo da opera√ß√£o</h2><div class="data-line"><div><b>03</b><small>Aguardando aprova√ß√£o</small></div><span class="status-pill waiting">R$ 1.840</span></div><div class="data-line"><div><b>08</b><small>Em atendimento</small></div><span class="status-pill in-progress">Hoje</span></div><div class="data-line"><div><b>04</b><small>Prontos para retirada</small></div><span class="status-pill ready">Avisar</span></div></div></div>`;
-  }
-  if (section === 'conversas') {
-    content.querySelector('.conversation-panel')?.insertAdjacentHTML('beforeend', '<div class="whatsapp-connection"><span class="status-dot"></span><div><b>WhatsApp da empresa</b><small>Central pronta para receber a API oficial e os webhooks de mensagens.</small></div><button class="outline-button" id="connect-whatsapp">Configurar</button></div>');
-    content.querySelector('#connect-whatsapp')?.addEventListener('click', () => showToast('A conex&atilde;o real exige WhatsApp Cloud API, webhook e credenciais da empresa.'));
-  }
-  content.querySelectorAll('[data-service-index]').forEach((item) => item.addEventListener('click', () => { activeServiceIndex = Number(item.dataset.serviceIndex); stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); openModal('detail-modal'); }));
-  if (section === 'servicos') {
-    const catalogPanel = content.querySelector('.service-price')?.parentElement;
-    serviceCatalogExtras.forEach((item) => { if (catalogPanel) catalogPanel.insertAdjacentHTML('beforeend', `<div class="service-price"><div><b>${item.name}</b><small>${item.description}</small></div><span>${item.price}</span></div>`); });
-    const newPrice = content.querySelector('#new-price');
-    if (newPrice) newPrice.addEventListener('click', openServicePriceModal);
-  }
-  content.querySelectorAll('button[id^="new-"]:not(#new-price)').forEach((item) => item.addEventListener('click', () => showToast('Formul√°rio pronto para cadastrar este registro.')));
-}
-document.querySelectorAll('[data-section]').forEach((item) => item.addEventListener('click', () => showSection(item.dataset.section)));
-const openModal = (id) => document.querySelector(`#${id}`).classList.remove('hidden');
-const closeModal = (id) => { const modal = document.querySelector(`#${id}`); if (modal) { modal.classList.add('hidden'); if (id === 'detail-modal') modal.classList.remove('employee-overlay'); } };
-document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop hidden" id="new-client-modal"><div class="modal"><button class="close-button" data-close="new-client-modal">√ó</button><p class="eyebrow">BASE DE CLIENTES</p><h2>Cadastrar cliente</h2><p class="muted">Esse cadastro poder√° ser reutilizado em novos atendimentos.</p><form id="new-client-form"><label>Nome completo<input name="name" required placeholder="Ex.: Rafael Nogueira" /></label><label>WhatsApp<input name="phone" required placeholder="(19) 99999-0000" /></label><label>Ve√≠culo e placa<input name="vehicle" required placeholder="Ex.: Honda Civic ¬∑ RGT-4B21" /></label><div class="form-actions"><button type="button" class="outline-button" data-close="new-client-modal">Cancelar</button><button class="primary-button">Salvar cliente</button></div></form></div></div>`);
-document.querySelectorAll('#new-client-modal [data-close]').forEach((button) => button.addEventListener('click', () => closeModal(button.dataset.close)));
-const serviceForm = document.querySelector('#service-form');
-const existingChoice = document.createElement('label');
-existingChoice.innerHTML = 'Cliente j√° cadastrado<select name="existingClient"><option value="new">Novo cliente</option><option value="Rafael Nogueira|Honda Civic Touring ¬∑ RGT-4B21">Rafael Nogueira ¬∑ Honda Civic</option><option value="Camila Bittencourt|Toyota Corolla XEi ¬∑ FDL-8A06">Camila Bittencourt ¬∑ Toyota Corolla</option><option value="Jo√£o Vitor Mendes|Jeep Compass Limited ¬∑ EKW-1C73">Jo√£o Vitor Mendes ¬∑ Jeep Compass</option><option value="Marina Albuquerque|BMW 320i M Sport ¬∑ GHA-5D92">Marina Albuquerque ¬∑ BMW 320i</option></select><small class="form-helper">Selecione um cadastro para preencher cliente e placa automaticamente.</small>';
-serviceForm.insertBefore(existingChoice, serviceForm.firstElementChild);
-existingChoice.querySelector('select').innerHTML = `<option value="new">Novo cliente</option>${clients.map((client, index) => `<option value="${index}">${client[0]} ¬∑ ${vehicleParts(client[1]).model}</option>`).join('')}`;
-existingChoice.querySelector('select').addEventListener('change', (event) => { const selected = clients[Number(event.target.value)]; serviceForm.elements.client.value = event.target.value === 'new' || !selected ? '' : selected[0]; serviceForm.elements.vehicle.value = event.target.value === 'new' || !selected ? '' : selected[1]; });
-const responsibleChoice = document.createElement('label');
-responsibleChoice.innerHTML = `Respons√°vel<select name="responsible">${teamMembers.map((member) => `<option value="${member.name}">${member.name} ¬∑ ${member.role}</option>`).join('')}</select><small class="form-helper">Escolha quem ficar√° respons√°vel por acompanhar esta ordem.</small>`;
-serviceForm.insertBefore(responsibleChoice, serviceForm.querySelector('.form-actions'));
-document.querySelector('#new-client-form').addEventListener('submit', (event) => { event.preventDefault(); const data = new FormData(event.currentTarget); clients.push([data.get('name'), data.get('vehicle'), 'Sem hist√≥rico', 'Novo cadastro', 'received', 0, '']); closeModal('new-client-modal'); renderClients(); event.currentTarget.reset(); showToast('Cliente cadastrado e dispon√≠vel na ficha de clientes.'); });
-const buttonHints = {
-  '#new-service': 'Cadastrar cliente, ve√≠culo, servi√ßos e gerar o link de acompanhamento.',
-  '#open-client-link': 'Abrir uma demonstra√ß√£o do que o cliente ver√° pelo link.',
-  '#employee-preview': 'Visualizar o painel com acesso operacional da equipe.',
-  '#client-preview': 'Visualizar o portal externo do cliente.'
-};
-Object.entries(buttonHints).forEach(([selector, hint]) => { const button = document.querySelector(selector); if (button) button.title = hint; });
-const whatsappButton = document.querySelector('.portal-footer .text-button');
-if (whatsappButton) {
-  whatsappButton.textContent = 'Falar pelo WhatsApp ‚Üí';
-  whatsappButton.title = 'Abrir o WhatsApp com uma mensagem sobre esta ordem de servi√ßo.';
-  whatsappButton.addEventListener('click', () => showToast('No sistema real, este bot√£o abrir√° o WhatsApp da empresa com a ordem j√° identificada.'));
-}
-function addClientPhotos(portal) {
-  if (!portal || portal.querySelector('.portal-photos')) return;
-  portal.querySelector('.portal-footer').insertAdjacentHTML('beforebegin', `<section class="portal-photos"><div class="portal-section-heading"><div><p class="eyebrow">REGISTRO VISUAL</p><h3>Fotos do servi√ßo</h3></div><span class="photo-count">3 fotos</span></div><div class="photo-grid"><figure><img src="https://images.squarespace-cdn.com/content/v1/62b21428251d255436cd2356/e61f43e0-c9fb-456a-aeb3-d9621d4291ff/GridArt_20230731_160914788.jpg" alt="Ve√≠culo antes e depois do servi√ßo" /><figcaption>Antes e depois ¬∑ Hoje, 08:45</figcaption></figure><figure><img src="https://images.squarespace-cdn.com/content/v1/62b21428251d255436cd2356/bae8f1fc-35fd-4465-88df-3f9b9fda6096/GridArt_20231204_172529008.jpg" alt="Interior e exterior do ve√≠culo em limpeza" /><figcaption>Interior e exterior ¬∑ Hoje, 11:20</figcaption></figure><figure><img src="https://images.squarespace-cdn.com/content/v1/62b21428251d255436cd2356/793806e4-c939-4f89-96c8-9b7a62011617/GridArt_20231204_165303090.jpg" alt="Resultado final do detalhamento automotivo" /><figcaption>Resultado final ¬∑ Hoje, 13:05</figcaption></figure></div></section>`);
-}
-function refreshClientPhotos() {
-  document.querySelectorAll('.client-portal').forEach((portal) => {
-    const grid = portal.querySelector('.photo-grid');
-    if (!grid) return;
-    grid.querySelectorAll('[data-uploaded-photo]').forEach((photo) => photo.remove());
-    const uploaded = servicePhotos[activeServiceIndex] || [];
-    uploaded.forEach((photo) => grid.insertAdjacentHTML('beforeend', `<figure data-uploaded-photo><img src="${photo.url}" alt="Foto adicionada pela equipe" /><figcaption>${photo.name} ¬∑ Enviado agora</figcaption></figure>`));
-    const count = portal.querySelector('.photo-count');
-    if (count) count.textContent = `${3 + uploaded.length} fotos`;
-  });
-}
-document.querySelectorAll('.client-portal').forEach(addClientPhotos);
-let stageIndex = serviceStates[0].stage;
-function removeService(index) {
-  if (!services[index]) return;
-  services.splice(index, 1);
-  serviceStates.splice(index, 1);
-  serviceEstimates.splice(index, 1);
-  serviceMilestones.splice(index, 1);
-  servicePhotos.splice(index, 1);
-  activeServiceIndex = Math.min(activeServiceIndex, Math.max(0, services.length - 1));
-  stageIndex = services.length ? serviceStates[activeServiceIndex].stage : 0;
-  refreshServiceList();
-  renderModule('atendimentos');
-  document.querySelectorAll('.employee-portal').forEach((portal) => { renderEmployeeJobs(portal); bindEmployeeOrderActions(portal); });
-  refreshGlobalCounts();
-}
-function addEstimateEditor() {
-  const detail = document.querySelector('#detail-modal');
-  const estimate = serviceEstimates[activeServiceIndex] || { date: '', time: '' };
-  const estimateText = formatEstimate(activeServiceIndex);
-  const estimateLabel = detail.querySelector('#detail-estimate-label');
-  const estimateDate = detail.querySelector('#estimate-date');
-  const estimateTime = detail.querySelector('#estimate-time');
-  if (estimateLabel) estimateLabel.textContent = estimateText;
-  if (estimateDate && document.activeElement !== estimateDate) estimateDate.value = estimate.date;
-  if (estimateTime && document.activeElement !== estimateTime) estimateTime.value = estimate.time;
-  document.querySelectorAll('.client-portal').forEach((portal) => {
-    const portalEstimate = portal.querySelector('.portal-estimate') || portal.querySelectorAll('.timeline-item')[4]?.querySelector('small');
-    const milestones = serviceMilestones[activeServiceIndex];
-    const timelineItems = portal.querySelectorAll('.timeline-item');
-    if (portalEstimate) portalEstimate.textContent = serviceStates[activeServiceIndex]?.deliveryStatus === 'delivered' ? `Retirado em ${serviceStates[activeServiceIndex].deliveryAt || 'hor√°rio n√£o registrado'}` : `Previs√£o: ${estimateText}`;
-    if (milestones && timelineItems[0]) timelineItems[0].querySelector('small').textContent = `Recebido em ${milestones.received}`;
-    if (milestones && timelineItems[1]) timelineItems[1].querySelector('small').textContent = stageIndex === 0 ? 'Aguardando avalia√ß√£o inicial' : stageIndex === 1 ? 'Avalia√ß√£o em andamento' : `Conclu√≠da em ${milestones.evaluated}`;
-  });
-  if (!detail || detail.querySelector('.estimate-editor')) return;
-  detail.querySelector('.detail-progress').insertAdjacentHTML('afterend', `<section class="estimate-editor"><div><p class="eyebrow">PREVIS√ÉO DE ENTREGA</p><strong id="detail-estimate-label">A definir ap√≥s avalia√ß√£o</strong><small>Defina o prazo depois de avaliar o servi√ßo.</small></div><div class="estimate-fields"><label>Data<input id="estimate-date" type="date" /></label><label>Hor√°rio<input id="estimate-time" type="time" /></label><button class="outline-button" id="save-estimate">Salvar previs√£o</button></div></section>`);
-  detail.querySelector('.detail-actions').insertAdjacentHTML('afterbegin', '<div class="order-management-actions"><button class="outline-button hidden" id="cancel-delivery">Cancelar entrega</button><button class="outline-button danger-button" id="delete-order">Apagar ordem</button></div>');
-  detail.querySelector('#cancel-delivery').addEventListener('click', () => { serviceStates[activeServiceIndex].deliveryStatus = null; stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); showToast('Entrega cancelada. O ve√≠culo voltou para retirada.'); });
-  detail.querySelector('#delete-order').addEventListener('click', () => { if (!window.confirm('Apagar esta ordem? Esta a√ß√£o remove o atendimento do prot√≥tipo.')) return; const deletedClient = services[activeServiceIndex].client; removeService(activeServiceIndex); closeModal('detail-modal'); showToast(`Ordem de ${deletedClient} apagada.`); });
-  detail.querySelector('#save-estimate').addEventListener('click', () => {
-    const estimate = serviceEstimates[activeServiceIndex];
-    estimate.date = detail.querySelector('#estimate-date').value;
-    estimate.time = detail.querySelector('#estimate-time').value;
-    syncStage();
-    showToast(estimate.date && estimate.time ? 'Previs√£o atualizada e compartilhada com o cliente.' : 'Previs√£o removida. Defina uma data e um hor√°rio quando estiver pronto.');
-  });
-}
-addEstimateEditor();
-function syncStage() {
-  const names = stageNames;
-  const active = services[activeServiceIndex];
-  const state = serviceStates[activeServiceIndex];
-  state.stage = stageIndex;
-  if (state.deliveryStatus === 'delivered') state.status = 'delivered';
-  else if (stageIndex === 0) state.status = 'received';
-  else if (stageIndex === 4) state.status = 'ready';
-  else if (state.status !== 'waiting' || stageIndex !== 1) state.status = 'in-progress';
-  active.status = state.status === 'delivered' ? 'Entregue' : state.status === 'received' ? 'Recebido' : state.status === 'ready' ? 'Pronto para retirada' : state.status === 'waiting' ? 'Aguardando aprova√ß√£o' : 'Em andamento';
-  active.tone = state.status === 'delivered' ? 'delivered' : state.status;
-  document.querySelectorAll('.timeline').forEach((timeline) => timeline.querySelectorAll('.timeline-item').forEach((item, index) => { item.classList.toggle('done', index < stageIndex); item.classList.toggle('current', index === stageIndex); item.querySelector('span').textContent = index < stageIndex ? '‚úì' : `0${index + 1}`; item.querySelector('b').textContent = names[index]; }));
-  const detail = document.querySelector('#detail-modal');
-  const estimate = serviceEstimates[activeServiceIndex] || { date: '', time: '' };
-  const estimateText = formatEstimate(activeServiceIndex);
-  const estimateLabel = detail.querySelector('#detail-estimate-label');
-  const estimateDate = detail.querySelector('#estimate-date');
-  const estimateTime = detail.querySelector('#estimate-time');
-  if (estimateLabel) estimateLabel.textContent = estimateText;
-  if (estimateDate && document.activeElement !== estimateDate) estimateDate.value = estimate.date;
-  if (estimateTime && document.activeElement !== estimateTime) estimateTime.value = estimate.time;
-  document.querySelectorAll('.client-portal').forEach((portal) => {
-    const portalEstimate = portal.querySelector('.portal-estimate') || portal.querySelectorAll('.timeline-item')[4]?.querySelector('small');
-    const milestones = serviceMilestones[activeServiceIndex];
-    const timelineItems = portal.querySelectorAll('.timeline-item');
-    if (portalEstimate) portalEstimate.textContent = state.deliveryStatus === 'delivered' ? `Retirado em ${state.deliveryAt || 'hor√°rio n√£o registrado'}` : `Previs√£o: ${estimateText}`;
-    if (milestones && timelineItems[0]) timelineItems[0].querySelector('small').textContent = `Recebido em ${milestones.received}`;
-    if (milestones && timelineItems[1]) timelineItems[1].querySelector('small').textContent = stageIndex === 0 ? 'Aguardando avalia√ß√£o inicial' : stageIndex === 1 ? 'Avalia√ß√£o em andamento' : `Conclu√≠da em ${milestones.evaluated}`;
-  });
-  detail.querySelectorAll('#current-stage, .progress-label b').forEach((item) => item.textContent = names[stageIndex]);
-  detail.querySelector('.progress-track span').style.width = `${((stageIndex + 1) / 5) * 100}%`;
-  detail.querySelector('.progress-label span:last-child').textContent = `${stageIndex + 1} de 5`;
-  detail.querySelectorAll('.stage').forEach((item, index) => { item.classList.toggle('active', index === Math.max(0, stageIndex - 2)); const label = item.querySelector('b'); if (label) label.textContent = stageNames[index + 2]; });
-  const status = detail.querySelector('.status-pill');
-  status.textContent = active.status;
-  status.className = `status-pill ${active.tone}`;
-  const cancelDelivery = detail.querySelector('#cancel-delivery');
-  if (cancelDelivery) cancelDelivery.classList.toggle('hidden', state.deliveryStatus !== 'delivered');
-  document.querySelectorAll('.attendance-item').forEach((row) => { const index = Number(row.dataset.serviceIndex); const item = services[index]; const pill = row.querySelector('.status-pill'); if (pill) { pill.textContent = item.status; pill.className = `status-pill ${item.tone}`; } const stage = row.querySelector('.attendance-stage'); if (stage) stage.textContent = `Etapa: ${stageNames[serviceStates[index].stage]}`; row.dataset.status = item.tone === 'in-progress' ? 'andamento' : item.tone === 'waiting' ? 'aprovacao' : item.tone === 'ready' ? 'prontos' : 'recebido'; });
-  document.querySelectorAll('.attendance-item').forEach((row) => { const index = Number(row.dataset.serviceIndex); const responsible = row.querySelector('.attendance-person span:last-child'); if (responsible) responsible.textContent = serviceStates[index].responsible || 'N√£o atribu√≠do'; });
-  document.querySelectorAll('.attendance-item[data-service-index]').forEach((row) => { const index = Number(row.dataset.serviceIndex); const estimate = row.querySelector('.attendance-time b'); const estimateLabel = row.querySelector('.attendance-time small'); if (estimate) estimate.textContent = formatEstimate(index); if (estimateLabel) estimateLabel.textContent = 'previs√£o de entrega'; });
-  document.querySelectorAll('.service-row[data-service-index]').forEach((row) => { const index = Number(row.dataset.serviceIndex); const item = services[index]; const pill = row.querySelector('.status-pill'); if (pill) { pill.textContent = item.status; pill.className = `status-pill ${item.tone}`; } const stage = row.querySelector('.service-stage'); if (stage) stage.textContent = `Etapa: ${stageNames[serviceStates[index].stage]}`; });
-  document.querySelectorAll('.employee-job[data-service-index]').forEach((job) => { const item = services[Number(job.dataset.serviceIndex)]; const pill = job.querySelector('.status-pill'); if (pill) { pill.textContent = item.status; pill.className = `status-pill ${item.tone}`; } });
-  document.querySelectorAll('.employee-job[data-service-index] .employee-action').forEach((button) => { const presentation = getServicePresentation(Number(button.dataset.serviceIndex)); button.textContent = presentation.actionLabel; button.dataset.employeeAction = presentation.action; button.classList.toggle('secondary-button', presentation.action === 'delivery'); button.classList.toggle('primary-button', presentation.action !== 'delivery'); });
-  document.querySelectorAll('.client-portal').forEach((portal) => { const vehicle = portal.querySelector('.portal-vehicle h2'); const identity = portal.querySelector('.portal-vehicle .muted'); if (vehicle) vehicle.textContent = active.vehicle.split(' ¬∑ ')[0]; if (identity) identity.textContent = `${active.vehicle.split(' ¬∑ ')[1]} ¬∑ ${active.client}`; });
-  const clientRecord = clients.find((client) => client[0] === active.client);
-  if (clientRecord) { clientRecord[2] = active.service; clientRecord[3] = active.status; clientRecord[4] = active.tone; }
-  refreshClientPhotos();
-  refreshGlobalCounts();
-}
-function renderEmployeeJobs(portal) {
-  const list = portal && portal.querySelector('.employee-list');
-  if (!list) return;
-  const assigned = services.map((item, index) => ({ item, index })).filter(({ index }) => serviceStates[index].responsible === 'Lucas Sampaio');
-  list.innerHTML = assigned.map(({ item, index }) => { const presentation = getServicePresentation(index); return `<div class="employee-job" data-service-index="${index}"><div><b>${item.client}</b><small>${item.vehicle}</small><span class="status-pill ${presentation.tone}">${presentation.label}</span></div><button class="${presentation.action === 'delivery' ? 'secondary-button' : 'primary-button'} employee-action" data-service-index="${index}" data-employee-action="${presentation.action}">${presentation.actionLabel}</button></div>`; }).join('') || '<p class="employee-empty">Nenhuma ordem atribu&iacute;da a este funcion&aacute;rio.</p>';
-}
-function renderEmployeeOrder(index) {
-  const item = services[index];
-  const state = serviceStates[index];
-  if (!item || !state) return;
-  const photos = servicePhotos[index] || [];
-  const photoMarkup = photos.map((photo) => `<figure><img src="${photo.url}" alt="Foto adicionada pela equipe" /><figcaption>${photo.name}</figcaption></figure>`).join('') || '<p class="employee-empty">Nenhuma foto adicionada nesta ordem.</p>';
-  const vehicle = vehicleParts(item.vehicle);
-  const advanceButton = state.stage < 4 ? '<button class="outline-button" id="employee-advance">Avan&ccedil;ar etapa</button>' : '';
-  const backButton = state.stage > 0 ? '<button class="outline-button" id="employee-back-stage">Voltar etapa</button>' : '';
-  const deliveryButton = state.deliveryStatus === 'delivered' ? '<button class="outline-button" id="employee-cancel-delivery">Cancelar entrega</button>' : '<button class="primary-button" id="employee-delivery" disabled>Registrar entrega</button>';
-  const deliveryAction = state.status === 'ready' ? '<button class="primary-button" id="employee-delivery">Registrar entrega</button>' : deliveryButton;
-  roleScreenContent.innerHTML = `<section class="employee-order-screen"><div class="employee-order-heading"><div><p class="eyebrow">ORDEM OPERACIONAL</p><h1>${vehicle.model}</h1><p class="muted">${item.client} ¬∑ ${vehicle.plate}</p></div><button class="outline-button" id="employee-back">Voltar para minhas ordens</button></div><div class="employee-order-grid"><article class="employee-order-main"><div class="employee-order-status"><div><span class="status-pill ${item.tone}">${item.status}</span><b>${stageNames[state.stage]}</b></div><small>Respons&aacute;vel: ${state.responsible}</small></div><div class="employee-stage-strip"><span class="completed">Entrada</span><span class="${state.stage >= 1 ? 'completed' : ''}">Avalia&ccedil;&atilde;o</span><span class="${state.stage >= 2 ? 'completed' : 'current'}">Execu&ccedil;&atilde;o</span><span class="${state.stage >= 3 ? 'completed' : ''}">Inspe&ccedil;&atilde;o</span><span class="${state.stage >= 4 ? 'completed' : ''}">Retirada</span></div><div class="employee-order-actions"><button class="secondary-button" id="employee-add-photo">Adicionar foto</button>${backButton}${advanceButton}${deliveryAction}<input id="employee-photo-input" type="file" accept="image/*" multiple hidden /></div><section class="employee-photo-board"><div class="employee-section-heading"><div><p class="eyebrow">REGISTRO VISUAL</p><h2>Fotos do atendimento</h2></div><span>${photos.length} foto${photos.length === 1 ? '' : 's'}</span></div><div class="employee-photo-grid">${photoMarkup}</div></section><section class="employee-observation"><label>Observa&ccedil;&atilde;o interna<textarea id="employee-observation" rows="3" placeholder="Registre um detalhe importante para a equipe.">${state.note || ''}</textarea><small class="form-helper">Vis&iacute;vel somente para a equipe da opera&ccedil;&atilde;o; n&atilde;o aparece para o cliente.</small></label><button class="outline-button" id="employee-save-note">Salvar observa&ccedil;&atilde;o</button></section></article><aside class="employee-order-aside"><div><span>Servi&ccedil;o</span><b>${item.service}</b></div><div><span>Entrada</span><b>${serviceMilestones[index]?.received || item.time}</b></div><div><span>Previs&atilde;o</span><b>${formatEstimate(index)}</b></div><div><span>Cliente</span><b>${item.client}</b><button class="text-button" id="employee-client-ficha">Ver ficha do cliente</button></div></aside></div></section>`;
-  roleScreenContent.querySelector('#employee-back').addEventListener('click', () => showRoleScreen('employee'));
-  roleScreenContent.querySelector('#employee-add-photo').addEventListener('click', () => roleScreenContent.querySelector('#employee-photo-input').click());
-  roleScreenContent.querySelector('#employee-photo-input').addEventListener('change', (event) => { servicePhotos[index].push(...Array.from(event.target.files).map((file) => ({ url: URL.createObjectURL(file), name: file.name }))); refreshClientPhotos(); renderEmployeeOrder(index); showToast('Foto adicionada ao atendimento e portal do cliente.'); });
-  const advance = roleScreenContent.querySelector('#employee-advance');
-  if (advance) advance.addEventListener('click', () => { activeServiceIndex = index; stageIndex = Math.min(4, state.stage + 1); syncStage(); renderEmployeeOrder(index); showToast('Etapa atualizada para toda a equipe.'); });
-  const backStage = roleScreenContent.querySelector('#employee-back-stage');
-  if (backStage) backStage.addEventListener('click', () => { activeServiceIndex = index; stageIndex = Math.max(0, state.stage - 1); state.deliveryStatus = null; syncStage(); renderEmployeeOrder(index); showToast('Etapa anterior restaurada.'); });
-  const delivery = roleScreenContent.querySelector('#employee-delivery');
-  if (delivery) delivery.addEventListener('click', () => { if (state.status !== 'ready') return; state.deliveryStatus = 'delivered'; state.deliveryAt = getCurrentEntryData().received; activeServiceIndex = index; stageIndex = 4; syncStage(); renderEmployeeOrder(index); showToast('Entrega registrada √†s ' + state.deliveryAt + '.'); });
-  const cancelDelivery = roleScreenContent.querySelector('#employee-cancel-delivery');
-  if (cancelDelivery) cancelDelivery.addEventListener('click', () => { state.deliveryStatus = null; state.deliveryAt = ''; activeServiceIndex = index; stageIndex = state.stage; syncStage(); renderEmployeeOrder(index); showToast('Entrega cancelada. O ve√≠culo voltou para retirada.'); });
-  roleScreenContent.querySelector('#employee-save-note').addEventListener('click', (event) => { state.note = roleScreenContent.querySelector('#employee-observation').value.trim(); event.currentTarget.textContent = 'Observa&ccedil;&atilde;o salva'; event.currentTarget.classList.add('saved-action'); showToast('Observa&ccedil;&atilde;o salva para a equipe da opera&ccedil;&atilde;o.'); });
-  roleScreenContent.querySelector('#employee-client-ficha').addEventListener('click', () => { const clientIndex = clients.findIndex((client) => client[0] === item.client); if (clientIndex >= 0) openClientFicha(clientIndex); else showToast('Ficha do cliente ainda n&atilde;o foi cadastrada.'); });
-}
-function bindEmployeeOrderActions(portal) {
-  if (!portal) return;
-  portal.querySelectorAll('.employee-action[data-service-index]').forEach((button) => button.addEventListener('click', (event) => {
-    event.stopPropagation();
-    const index = Number(button.dataset.serviceIndex);
-    activeServiceIndex = index;
-    stageIndex = serviceStates[index].stage;
-    renderEmployeeOrder(index);
-  }));
-}
-const employeePortal = document.querySelector('.employee-portal');
-if (employeePortal) {
-  const role = employeePortal.querySelector('.role-tag');
-  if (role) role.textContent = 'Recep√ß√£o + Operacional';
-  const receptionActions = document.createElement('div');
-  receptionActions.className = 'reception-actions';
-  receptionActions.innerHTML = `<div class="reception-actions-heading"><div><p class="eyebrow">ROTINA DA RECEP√á√ÉO</p><b>Registrar novos atendimentos</b><small>Cadastre o cliente, o ve√≠culo e reserve um hor√°rio.</small></div></div><div class="reception-buttons"><button class="primary-button" id="reception-new-service">+ Novo atendimento</button><button class="outline-button" id="reception-new-client">Cadastrar cliente</button><button class="outline-button" id="reception-new-booking">Marcar na agenda</button></div>`;
-  const list = employeePortal.querySelector('.employee-list');
-  employeePortal.insertBefore(receptionActions, list);
-  renderEmployeeJobs(employeePortal);
-  bindEmployeeOrderActions(employeePortal);
-  receptionActions.querySelector('#reception-new-service').addEventListener('click', () => renderEmployeeForm('attendance'));
-  receptionActions.querySelector('#reception-new-client').addEventListener('click', () => renderEmployeeForm('client'));
-  receptionActions.querySelector('#reception-new-booking').addEventListener('click', () => { closeModal('employee-modal'); showSection('agenda'); showToast('Agenda aberta para marcar um novo hor√°rio.'); });
-}
-function renderEmployeeForm(type) {
-  const isClient = type === 'client';
-  roleScreenContent.innerHTML = `<div class="employee-form-screen"><div class="employee-agenda-heading"><div><p class="eyebrow">PAINEL DA RECEP√á√ÉO</p><h1>${isClient ? 'Cadastrar cliente' : 'Novo atendimento'}</h1><p class="muted">${isClient ? 'Cadastre os dados para reutilizar em pr√≥ximos atendimentos.' : 'Registre a chegada do ve√≠culo sem sair do painel do funcion√°rio.'}</p></div><button class="outline-button" id="back-to-employee-form">‚Üê Voltar ao painel</button></div><div class="module-panel"><form id="employee-role-form"><label>Cliente${isClient ? '' : '<select name="existingClient"><option value="new">Novo cliente</option><option>Rafael Nogueira ¬∑ Honda Civic</option><option>Camila Bittencourt ¬∑ Toyota Corolla</option><option>Jo√£o Vitor Mendes ¬∑ Jeep Compass</option></select>'}<input name="client" required placeholder="Nome completo" /></label><label>WhatsApp<input name="phone" required placeholder="(19) 99999-0000" /></label><label>Ve√≠culo e placa<input name="vehicle" required placeholder="Ex.: Honda Civic ¬∑ RGT-4B21" /></label>${isClient ? '' : '<label>Servi√ßo<select name="service"><option>Detalhamento interno</option><option>Polimento t√©cnico</option><option>Higieniza√ß√£o completa</option><option>Prote√ß√£o cer√¢mica</option></select></label>'}<div class="form-actions"><button type="button" class="outline-button" id="cancel-employee-form">Cancelar</button><button class="primary-button">${isClient ? 'Salvar cliente' : 'Criar atendimento'}</button></div></form></div></div>`;
-  roleScreenContent.querySelector('#back-to-employee-form').addEventListener('click', () => showRoleScreen('employee'));
-  roleScreenContent.querySelector('#cancel-employee-form').addEventListener('click', () => showRoleScreen('employee'));
-  const existing = roleScreenContent.querySelector('select[name="existingClient"]');
-  if (existing) {
-    existing.innerHTML = `<option value="new">Novo cliente</option>${clients.map((client, index) => `<option value="${index}">${client[0]} ¬∑ ${vehicleParts(client[1]).model}</option>`).join('')}`;
-    existing.addEventListener('change', (event) => { const selected = clients[Number(event.target.value)]; if (selected) { roleScreenContent.querySelector('input[name="client"]').value = selected[0]; roleScreenContent.querySelector('input[name="vehicle"]').value = selected[1]; } });
-  }
-  if (existing) existing.addEventListener('change', (event) => { const values = { 'Rafael Nogueira ¬∑ Honda Civic': ['Rafael Nogueira', 'Honda Civic Touring ¬∑ RGT-4B21'], 'Camila Bittencourt ¬∑ Toyota Corolla': ['Camila Bittencourt', 'Toyota Corolla XEi ¬∑ FDL-8A06'], 'Jo√£o Vitor Mendes ¬∑ Jeep Compass': ['Jo√£o Vitor Mendes', 'Jeep Compass Limited ¬∑ EKW-1C73'] }; const selected = values[event.target.value]; if (selected) { roleScreenContent.querySelector('input[name="client"]').value = selected[0]; roleScreenContent.querySelector('input[name="vehicle"]').value = selected[1]; } });
-  if (!isClient) {
-    const responsible = document.createElement('label');
-    responsible.innerHTML = `Respons√°vel<select name="responsible">${teamMembers.map((member) => `<option value="${member.name}">${member.name} ¬∑ ${member.role}</option>`).join('')}</select><small class="form-helper">Escolha quem ficar√° com esta ordem.</small>`;
-    roleScreenContent.querySelector('#employee-role-form .form-actions').before(responsible);
-  }
-  roleScreenContent.querySelector('#employee-role-form').addEventListener('submit', (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    if (!isClient) {
-      const client = data.get('client');
-      const vehicle = data.get('vehicle');
-      const service = data.get('service');
-      const responsible = data.get('responsible') || 'N√£o atribu√≠do';
-      const entry = getCurrentEntryData();
-      services.push({ initials: client.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(), client, vehicle, service, status: 'Recebido', tone: 'received', time: entry.time });
-      serviceStates.push({ stage: 0, status: 'received', responsible });
-      serviceEstimates.push({ date: '', time: '' });
-      serviceMilestones.push({ received: entry.received, evaluated: '' });
-      upsertClientFromService(client, vehicle, service, 'Recebido', 'received');
-      servicePhotos.push([]);
-      refreshServiceList();
-      refreshGlobalCounts();
-    } else {
-      clients.push([data.get('client'), data.get('vehicle'), 'Sem hist√≥rico', 'Novo cadastro', 'received', 0, '']);
-      refreshGlobalCounts();
-    }
-    showRoleScreen('employee');
-    showToast(isClient ? 'Cliente cadastrado com sucesso.' : 'Atendimento criado e respons√°vel atribu√≠do.');
-  });
-}
-const roleScreen = document.querySelector('#role-screen');
-const roleScreenContent = document.querySelector('#role-screen-content');
-function renderEmployeeAgenda() {
-  roleScreenContent.innerHTML = `<div class="employee-agenda-screen"><div class="employee-agenda-heading"><div><p class="eyebrow">AGENDA DA RECEP√á√ÉO</p><h1>Marcar atendimento</h1><p class="muted">Escolha um hor√°rio livre para cadastrar a entrada do ve√≠culo.</p></div><button class="outline-button" id="back-to-employee">‚Üê Voltar ao painel</button></div><div class="module-panel"><div class="module-toolbar"><h2>07 a 11 de agosto</h2><button class="primary-button" id="agenda-new-booking">+ Novo hor√°rio</button></div><div class="calendar-grid"><div class="calendar-day"><strong>Qui ¬∑ 07</strong><small>4 hor√°rios</small><div class="calendar-event"><b>08:30 ¬∑ Rafael N.</b>Honda Civic ¬∑ Confirmado</div><div class="calendar-event"><b>14:00 ¬∑ Marina A.</b>BMW 320i ¬∑ Em andamento</div></div><div class="calendar-day"><strong>Sex ¬∑ 08</strong><small>3 hor√°rios</small><div class="calendar-event"><b>09:00 ¬∑ Bruno S.</b>Jeep Renegade ¬∑ Confirmado</div><div class="calendar-event available"><b>11:30 ¬∑ Hor√°rio livre</b>Clique para agendar</div></div><div class="calendar-day"><strong>S√°b ¬∑ 09</strong><small>2 hor√°rios</small><div class="calendar-event"><b>10:30 ¬∑ Ana P.</b>Corolla XEi ¬∑ Confirmado</div></div><div class="calendar-day"><strong>Dom ¬∑ 10</strong><small>Fechado</small></div><div class="calendar-day"><strong>Seg ¬∑ 11</strong><small>5 hor√°rios</small><div class="calendar-event"><b>08:00 ¬∑ Lucas M.</b>Onix Premier ¬∑ Confirmado</div></div></div></div></div>`;
-  roleScreenContent.querySelector('#back-to-employee').addEventListener('click', () => showRoleScreen('employee'));
-  roleScreenContent.querySelector('#agenda-new-booking').addEventListener('click', () => showToast('Formul√°rio de novo agendamento aberto para a recep√ß√£o.'));
-  roleScreenContent.querySelectorAll('.calendar-event.available').forEach((slot) => slot.addEventListener('click', () => showToast('Hor√°rio selecionado. Agora cadastre o cliente e o ve√≠culo.')));
-}
-function showRoleScreen(role) {
-  const isEmployee = role === 'employee';
-  document.querySelector('#role-screen-title').textContent = isEmployee ? 'Painel do funcion√°rio' : 'Portal do cliente';
-  document.querySelector('#role-screen-subtitle').textContent = isEmployee ? 'Recep√ß√£o e opera√ß√£o' : 'Acompanhamento do ve√≠culo';
-  const source = document.querySelector(isEmployee ? '.employee-portal' : '.client-portal').cloneNode(true);
-  source.querySelectorAll('.close-button').forEach((button) => button.remove());
-  roleScreenContent.innerHTML = '';
-  roleScreenContent.appendChild(source);
-  if (isEmployee) { renderEmployeeJobs(source); bindEmployeeOrderActions(source); }
-  if (!isEmployee) addClientPhotos(source);
-  syncStage();
-  roleScreen.classList.remove('hidden');
-  roleScreenContent.querySelectorAll('.employee-action:not([data-service-index])').forEach((button) => button.addEventListener('click', () => showToast(`${button.dataset.action}: a√ß√£o registrada no sistema.`)));
-  const newService = roleScreenContent.querySelector('#reception-new-service');
-  if (newService) newService.addEventListener('click', () => renderEmployeeForm('attendance'));
-  const newClient = roleScreenContent.querySelector('#reception-new-client');
-  if (newClient) newClient.addEventListener('click', () => renderEmployeeForm('client'));
-  const newBooking = roleScreenContent.querySelector('#reception-new-booking');
-  if (newBooking) newBooking.addEventListener('click', () => renderEmployeeAgenda());
-  const whatsapp = roleScreenContent.querySelector('.portal-footer .text-button');
-  if (whatsapp) whatsapp.addEventListener('click', () => showToast('No sistema real, este bot√£o abrir√° o WhatsApp da empresa com a ordem identificada.'));
-}
-document.querySelector('#return-admin').addEventListener('click', () => { roleScreen.classList.add('hidden'); roleScreenContent.innerHTML = ''; });
-document.querySelector('#new-service').addEventListener('click', () => openModal('service-modal'));
-document.querySelector('#employee-preview').addEventListener('click', () => showRoleScreen('employee'));
-document.querySelector('#client-preview').addEventListener('click', () => showRoleScreen('client'));
-document.querySelector('#open-client-link').addEventListener('click', () => showRoleScreen('client'));
-document.querySelectorAll('#service-list .service-row').forEach((item) => item.addEventListener('click', () => { activeServiceIndex = Number(item.dataset.serviceIndex); stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); openModal('detail-modal'); }));
-document.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => closeModal(button.dataset.close)));
-document.querySelector('#service-form').addEventListener('submit', (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const data = new FormData(form);
-  const client = data.get('client');
-  const vehicle = data.get('vehicle');
-  const service = data.get('service');
-  const responsible = data.get('responsible') || 'N√£o atribu√≠do';
-  const entry = getCurrentEntryData();
-  services.push({ initials: client.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(), client, vehicle, service, status: 'Recebido', tone: 'received', time: entry.time });
-  serviceStates.push({ stage: 0, status: 'received', responsible });
-  serviceEstimates.push({ date: '', time: '' });
-  serviceMilestones.push({ received: entry.received, evaluated: '' });
-  upsertClientFromService(client, vehicle, service, 'Recebido', 'received');
-  servicePhotos.push([]);
-  refreshServiceList();
-  refreshGlobalCounts();
-  closeModal('service-modal');
-  form.reset();
-  showToast('Atendimento criado e respons√°vel atribu√≠do. Link do cliente gerado.');
-});
-document.querySelector('#new-client').addEventListener('click', () => openModal('new-client-modal'));
-document.querySelector('#generic-action').addEventListener('click', () => { const module = document.querySelector('#generic-action').dataset.module; if (module === 'servicos') { openServicePriceModal(); return; } const actions = { agenda: 'Formul√°rio de novo agendamento aberto para a recep√ß√£o.', equipe: 'Cadastro de novo membro aberto para a administradora.', atendimentos: 'Formul√°rio de novo atendimento aberto.', conversas: 'Nova conversa vinculada √† ordem selecionada.', relatorios: 'Resumo preparado para exporta√ß√£o.', configuracoes: 'Prefer√™ncias salvas neste prot√≥tipo.' }; showToast(actions[module] || 'A√ß√£o dispon√≠vel neste m√≥dulo.'); });
-document.querySelector('#copy-link').addEventListener('click', () => showToast('Link copiado: atelier-os.com/acompanhamento/ao-2048'));
-document.querySelector('#add-photo').addEventListener('click', () => { addClientPhotos(document.querySelector('.client-portal')); showToast('√Årea de fotos aberta para a equipe.'); });
-document.querySelector('#advance-stage').addEventListener('click', () => { if (stageIndex < 4) stageIndex += 1; syncStage(); showToast(stageIndex === 4 ? 'Ve√≠culo marcado como pronto e cliente notificado.' : 'Etapa atualizada e cliente notificado.'); });
-const backStageButton = document.createElement('button');
-backStageButton.className = 'outline-button';
-backStageButton.textContent = '‚Üê Voltar etapa';
-backStageButton.title = 'Retornar o ve√≠culo para a etapa anterior.';
-document.querySelector('#advance-stage').parentElement.insertBefore(backStageButton, document.querySelector('#add-photo'));
-backStageButton.addEventListener('click', () => { if (stageIndex > 0) stageIndex -= 1; syncStage(); showToast('Ve√≠culo retornou para a etapa anterior.'); });
-document.querySelector('#copy-link').title = 'Copiar o link exclusivo desta ordem para enviar ao cliente.';
-document.querySelector('#add-photo').title = 'Adicionar fotos do antes, durante ou depois do servi√ßo.';
-document.querySelector('#advance-stage').title = 'Concluir a etapa atual e avisar o cliente sobre a mudan√ßa.';
-document.querySelectorAll('.employee-action:not([data-service-index])').forEach((button) => button.addEventListener('click', () => showToast(`${button.dataset.action}: a√ß√£o registrada no sistema.`)));
-function openDashboardOrder(index) {
-  if (!services[index] || !serviceStates[index]) return;
-  activeServiceIndex = index;
-  stageIndex = serviceStates[index].stage;
-  syncStage();
-  openModal('detail-modal');
-}
-function renderDashboardOrganization() {
-  const dashboard = document.querySelector('#dashboard-section');
-  if (!dashboard) return;
-  let workspace = dashboard.querySelector('#dashboard-organization');
-  if (!workspace) {
-    workspace = document.createElement('section');
-    workspace.id = 'dashboard-organization';
-    workspace.className = 'dashboard-organization';
-    dashboard.appendChild(workspace);
-  }
-  const counts = getServiceCounts();
-  const tasks = [];
-  serviceStates.forEach((state, index) => {
-    const item = services[index];
-    if (!item || state.status === 'delivered') return;
-    if (state.status === 'waiting') tasks.push({ index, tone: 'waiting', title: 'Aprova&ccedil;&atilde;o pendente', detail: `${item.client} ¬∑ ${item.vehicle.split(' √Ç¬∑ ')[0]}` });
-    if (state.status === 'ready') tasks.push({ index, tone: 'ready', title: 'Confirmar retirada', detail: `${item.client} ¬∑ ${item.vehicle.split(' √Ç¬∑ ')[0]}` });
-    if (!serviceEstimates[index] || !serviceEstimates[index].date) tasks.push({ index, tone: 'received', title: 'Definir previs&atilde;o de entrega', detail: `${item.client} ¬∑ ${item.service}` });
-  });
-  const taskMarkup = tasks.slice(0, 4).map((task) => `<div class="dashboard-task"><span class="dashboard-task-status ${task.tone}"></span><div class="dashboard-task-copy"><b>${task.title}</b><small>${task.detail}</small></div><button class="dashboard-task-action" data-dashboard-order="${task.index}">Abrir ordem</button></div>`).join('') || '<p class="dashboard-empty">Nenhuma pend&ecirc;ncia operacional agora.</p>';
-  const agendaMarkup = services.slice(0, 4).map((item, index) => `<button class="dashboard-agenda-item" data-dashboard-order="${index}"><span class="dashboard-agenda-time">${item.time.replace('Entrada ', '')}</span><span class="dashboard-agenda-copy"><b>${item.client}</b><small>${item.vehicle.split(' √Ç¬∑ ')[0]} ¬∑ ${getServicePresentation(index).label}</small></span><span class="dashboard-arrow">Abrir</span></button>`).join('') || '<p class="dashboard-empty">Nenhum atendimento cadastrado.</p>';
-  workspace.innerHTML = `<div class="dashboard-work-grid"><article class="dashboard-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">ORGANIZA&Ccedil;&Atilde;O</p><h2>Pend&ecirc;ncias de hoje</h2></div><span class="dashboard-count">${tasks.length}</span></div><p class="muted">Pr&oacute;ximas a&ccedil;&otilde;es para a equipe n&atilde;o perder nenhum retorno.</p><div class="dashboard-task-list">${taskMarkup}</div></article><article class="dashboard-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">VIS&Atilde;O R&Aacute;PIDA</p><h2>Ordens em acompanhamento</h2></div><span class="dashboard-count">${counts.total}</span></div><p class="muted">Acesse uma ordem diretamente sem procurar na listagem.</p><div class="dashboard-agenda-list">${agendaMarkup}</div></article></div><article class="dashboard-panel dashboard-shortcuts-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">ROTINA DA OPERA&Ccedil;&Atilde;O</p><h2>Atalhos de organiza&ccedil;&atilde;o</h2></div></div><div class="dashboard-shortcuts"><button class="dashboard-shortcut" data-dashboard-modal="service-modal"><span>01</span><b>Registrar atendimento</b><small>Abra uma nova ordem e atribua um respons&aacute;vel.</small></button><button class="dashboard-shortcut" data-dashboard-modal="new-client-modal"><span>02</span><b>Cadastrar cliente</b><small>Adicione cliente e ve&iacute;culo para a pr&oacute;xima entrada.</small></button><button class="dashboard-shortcut" data-dashboard-section="agenda"><span>03</span><b>Ver agenda</b><small>Confira entradas e retiradas previstas.</small></button><button class="dashboard-shortcut" data-dashboard-role="employee"><span>04</span><b>Abrir painel da equipe</b><small>Veja tarefas da recep&ccedil;&atilde;o e registre uma entrega.</small></button></div></article></section>`;
-  workspace.querySelectorAll('[data-dashboard-order]').forEach((button) => button.addEventListener('click', () => openDashboardOrder(Number(button.dataset.dashboardOrder))));
-  workspace.querySelectorAll('[data-dashboard-modal]').forEach((button) => button.addEventListener('click', () => openModal(button.dataset.dashboardModal)));
-  workspace.querySelectorAll('[data-dashboard-section]').forEach((button) => button.addEventListener('click', () => showSection(button.dataset.dashboardSection)));
-  workspace.querySelectorAll('[data-dashboard-role]').forEach((button) => button.addEventListener('click', () => showRoleScreen(button.dataset.dashboardRole)));
-}
-syncStage();
-function showToast(message) { const toast = document.querySelector('#toast'); toast.textContent = message; toast.classList.remove('hidden'); toast.classList.add('show'); setTimeout(() => toast.classList.add('hidden'), 3200); }
-document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.addEventListener('click', (event) => { if (event.target === backdrop) backdrop.classList.add('hidden'); }));
+    content.innerHTML = `<div class="module-grid"><div class="module-panel"><div class="module-toolbar"><h2>Pessoas cadastradas</h2><button class="outline-button" id="new-member">+ Adicionar pessoa</button></div><div class="permission-list"><div class="permission-item"><span class="avatar">MC</span><div><b>Marina Costa</b><small>Acesso completo ao sistema</small></div><span class="role-tag">Administradora</span></div><div class="permission-item"><span class="avatar">LS</span><div><b>Lucas Sampaio</b><small>Atualiza etapas e adiciona fotos</small></div><span class="role-tag">Funcion√°rio</span></div><div class="permission-item"><span class="avatar">FC</span><div><b>Fernanda Cardoso</b><small>Agenda e atendimento</small></div><span class="role-tag">Atendente</span></div></div></div><div class="module-panel"><h2>Permiss√µes por fun√ß√£o</h2><div class="data-line"><div><b>Administradora</b><small>Todos os m√≥dulos, configura√ß√µes e faturamento</small></div><span class◊Ætˆ⁄$z{-ÆÈ‹j◊ùIŒà…–ÿ[Z[Hö][ò€›\ù	À	’ﬁ[›H€‹õ€HZH0≠»ëNLâ◊K	“õË€»ö]‹àY[ô\»0≠»ôY\€€\\‹…Œà…“õË€»ö]‹àY[ô\…À	“ôY\€€\\‹»[Z]Y0≠»R’ÀLPÕÃ…◊HN»€€ú›Ÿ[X›YHò[Y\÷Ÿ]ô[ùù\ôŸ]ùò[YWN»Yà
+Ÿ[X›Y
+H»õ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ä	⁄[ú]€ò[YOHò€Y[ùóI Kùò[YHHŸ[X›YÃN»õ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ä	⁄[ú]€ò[YOHùôZX€HóI Kùò[YHHŸ[X›YÃWN»HJN√BàYà
+Z\–€Y[ù
+H√Bà€€ú›ô\‹€ú⁄XõHHÿ›[Y[ùò‹ôX]Q[[Y[ù
+	€Xô[	 N√Bàô\‹€ú⁄XõKö[õô\íSHô\‹€úË]ô[Ÿ[X›ò[YOHúô\‹€ú⁄XõHèâ›X[SY[Xô\úÀõX\
+
+Y[Xô\äHOà‹[€àò[YOHâ€Y[Xô\ãõò[Y_Hèâ€Y[Xô\ãõò[Y_H0≠»	€Y[Xô\ãúõ€_O€‹[€èò
+Köõ⁄[ä	… _O‹Ÿ[X›è€X[€\‹œHôõ‹õKZ[\àèë\ÿ€€H]Y[HöXÿ\∞ËH€€H\›H‹ô[Kè‹€X[ò√Bàõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ä	»Ÿ[\ﬁYYK\õ€KYõ‹õHôõ‹õKXX›[€ú… KòôYõ‹ôJô\‹€ú⁄XõJN√BàCBàõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ä	»Ÿ[\ﬁYYK\õ€KYõ‹õI KòY]ô[ù\›[ô\ä	‹›XõZ]	À
+]ô[ù
+HOà√Bà]ô[ùúô]ô[ùYò][
+
+N√Bà€€ú›õ‹õHH]ô[ùò›\úô[ù\ôŸ]√Bà€€ú›]HHô]»õ‹õQ]Jõ‹õJN√BàYà
+Z\–€Y[ù
+H√Bà€€ú›€Y[ùH]KôŸ]
+	ÿ€Y[ù	 N√Bà€€ú›ôZX€HH]KôŸ]
+	›ôZX€I N√Bà€€ú›Ÿ\ùöXŸHH]KôŸ]
+	‹Ÿ\ùöXŸI N√Bà€€ú›ô\‹€ú⁄XõHH]KôŸ]
+	‹ô\‹€ú⁄XõI H	”∞Ë€»]öXùpÎY…Œ√Bà€€ú›[ùûHHŸ]›\úô[ù[ùûQ]J
+N√BàŸ\ùöXŸ\Àú\⁄
+»[ö]X[Œà€Y[ùú‹]
+	»	 KõX\
+
+\ù
+HOà\ùÃJKöõ⁄[ä	… Kú€XŸJäKù’\\êÿ\ŸJ
+K€Y[ùôZX€KŸ\ùöXŸK›]\Œà	‘ôXŸXöY…À€ôNà	‹ôXŸZ]ôY	À[YNà[ùûKù[YHJN√BàŸ\ùöXŸT›]\Àú\⁄
+»›YŸNà›]\Œà	‹ôXŸZ]ôY	Àô\‹€ú⁄XõHJN√BàŸ\ùöXŸQ\›[X]\Àú\⁄
+»]Nà	…À[YNà	…»JN√BàŸ\ùöXŸSZ[\›€ô\Àú\⁄
+»ôXŸZ]ôYà[ùûKúôXŸZ]ôY]ò[X]Yà	…»JN√Bà\Ÿ\ù€Y[ùúõ€TŸ\ùöXŸJ€Y[ùôZX€KŸ\ùöXŸK	‘ôXŸXöY…À	‹ôXŸZ]ôY	 N√BàŸ\ùöXŸT›‹Àú\⁄
+◊JN√BàôYúô\⁄Ÿ\ùöXŸS\›
+
+N√BàôYúô\⁄€ÿò[€›[ù 
+N√BàH[ŸH√Bà€Y[ùÀú\⁄
+Ÿ]KôŸ]
+	ÿ€Y[ù	 K]KôŸ]
+	›ôZX€I K	‘Ÿ[H\›0Ï‹öX€…À	”õ›õ»ÿY\›õ…À	‹ôXŸZ]ôY	À	…◊JN√BàôYúô\⁄€ÿò[€›[ù 
+N√BàCBà⁄›‘õ€Tÿ‹ôY[ä	Ÿ[\ﬁYYI N√Bà⁄›’ÿ\›
+\–€Y[ù»	–€Y[ùHÿY\›òY»€€H›XŸ\‹€Àâ»à	–][ô[Y[ù»‹öXY»Hô\‹€úË]ô[]öXùpÎYÀâ N√BàJN√BüCBò€€ú›õ€Tÿ‹ôY[àHÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»‹õ€K\ÿ‹ôY[â N√Bò€€ú›õ€Tÿ‹ôY[ê€€ù[ùHÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»‹õ€K\ÿ‹ôY[ãX€€ù[ù	 N√Bôù[ò›[€àô[ô\ë[\ﬁYYPYŸ[ôJ
+H¬àõ€Tÿ‹ôY[ê€€ù[ùö[õô\íSH]à€\‹œHô[\ﬁYYKXYŸ[ôK\ÿ‹ôY[àèè]à€\‹œHô[\ﬁYYKXYŸ[ôKZXY[ô»èè]èè€\‹œHô^YXúõ›»èêQ—SëHHëP—T0·‡”œ‹èOìX\òÿ\à][ô[Y[ùœ⁄Oè€\‹œHõ]]Yèë\ÿ€€H[H‹∞Ë\ö[»]úôH\òHÿY\›ò\àH[ùòYH»ôpÎX›[Àè‹èŸ]èèù]€à€\‹œHõ›][ôKXù]€ààYHòòX⁄À]ÀY[\ﬁYYHè∏°§õ€\à[»Z[ô[ÿù]€èèŸ]èè]à€\‹œHõ[Ÿ[K\[ô[èè]à€\‹œHõ[Ÿ[K]€€ò\àèèèå»HLHHY€‹›œ⁄èèù]€à€\‹œHúö[X\ûKXù]€ààYHòYŸ[ôK[ô]ÀXõ€⁄⁄[ô»èä»õ›õ»‹∞Ë\ö[œÿù]€èèŸ]èè]à€\‹œHòÿ[[ô\ãY‹öYèè]à€\‹œHòÿ[[ô\ãY^Hèè›õ€ôœî]ZH0≠»œ‹›õ€ôœè€X[ç‹∞Ë\ö[‹œ‹€X[è]à€\‹œHòÿ[[ô\ãY]ô[ùèèèååÃ0≠»òYòY[ãèÿèí€ôH⁄]öX»0≠»€€ôö\õXYœŸ]èè]à€\‹œHòÿ[[ô\ãY]ô[ùèèèåMå0≠»X\ö[òHKèÿèêìU»ÃåH0≠»[H[ô[Y[ùœŸ]èèŸ]èè]à€\‹œHòÿ[[ô\ãY^Hèè›õ€ôœîŸ^0≠»‹›õ€ôœè€X[å»‹∞Ë\ö[‹œ‹€X[è]à€\‹œHòÿ[[ô\ãY]ô[ùèèèåNå0≠»úù[õ»ÀèÿèíôY\ô[ôYÿYH0≠»€€ôö\õXYœŸ]èè]à€\‹œHòÿ[[ô\ãY]ô[ù]òZ[XõHèèèåLNåÃ0≠»‹∞Ë\ö[»]úôOÿèê€\]YH\òHYŸ[ô\èŸ]èèŸ]èè]à€\‹œHòÿ[[ô\ãY^Hèè›õ€ôœîËXà0≠»O‹›õ€ôœè€X[åà‹∞Ë\ö[‹œ‹€X[è]à€\‹œHòÿ[[ô\ãY]ô[ùèèèåLåÃ0≠»[òHèÿèê€‹õ€HZH0≠»€€ôö\õXYœŸ]èèŸ]èè]à€\‹œHòÿ[[ô\ãY^Hèè›õ€ôœë€H0≠»L‹›õ€ôœè€X[ëôX⁄Yœ‹€X[èŸ]èè]à€\‹œHòÿ[[ô\ãY^Hèè›õ€ôœîŸY»0≠»LO‹›õ€ôœè€X[çH‹∞Ë\ö[‹œ‹€X[è]à€\‹œHòÿ[[ô\ãY]ô[ùèèèåå0≠»Xÿ\»Kèÿèì€ö^ô[ZY\à0≠»€€ôö\õXYœŸ]èèŸ]èèŸ]èèŸ]èèŸ]èò√Bàõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ä	»ÿòX⁄À]ÀY[\ﬁYYI KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà⁄›‘õ€Tÿ‹ôY[ä	Ÿ[\ﬁYYI JN√Bàõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ä	»ÿYŸ[ôK[ô]ÀXõ€⁄⁄[ô… KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà⁄›’ÿ\›
+	—õ‹õ][0Ë\ö[»Hõ›õ»YŸ[ô[Y[ù»Xô\ù»\òHHôXŸ\0ÈË€Àâ JN√Bàõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ê[
+	Àòÿ[[ô\ãY]ô[ùò]òZ[XõI Kôõ‹ëXX⁄
+
+€›
+HOà€›òY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà⁄›’ÿ\›
+	“‹∞Ë\ö[»Ÿ[X⁄[€òYÀàY€‹òHÿY\›ôH»€Y[ùHH»ôpÎX›[Àâ JJN√BüBôù[ò›[€àô[ô\ë[\ﬁYYQ\⁄õÿ\ô
+
+H¬à€€ú›õŸö[HH€ÿò[\Àó◊‹Ÿ\‹⁄[€îõŸö[HﬂN¬à€€ú›]ôTŸ\ùöXŸ\»H€ÿò[\Àó◊€]ôTŸ\ùöXŸ\Œ¬à€€ú›€›\òŸTŸ\ùöXŸ\»H\úò^Kö\–\úò^J]ôTŸ\ùöXŸ\ H»]ôTŸ\ùöXŸ\»àŸ\ùöXŸ\Œ¬à€€ú›\⁄õÿ\ôH€ÿò[\Àó◊ŸŸ][\ﬁYYQ\⁄õÿ\ô]H»€ÿò[\Àó◊ŸŸ][\ﬁYYQ\⁄õÿ\ô]J€›\òŸTŸ\ùöXŸ\ÀõŸö[JHà»‹ô\úŒà€›\òŸTŸ\ùöXŸ\Àôö[\ä
+][JHOà][Kúô\‹€ú⁄XõRYOOHõŸö[KöY][Kúô\‹€ú⁄XõRYOOHõŸö[Kôù[€ò[YJKY]öX‹Œà»X›]ôNàôXYNà›[àHN¬à€€ú›ÿYôHH
+ò[YJHOà›ö[ô ò[YHœ»	… Kúô\XŸJ÷…èâ»óKŸÀ
+⁄\òX›\äHOà
+»	…âŒà	…ò[\…À	œ	Œà	…õ…À	œâŒà	…ô›…Àâ»éà	…àÃŒN…À	»âŒà	…ú][›…»Vÿ⁄\òX›\óJJN¬à€€ú›YŸ[ôHH\⁄õÿ\ôõ‹ô\úÀôö[\ä
+][JHOà][Kúÿ⁄Y[Y]][Kù[YJKú€XŸJ
+Kú€‹ù
+
+KäHOà›ö[ô Kúÿ⁄Y[Y]Kù[YJKõÿÿ[P€€\\ôJ›ö[ô ãúÿ⁄Y[Y]ãù[YJJJN¬à€€ú›‹ô\ìX\ö›\H\⁄õÿ\ôõ‹ô\úÀõX\
+
+][JHOàù]€à\OHòù]€àà€\‹œHô[\ﬁYYKY\⁄õÿ\ô[‹ô\àà]K[]ôK[‹ô\èHâ‹ÿYôJ][Kõ‹ô\íY
+_Hèè‹[à€\‹œHùôZX€K[X\ö»à\öXKZY[èHùùYHèè‹‹[èè‹[à€\‹œHô[\ﬁYYKY\⁄õÿ\ô[‹ô\ãX€‹Hèèèâ‹ÿYôJ][Kò€Y[ù
+_Oÿèè€X[â‹ÿYôJ][KùôZX€J_H0≠»	‹ÿYôJ][KúŸ\ùöXŸJ_O‹€X[è‹‹[èè‹[à€\‹œHú›]\À\[	‹ÿYôJ][Kù€ôJ_Hèâ‹ÿYôJ][Kú›]\ _O‹‹[èè‹[à€\‹œHô\⁄õÿ\ôX\úõ›»è∏°§è‹‹[èèÿù]€èò
+Köõ⁄[ä	… H	œ€\‹œHô[\ﬁYYKY[\Hèìô[ö[XH‹ô[H]öXùpÎYHH\›Hù[ò⁄[€∞Ë\ö[Àè‹âŒ¬à€€ú›YŸ[ôSX\ö›\HYŸ[ôKõX\
+
+][JHOà]à€\‹œHô[\ﬁYYKY\⁄õÿ\ôXYŸ[ôKZ][Hèè‹[à€\‹œHô[\ﬁYYKY\⁄õÿ\ô][YHèâ‹ÿYôJ][Kù[YOÀúô\XŸJ	—[ùòYH	À	… H	¯†%	 _O‹‹[èè‹[èèèâ‹ÿYôJ][Kò€Y[ù
+_Oÿèè€X[â‹ÿYôJ][KùôZX€J_H0≠»	‹ÿYôJ][KúŸ\ùöXŸJ_O‹€X[è‹‹[èè‹[à€\‹œHú›]\À\[	‹ÿYôJ][Kù€ôJ_Hèâ‹ÿYôJ][Kú›]\ _O‹‹[èèŸ]èò
+Köõ⁄[ä	… H	œ€\‹œHô[\ﬁYYKY[\Hèìô[ö[H‹∞Ë\ö[»ô]ö\›»\òH\»‹ô[ú»]öXùpÎY\Àè‹âŒ¬àõ€Tÿ‹ôY[ê€€ù[ùö[õô\íSHŸX›[€à€\‹œHô[\ﬁYYKY\⁄õÿ\ôèè]à€\‹œHô[\ﬁYYKY\⁄õÿ\ôZXY[ô»èè]èè€\‹œHô^YXúõ›»èîRSëS‘TêP“S”êS‹èOêõ€HXK	‹ÿYôJõŸö[Kôù[€ò[YH	Ÿù[ò⁄[€∞Ë\ö[… _Kè⁄Oè€\‹œHõ]]YèêX€€\[öH›X\»‹ô[úÀ]\\»H‹∞Ë\ö[‹»[H[XH0ÓõöXÿHö\Ë€Àè‹èŸ]èè‹[à€\‹œHúõ€K]Y»èëù[ò⁄[€∞Ë\ö[œ‹‹[èèŸ]èè]à€\‹œHô[\ﬁYYKY\⁄õÿ\ô[Y]öX‹»èè]èèèâ‘›ö[ô \⁄õÿ\ôõY]öX‹ÀòX›]ôJKúY›\ù
+ã	Ã	 _Oÿèè€X[ë[H][ô[Y[ùœ‹€X[èŸ]èè]èèèâ‘›ö[ô \⁄õÿ\ôõY]öX‹ÀúôXYJKúY›\ù
+ã	Ã	 _Oÿèè€X[îõ€ù‹»\òHô]\òYO‹€X[èŸ]èè]èèèâ‘›ö[ô \⁄õÿ\ôõY]öX‹Àù›[
+KúY›\ù
+ã	Ã	 _Oÿèè€X[ì‹ô[ú»]öXùpÎY\œ‹€X[èŸ]èèŸ]èè]à€\‹œHô[\ﬁYYKY\⁄õÿ\ôY‹öYèèŸX›[€à€\‹œHô[\ﬁYYKY\⁄õÿ\ô\[ô[èè]à€\‹œHô[\ﬁYYKY\⁄õÿ\ô\[ô[ZXY[ô»èè]èè€\‹œHô^YXúõ›»èì‘Têp·‡”œ‹èèì‹ô[ú»»[€Y[ùœ⁄èèŸ]èè‹[à€\‹œHô\⁄õÿ\ôX€›[ùèâ‘›ö[ô \⁄õÿ\ôõY]öX‹Àù›[
+KúY›\ù
+ã	Ã	 _O‹‹[èèŸ]èè€\‹œHõ]]YèîŸ\ùöpÈ€‹»ö[ò›[Y‹»[»Ÿ]HXŸ\‹€»õ»⁄\›[XKè‹è]à€\‹œHô[\ﬁYYKY\⁄õÿ\ô[‹ô\ã[\›èâ€‹ô\ìX\ö›\OŸ]èè‹ŸX›[€èèŸX›[€à€\‹œHô[\ﬁYYKY\⁄õÿ\ô\[ô[èè]à€\‹œHô[\ﬁYYKY\⁄õÿ\ô\[ô[ZXY[ô»èè]èè€\‹œHô^YXúõ›»èêQ—SëO‹èèí⁄ôO⁄èèŸ]èè‹[à€\‹œHô\⁄õÿ\ôX€›[ùèâ‘›ö[ô YŸ[ôKõ[ô›
+KúY›\ù
+ã	Ã	 _O‹‹[èèŸ]èè€\‹œHõ]]Yèí‹∞Ë\ö[‹»ô[X⁄[€òY‹»0Ë»›X\»‹ô[úÀè‹è]à€\‹œHô[\ﬁYYKY\⁄õÿ\ôXYŸ[ôK[\›èâÿYŸ[ôSX\ö›\OŸ]èè‹ŸX›[€èèŸ]èè]à€\‹œHô[\ﬁYYKY\⁄õÿ\ô[õ›HèèèîŸ]H\‹pÈ€»HòXò[œÿèè‹[èêXúòH[XH‹ô[H\òH]X[^ò\à]\\ÀYX⁄[€ò\àõ›‹ÀôY⁄\›ò\àÿúŸ\ùòpÈÌY\»HX\òÿ\àHô]\òYKè‹‹[èèŸ]èè‹ŸX›[€èò¬àõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ê[
+	÷Ÿ]K[]ôK[‹ô\óI Kôõ‹ëXX⁄
+
+ù]€äHOàù]€ãòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà»€€ú›‹ô\àH\⁄õÿ\ôõ‹ô\úÀôö[ô
+
+][JHOà][Kõ‹ô\íYOOHù]€ãô]\Ÿ]õ]ôS‹ô\äN»Yà
+‹ô\äH⁄›’ÿ\›
+‹ô[HH	€‹ô\ãò€Y[ùHŸ[X⁄[€òYKò
+N»JJN¬üBôù[ò›[€à⁄›‘õ€Tÿ‹ôY[äõ€JH¬à€€ú›\—[\ﬁYYHHõ€HOOH	Ÿ[\ﬁYYIŒ¬àÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»‹õ€K\ÿ‹ôY[ã]]I Kù^€€ù[ùH\—[\ﬁYYH»	‘Z[ô[»ù[ò⁄[€∞Ë\ö[…»à	‘‹ù[»€Y[ùIŒ¬àÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»‹õ€K\ÿ‹ôY[ã\›Xù]I Kù^€€ù[ùH\—[\ﬁYYH»	‘ôXŸ\0ÈË€»H‹\òpÈË€…»à	–X€€\[ö[Y[ù»»ôpÎX›[…Œ¬à€€ú›€›\òŸHHÿ›[Y[ùú]Y\ûTŸ[X›‹ä\—[\ﬁYYH»	Àô[\ﬁYYK\‹ù[	»à	Àò€Y[ù\‹ù[	 Kò€€ôSõŸJùYJN¬à€›\òŸKú]Y\ûTŸ[X›‹ê[
+	Àò€‹ŸKXù]€â Kôõ‹ëXX⁄
+
+ù]€äHOàù]€ãúô[[›ôJ
+JN¬àõ€Tÿ‹ôY[ê€€ù[ùö[õô\íSH	…Œ¬àõ€Tÿ‹ôY[ê€€ù[ùò\[ô⁄[
+€›\òŸJN¬àYà
+\—[\ﬁYYJH¬à€€ú›[\ﬁYYSò[YHH€ÿò[\Àó◊‹Ÿ\‹⁄[€îõŸö[OÀôù[€ò[YH	Ÿù[ò⁄[€∞Ë\ö[…Œ¬à€€ú›XY[ô»H€›\òŸKú]Y\ûTŸ[X›‹ä	Àô[\ﬁYYKZXY[ô»â N¬àYà
+XY[ô HXY[ôÀù^€€ù[ùHõ€HXK	Ÿ[\ﬁYYSò[Y_Kò¬àô[ô\ë[\ﬁYYRõÿú €›\òŸJN¬àö[ô[\ﬁYYS‹ô\êX›[€ú €›\òŸJN¬àBàYà
+Z\—[\ﬁYYJHY€Y[ù›‹ €›\òŸJN¬àYà
+Ÿ\ùöXŸT›]\÷ÿX›]ôTŸ\ùöXŸR[ô^JHﬁ[ò‘›YŸJ
+N¬àõ€Tÿ‹ôY[ãò€\‹”\›úô[[›ôJ	⁄Y[â N¬àõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ê[
+	Àô[\ﬁYYKXX›[€éõõ›
+Ÿ]K\Ÿ\ùöXŸKZ[ô^JI Kôõ‹ëXX⁄
+
+ù]€äHOàù]€ãòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà⁄›’ÿ\›
+	ÿù]€ãô]\Ÿ]òX›[€üNàpÈË€»ôY⁄\›òYHõ»⁄\›[XKò
+JJN√Bà€€ú›ô]‘Ÿ\ùöXŸHHõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ä	»‹ôXŸ\[€ã[ô]À\Ÿ\ùöXŸI N√BàYà
+ô]‘Ÿ\ùöXŸJHô]‘Ÿ\ùöXŸKòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOàô[ô\ë[\ﬁYYQõ‹õJ	ÿ][ô[òŸI JN√Bà€€ú›ô]–€Y[ùHõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ä	»‹ôXŸ\[€ã[ô]ÀX€Y[ù	 N√BàYà
+ô]–€Y[ù
+Hô]–€Y[ùòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOàô[ô\ë[\ﬁYYQõ‹õJ	ÿ€Y[ù	 JN√Bà€€ú›ô]–õ€⁄⁄[ô»Hõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ä	»‹ôXŸ\[€ã[ô]ÀXõ€⁄⁄[ô… N√BàYà
+ô]–õ€⁄⁄[ô Hô]–õ€⁄⁄[ôÀòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOàô[ô\ë[\ﬁYYPYŸ[ôJ
+JN√Bà€€ú›⁄]ÿ\Hõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ä	Àú‹ù[Yõ€›\àù^Xù]€â N√BàYà
+⁄]ÿ\
+H⁄]ÿ\òY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà⁄›’ÿ\›
+	”õ»⁄\›[XHôX[\›Hõ›0Ë€»Xúö\∞ËH»⁄]–\H[\ô\ÿH€€HH‹ô[HY[ùYöXÿYKâ JN√BüBô€ÿò[\Àó◊‹⁄›‘õ€Tÿ‹ôY[àH⁄›‘õ€Tÿ‹ôY[é¬ô€ÿò[\Àó◊‹⁄›‘ŸX›[€àH⁄›‘ŸX›[€é¬ôÿ›[Y[ùòY]ô[ù\›[ô\ä	‹õ€K\ÿ‹ôY[ã\ô\]Y\›	À
+]ô[ù
+HOà⁄›‘õ€Tÿ‹ôY[ä]ô[ùô]Z[
+JN¬ôÿ›[Y[ùòY]ô[ù\›[ô\ä	‹ŸX›[€ã\ô\]Y\›	À
+]ô[ù
+HOà⁄›‘ŸX›[€ä]ô[ùô]Z[
+JN¬ôÿ›[Y[ùòY]ô[ù\›[ô\ä	€]ôKY]K\ôXYIÀ
+
+HOà»Yà
+€ÿò[\Àó◊ÿX›]ôTõ€HOOH	Ÿ[\ﬁYYI»	âà\õ€Tÿ‹ôY[ãò€\‹”\›ò€€ùZ[ú 	⁄Y[â JH»€€ú››\úô[ù‹ù[Hõ€Tÿ‹ôY[ê€€ù[ùú]Y\ûTŸ[X›‹ä	Àô[\ﬁYYK\‹ù[	 N»Yà
+›\úô[ù‹ù[
+H»ô[ô\ë[\ﬁYYRõÿú ›\úô[ù‹ù[
+N»ö[ô[\ﬁYYS‹ô\êX›[€ú ›\úô[ù‹ù[
+N»HHJN¬ôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»‹ô]\õãXYZ[â KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà»õ€Tÿ‹ôY[ãò€\‹”\›òY
+	⁄Y[â N»õ€Tÿ‹ôY[ê€€ù[ùö[õô\íSH	…Œ»JN¬ôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»€ô]À\Ÿ\ùöXŸI KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà‹[ì[Ÿ[
+	‹Ÿ\ùöXŸK[[Ÿ[	 JN√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»Ÿ[\ﬁYYK\ô]öY]… KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà⁄›‘õ€Tÿ‹ôY[ä	Ÿ[\ﬁYYI JN√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ÿ€Y[ù\ô]öY]… KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà⁄›‘õ€Tÿ‹ôY[ä	ÿ€Y[ù	 JN√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»€‹[ãX€Y[ù[[ö… KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà⁄›‘õ€Tÿ‹ôY[ä	ÿ€Y[ù	 JN√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ê[
+	»‹Ÿ\ùöXŸK[\›úŸ\ùöXŸK\õ›… Kôõ‹ëXX⁄
+
+][JHOà][KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà»X›]ôTŸ\ùöXŸR[ô^Hù[Xô\ä][Kô]\Ÿ]úŸ\ùöXŸR[ô^
+N»›YŸR[ô^HŸ\ùöXŸT›]\÷ÿX›]ôTŸ\ùöXŸR[ô^Kú›YŸN»ﬁ[ò‘›YŸJ
+N»‹[ì[Ÿ[
+	Ÿ]Z[[[Ÿ[	 N»JJN√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ê[
+	÷Ÿ]KX€‹ŸWI Kôõ‹ëXX⁄
+
+ù]€äHOàù]€ãòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà€‹ŸS[Ÿ[
+ù]€ãô]\Ÿ]ò€‹ŸJJJN√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»‹Ÿ\ùöXŸKYõ‹õI KòY]ô[ù\›[ô\ä	‹›XõZ]	À
+]ô[ù
+HOà√Bà]ô[ùúô]ô[ùYò][
+
+N√Bà€€ú›õ‹õHH]ô[ùò›\úô[ù\ôŸ]√Bà€€ú›]HHô]»õ‹õQ]Jõ‹õJN√Bà€€ú›€Y[ùH]KôŸ]
+	ÿ€Y[ù	 N√Bà€€ú›ôZX€HH]KôŸ]
+	›ôZX€I N√Bà€€ú›Ÿ\ùöXŸHH]KôŸ]
+	‹Ÿ\ùöXŸI N√Bà€€ú›ô\‹€ú⁄XõHH]KôŸ]
+	‹ô\‹€ú⁄XõI H	”∞Ë€»]öXùpÎY…Œ√Bà€€ú›[ùûHHŸ]›\úô[ù[ùûQ]J
+N√BàŸ\ùöXŸ\Àú\⁄
+»[ö]X[Œà€Y[ùú‹]
+	»	 KõX\
+
+\ù
+HOà\ùÃJKöõ⁄[ä	… Kú€XŸJäKù’\\êÿ\ŸJ
+K€Y[ùôZX€KŸ\ùöXŸK›]\Œà	‘ôXŸXöY…À€ôNà	‹ôXŸZ]ôY	À[YNà[ùûKù[YHJN√BàŸ\ùöXŸT›]\Àú\⁄
+»›YŸNà›]\Œà	‹ôXŸZ]ôY	Àô\‹€ú⁄XõHJN√BàŸ\ùöXŸQ\›[X]\Àú\⁄
+»]Nà	…À[YNà	…»JN√BàŸ\ùöXŸSZ[\›€ô\Àú\⁄
+»ôXŸZ]ôYà[ùûKúôXŸZ]ôY]ò[X]Yà	…»JN√Bà\Ÿ\ù€Y[ùúõ€TŸ\ùöXŸJ€Y[ùôZX€KŸ\ùöXŸK	‘ôXŸXöY…À	‹ôXŸZ]ôY	 N√BàŸ\ùöXŸT›‹Àú\⁄
+◊JN√BàôYúô\⁄Ÿ\ùöXŸS\›
+
+N√BàôYúô\⁄€ÿò[€›[ù 
+N√Bà€‹ŸS[Ÿ[
+	‹Ÿ\ùöXŸK[[Ÿ[	 N√Bàõ‹õKúô\Ÿ]
+
+N√Bà⁄›’ÿ\›
+	–][ô[Y[ù»‹öXY»Hô\‹€úË]ô[]öXùpÎYÀà[ö»»€Y[ùHŸ\òYÀâ N√BüJN√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»€ô]ÀX€Y[ù	 KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà‹[ì[Ÿ[
+	€ô]ÀX€Y[ù[[Ÿ[	 JN√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ŸŸ[ô\öXÀXX›[€â KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà»€€ú›[Ÿ[HHÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ŸŸ[ô\öXÀXX›[€â Kô]\Ÿ]õ[Ÿ[N»Yà
+[Ÿ[HOOH	ÿYŸ[ôI»	âà€ÿò[\Àó◊ÿÿ[ê‹ôX]TŸX›[€èÀä€ÿò[\Àó◊ÿX›]ôTõ€K	ÿYŸ[ôI JH»⁄[ô›Àô\‹]⁄]ô[ù
+ô]»›\›€Q]ô[ù
+	ÿYŸ[ôK[‹[ãXõ€⁄⁄[ô… JN»ô]\õé»HYà
+[Ÿ[HOOH	‹Ÿ\ùöX€‹… H»‹[îŸ\ùöXŸTöXŸS[Ÿ[
+
+N»ô]\õé»HYà
+[Ÿ[HOOH	ÿ][ô[Y[ù‹…»	âà€ÿò[\Àó◊ÿÿ[ê‹ôX]TŸX›[€èÀä€ÿò[\Àó◊ÿX›]ôTõ€K	ÿ][ô[Y[ù‹… JH»‹[ì[Ÿ[
+	‹Ÿ\ùöXŸK[[Ÿ[	 N»ô]\õé»H€€ú›X›[€ú»H»\]Z\Nà	–ÿY\›õ»Hõ›õ»Y[Xúõ»Xô\ù»\òH»YZ[ö\›òY‹äJKâÀ][ô[Y[ù‹Œà	—õ‹õ][0Ë\ö[»H][ô[Y[ù»\‹€∞Î]ô[\[ò\»\òHH\]Z\H]]‹ö^òYKâÀ€€ùô\úÿ\Œà	”õ›òH€€ùô\úÿHö[ò›[YH0Ë‹ô[HŸ[X⁄[€òYKâÀô[]‹ö[‹Œà	‘ô[]0Ï‹ö[»]X[^òY»€€H‹»ôY⁄\›õ‹»]XZ\ÀâÀ€€ôöY›\òX€Ÿ\Œà	‘ôYô\∞Íõò⁄X\»ÿ[ò\»ô\›Hõ›0Ï›\Àâ»N»⁄›’ÿ\›
+X›[€ú÷€[Ÿ[WH	–pÈË€»\‹€∞Î]ô[ô\›HpÏŸ[Àâ N»JN¬ôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ÿ€‹K[[ö… KòY]ô[ù\›[ô\ä	ÿ€X⁄…À\ﬁ[ò»
+
+HOà¬à€€ú›X›]ôHHŸ\ùöXŸ\÷ÿX›]ôTŸ\ùöXŸR[ô^Bà€€ú›]ôS‹ô\àH
+€ÿò[\Àó◊€]ôTŸ\ùöXŸ\»◊JKôö[ô
+
+][JHOà][Kõ‹ô\íYOOHX›]ôOÀõ‹ô\íY
+BàYà
+[]ôS‹ô\èÀõ‹ô\íYV…⁄[ã\õŸ‹ô\‹…À	Ÿ[]ô\ôY	◊Kö[ò€Y\ ]ôS‹ô\ãù€ôJJH¬à⁄›’ÿ\›
+	”»[ö»öXÿ\∞ËH\‹€∞Î]ô[]X[ô»»ôpÎX›[»[ùò\àòH\›0Í]XÿKâ Bàô]\õÇàBàûH¬à€€ú›[ö»H]ÿZ]€ÿò[\Àó◊ÿ‹ôX]P€Y[ù‹ô\ì[öœÀä]ôS‹ô\ãõ‹ô\íY
+BàYà
+[[ö Hõ›»ô]»\úõ‹ä	”[ö»[ô\‹€∞Î]ô[	 Bà]ÿZ]€ÿò[\Àó◊ÿ€‹P€Y[ù‹ô\ì[öœÀä[öÀù\õ
+Bà⁄›’ÿ\›
+	”[ö»»€Y[ùH€‹XYÀâ BàHÿ]⁄
+\úõ‹äH¬à⁄›’ÿ\›
+\úõ‹ãõY\‹ÿYŸH	”∞Ë€»õ⁄H‹‹Î]ô[Ÿ\ò\à»[ö»»€Y[ùKâ BàBüJN¬ôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ÿY\›… KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà»Y€Y[ù›‹ ÿ›[Y[ùú]Y\ûTŸ[X›‹ä	Àò€Y[ù\‹ù[	 JN»⁄›’ÿ\›
+	‡\ôXHHõ›‹»Xô\ùH\òHH\]Z\Kâ N»JN√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ÿYò[òŸK\›YŸI KòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà»Yà
+›YŸR[ô^
+H›YŸR[ô^
+œHN»ﬁ[ò‘›YŸJ
+N»⁄›’ÿ\›
+›YŸR[ô^OOH»	’ôpÎX›[»X\òÿY»€€[»õ€ù»H€Y[ùHõ›YöXÿYÀâ»à	—]\H]X[^òYHH€Y[ùHõ›YöXÿYÀâ N»JN√Bò€€ú›òX⁄‘›YŸPù]€àHÿ›[Y[ùò‹ôX]Q[[Y[ù
+	ÿù]€â N√BòòX⁄‘›YŸPù]€ãò€\‹”ò[YHH	€›][ôKXù]€âŒ√BòòX⁄‘›YŸPù]€ãù^€€ù[ùH	¯°§õ€\à]\IŒ√BòòX⁄‘›YŸPù]€ãù]HH	‘ô]‹õò\à»ôpÎX›[»\òHH]\H[ù\ö[‹ãâŒ√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ÿYò[òŸK\›YŸI Kú\ô[ù[[Y[ùö[úŸ\ùôYõ‹ôJòX⁄‘›YŸPù]€ãÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ÿY\›… JN√BòòX⁄‘›YŸPù]€ãòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà»Yà
+›YŸR[ô^à
+H›YŸR[ô^OHN»ﬁ[ò‘›YŸJ
+N»⁄›’ÿ\›
+	’ôpÎX›[»ô]‹õõ›H\òHH]\H[ù\ö[‹ãâ N»JN√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ÿ€‹K[[ö… Kù]HH	–€‹X\à»[ö»^€\⁄]õ»\›H‹ô[H\òH[ùöX\à[»€Y[ùKâŒ√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ÿY\›… Kù]HH	–YX⁄[€ò\àõ›‹»»[ù\À\ò[ùH›H\⁄\»»Ÿ\ùöpÈ€ÀâŒ√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ÿYò[òŸK\›YŸI Kù]HH	–€€ò€Z\àH]\H]X[H]ö\ÿ\à»€Y[ùH€ÿúôHH]Y[∞ÈÿKâŒ√Bôÿ›[Y[ùú]Y\ûTŸ[X›‹ê[
+	Àô[\ﬁYYKXX›[€éõõ›
+Ÿ]K\Ÿ\ùöXŸKZ[ô^JI Kôõ‹ëXX⁄
+
+ù]€äHOàù]€ãòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà⁄›’ÿ\›
+	ÿù]€ãô]\Ÿ]òX›[€üNàpÈË€»ôY⁄\›òYHõ»⁄\›[XKò
+JJN√Bôù[ò›[€à‹[ë\⁄õÿ\ô‹ô\ä[ô^
+H√BàYà
+\Ÿ\ùöXŸ\÷⁄[ô^H\Ÿ\ùöXŸT›]\÷⁄[ô^JHô]\õé√BàX›]ôTŸ\ùöXŸR[ô^H[ô^√Bà›YŸR[ô^HŸ\ùöXŸT›]\÷⁄[ô^Kú›YŸN√Bàﬁ[ò‘›YŸJ
+N√Bà‹[ì[Ÿ[
+	Ÿ]Z[[[Ÿ[	 N√BüCBôù[ò›[€àô[ô\ë\⁄õÿ\ô‹ôÿ[ö^ò][€ä
+H√Bà€€ú›\⁄õÿ\ôHÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»Ÿ\⁄õÿ\ô\ŸX›[€â N√BàYà
+Y\⁄õÿ\ô
+Hô]\õé√Bà]€‹ö‹‹XŸHH\⁄õÿ\ôú]Y\ûTŸ[X›‹ä	»Ÿ\⁄õÿ\ô[‹ôÿ[ö^ò][€â N√BàYà
+]€‹ö‹‹XŸJH√Bà€‹ö‹‹XŸHHÿ›[Y[ùò‹ôX]Q[[Y[ù
+	‹ŸX›[€â N√Bà€‹ö‹‹XŸKöYH	Ÿ\⁄õÿ\ô[‹ôÿ[ö^ò][€âŒ√Bà€‹ö‹‹XŸKò€\‹”ò[YHH	Ÿ\⁄õÿ\ô[‹ôÿ[ö^ò][€âŒ√Bà\⁄õÿ\ôò\[ô⁄[
+€‹ö‹‹XŸJN√BàCBà€€ú›€›[ù»HŸ]Ÿ\ùöXŸP€›[ù 
+N√Bà€€ú›\⁄‹»H◊N√BàŸ\ùöXŸT›]\Àôõ‹ëXX⁄
+
+›]K[ô^
+HOà√Bà€€ú›][HHŸ\ùöXŸ\÷⁄[ô^N√BàYà
+Z][H›]Kú›]\»OOH	Ÿ[]ô\ôY	 Hô]\õé√BàYà
+›]Kú›]\»OOH	›ÿZ][ô… H\⁄‹Àú\⁄
+»[ô^€ôNà	›ÿZ][ô…À]Nà	–\õ›òIòÿŸY[…ò][N€»[ô[ùIÀ]Z[à	⁄][Kò€Y[ùH0≠»	⁄][KùôZX€Kú‹]
+	»0‡∞≠»	 VÃ_XJN√BàYà
+›]Kú›]\»OOH	‹ôXYI H\⁄‹Àú\⁄
+»[ô^€ôNà	‹ôXYIÀ]Nà	–€€ôö\õX\àô]\òYIÀ]Z[à	⁄][Kò€Y[ùH0≠»	⁄][KùôZX€Kú‹]
+	»0‡∞≠»	 VÃ_XJN√BàYà
+\Ÿ\ùöXŸQ\›[X]\÷⁄[ô^H\Ÿ\ùöXŸQ\›[X]\÷⁄[ô^Kô]JH\⁄‹Àú\⁄
+»[ô^€ôNà	‹ôXŸZ]ôY	À]Nà	—Yö[ö\àô]ö\…ò][N€»H[ùôYÿIÀ]Z[à	⁄][Kò€Y[ùH0≠»	⁄][KúŸ\ùöXŸ_XJN√BàJN√Bà€€ú›\⁄”X\ö›\H\⁄‹Àú€XŸJ
+KõX\
+
+\⁄ HOà]à€\‹œHô\⁄õÿ\ô]\⁄»èè‹[à€\‹œHô\⁄õÿ\ô]\⁄À\›]\»	›\⁄Àù€ô_Hèè‹‹[èè]à€\‹œHô\⁄õÿ\ô]\⁄ÀX€‹Hèèèâ›\⁄Àù]_Oÿèè€X[â›\⁄Àô]Z[O‹€X[èŸ]èèù]€à€\‹œHô\⁄õÿ\ô]\⁄ÀXX›[€àà]KY\⁄õÿ\ô[‹ô\èHâ›\⁄Àö[ô^HèêXúö\à‹ô[Oÿù]€èèŸ]èò
+Köõ⁄[ä	… H	œ€\‹œHô\⁄õÿ\ôY[\Hèìô[ö[XH[ô	ôX⁄\òŒ€ò⁄XH‹\òX⁄[€ò[Y€‹òKè‹âŒ√Bà€€ú›YŸ[ôSX\ö›\HŸ\ùöXŸ\Àú€XŸJ
+KõX\
+
+][K[ô^
+HOàù]€à€\‹œHô\⁄õÿ\ôXYŸ[ôKZ][Hà]KY\⁄õÿ\ô[‹ô\èHâ⁄[ô^Hèè‹[à€\‹œHô\⁄õÿ\ôXYŸ[ôK][YHèâ⁄][Kù[YKúô\XŸJ	—[ùòYH	À	… _O‹‹[èè‹[à€\‹œHô\⁄õÿ\ôXYŸ[ôKX€‹Hèèèâ⁄][Kò€Y[ùOÿèè€X[â⁄][KùôZX€Kú‹]
+	»0‡∞≠»	 VÃ_H0≠»	ŸŸ]Ÿ\ùöXŸTô\Ÿ[ù][€ä[ô^
+KõXô[O‹€X[è‹‹[èè‹[à€\‹œHô\⁄õÿ\ôX\úõ›»èêXúö\è‹‹[èèÿù]€èò
+Köõ⁄[ä	… H	œ€\‹œHô\⁄õÿ\ôY[\Hèìô[ö[H][ô[Y[ù»ÿY\›òYÀè‹âŒ√Bà€‹ö‹‹XŸKö[õô\íSH]à€\‹œHô\⁄õÿ\ô]€‹öÀY‹öYèè\ùX€H€\‹œHô\⁄õÿ\ô\[ô[èè]à€\‹œHô\⁄õÿ\ô\[ô[ZXY[ô»èè]èè€\‹œHô^YXúõ›»èì‘ë–SíVêIêÿŸY[…ê][N”œ‹èèî[ô	ôX⁄\òŒ€ò⁄X\»H⁄ôO⁄èèŸ]èè‹[à€\‹œHô\⁄õÿ\ôX€›[ùèâ›\⁄‹Àõ[ô›O‹‹[èèŸ]èè€\‹œHõ]]YèîâõÿX›]Nﬁ[X\»IòÿŸY[…õ›[NŸ\»\òHH\]Z\Hâò][N€»\ô\àô[ö[Hô]‹õõÀè‹è]à€\‹œHô\⁄õÿ\ô]\⁄À[\›èâ›\⁄”X\ö›\OŸ]èèÿ\ùX€Oè\ùX€H€\‹œHô\⁄õÿ\ô\[ô[èè]à€\‹œHô\⁄õÿ\ô\[ô[ZXY[ô»èè]èè€\‹œHô^YXúõ›»èïíT…ê][N”»âêXX›]N‘QO‹èèì‹ô[ú»[HX€€\[ö[Y[ùœ⁄èèŸ]èè‹[à€\‹œHô\⁄õÿ\ôX€›[ùèâÿ€›[ùÀù›[O‹‹[èèŸ]èè€\‹œHõ]]YèêXŸ\‹ŸH[XH‹ô[H\ô][Y[ùHŸ[Hõÿ›\ò\àòH\›YŸ[Kè‹è]à€\‹œHô\⁄õÿ\ôXYŸ[ôK[\›èâÿYŸ[ôSX\ö›\OŸ]èèÿ\ùX€OèŸ]èè\ùX€H€\‹œHô\⁄õÿ\ô\[ô[\⁄õÿ\ô\⁄‹ù›]À\[ô[èè]à€\‹œHô\⁄õÿ\ô\[ô[ZXY[ô»èè]èè€\‹œHô^YXúõ›»èîì’SêHH‘TêIêÿŸY[…ê][N”œ‹èèê][‹»H‹ôÿ[ö^òIòÿŸY[…ò][N€œ⁄èèŸ]èèŸ]èè]à€\‹œHô\⁄õÿ\ô\⁄‹ù›]»èèù]€à€\‹œHô\⁄õÿ\ô\⁄‹ù›]à]KY\⁄õÿ\ô[[Ÿ[HúŸ\ùöXŸK[[Ÿ[èè‹[èåO‹‹[èèèîôY⁄\›ò\à][ô[Y[ùœÿèè€X[êXúòH[XHõ›òH‹ô[HH]öXùXH[Hô\‹€ú…òXX›]N›ô[è‹€X[èÿù]€èèù]€à€\‹œHô\⁄õÿ\ô\⁄‹ù›]à]KY\⁄õÿ\ô[[Ÿ[Hõô]ÀX€Y[ù[[Ÿ[èè‹[èåè‹‹[èèèêÿY\›ò\à€Y[ùOÿèè€X[êYX⁄[€ôH€Y[ùHHôIöXX›]Nÿ›[»\òHHâõÿX›]Nﬁ[XH[ùòYKè‹€X[èÿù]€èèù]€à€\‹œHô\⁄õÿ\ô\⁄‹ù›]à]KY\⁄õÿ\ô\ŸX›[€èHòYŸ[ôHèè‹[èåœ‹‹[èèèïô\àYŸ[ôOÿèè€X[ê€€ôö\òH[ùòY\»Hô]\òY\»ô]ö\›\Àè‹€X[èÿù]€èèù]€à€\‹œHô\⁄õÿ\ô\⁄‹ù›]à]KY\⁄õÿ\ô\õ€OHô[\ﬁYYHèè‹[èå‹‹[èèèêXúö\àZ[ô[H\]Z\Oÿèè€X[ïôZòH\ôYò\»HôXŸ\	òÿŸY[…ò][N€»HôY⁄\›ôH[XH[ùôYÿKè‹€X[èÿù]€èèŸ]èèÿ\ùX€Oè‹ŸX›[€èò√Bà€‹ö‹‹XŸKú]Y\ûTŸ[X›‹ê[
+	÷Ÿ]KY\⁄õÿ\ô[‹ô\óI Kôõ‹ëXX⁄
+
+ù]€äHOàù]€ãòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà‹[ë\⁄õÿ\ô‹ô\äù[Xô\äù]€ãô]\Ÿ]ô\⁄õÿ\ô‹ô\äJJJN√Bà€‹ö‹‹XŸKú]Y\ûTŸ[X›‹ê[
+	÷Ÿ]KY\⁄õÿ\ô[[Ÿ[I Kôõ‹ëXX⁄
+
+ù]€äHOàù]€ãòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà‹[ì[Ÿ[
+ù]€ãô]\Ÿ]ô\⁄õÿ\ô[Ÿ[
+JJN√Bà€‹ö‹‹XŸKú]Y\ûTŸ[X›‹ê[
+	÷Ÿ]KY\⁄õÿ\ô\ŸX›[€óI Kôõ‹ëXX⁄
+
+ù]€äHOàù]€ãòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà⁄›‘ŸX›[€äù]€ãô]\Ÿ]ô\⁄õÿ\ôŸX›[€äJJN√Bà€‹ö‹‹XŸKú]Y\ûTŸ[X›‹ê[
+	÷Ÿ]KY\⁄õÿ\ô\õ€WI Kôõ‹ëXX⁄
+
+ù]€äHOàù]€ãòY]ô[ù\›[ô\ä	ÿ€X⁄…À
+
+HOà⁄›‘õ€Tÿ‹ôY[äù]€ãô]\Ÿ]ô\⁄õÿ\ôõ€JJJN√BüCBúﬁ[ò‘›YŸJ
+N√Bôù[ò›[€à⁄›’ÿ\›
+Y\‹ÿYŸJH»€€ú›ÿ\›Hÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»›ÿ\›	 N»ÿ\›ù^€€ù[ùHY\‹ÿYŸN»ÿ\›ò€\‹”\›úô[[›ôJ	⁄Y[â N»ÿ\›ò€\‹”\›òY
+	‹⁄›… N»Ÿ][Y[›]
+
+
+HOàÿ\›ò€\‹”\›òY
+	⁄Y[â KÃå
+N»CBôÿ›[Y[ùú]Y\ûTŸ[X›‹ê[
+	Àõ[Ÿ[XòX⁄Ÿõ‹	 Kôõ‹ëXX⁄
+
+òX⁄Ÿõ‹
+HOàòX⁄Ÿõ‹òY]ô[ù\›[ô\ä	ÿ€X⁄…À
+]ô[ù
+HOà»Yà
+]ô[ùù\ôŸ]OOHòX⁄Ÿõ‹
+HòX⁄Ÿõ‹ò€\‹”\›òY
+	⁄Y[â N»JJN¬ôÿ›[Y[ùòY]ô[ù\›[ô\ä	€]ôKY]K\ôXYIÀ
+]ô[ù
+HOà¬à€€ú›»Ÿ\ùöXŸ\Œà]ôTŸ\ùöXŸ\À€Y[ùŒà]ôP€Y[ùÀ›]\»HH]ô[ùô]Z[¬àŸ\ùöXŸ\Àú‹XŸJŸ\ùöXŸ\Àõ[ô›ããõ]ôTŸ\ùöXŸ\ N¬à€Y[ùÀú‹XŸJ€Y[ùÀõ[ô›ããõ]ôP€Y[ù N¬àŸ\ùöXŸT›]\Àú‹XŸJŸ\ùöXŸT›]\Àõ[ô›ããú›]\ N¬àŸ\ùöXŸQ\›[X]\Àú‹XŸJŸ\ùöXŸQ\›[X]\Àõ[ô›ããõ]ôTŸ\ùöXŸ\ÀõX\
+
+
+HOà
+»]Nà	…À[YNà	…»JJJN¬àŸ\ùöXŸSZ[\›€ô\Àú‹XŸJŸ\ùöXŸSZ[\›€ô\Àõ[ô›ããõ]ôTŸ\ùöXŸ\ÀõX\
+
+
+HOà
+»ôXŸZ]ôYà	…À]ò[X]Yà	…»JJJN¬àŸ\ùöXŸT›‹Àú‹XŸJŸ\ùöXŸT›‹Àõ[ô›ããõ]ôTŸ\ùöXŸ\ÀõX\
+
+
+HOà◊JJN¬àôYúô\⁄Ÿ\ùöXŸS\›
+
+N¬àôYúô\⁄€ÿò[€›[ù 
+N¬àYà
+ÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ÿ€Y[ùÀ\ŸX›[€éõõ›
+öY[äI JHô[ô\ê€Y[ù 
+N¬à€€ú›Ÿ[ô\öX–X›[€àHÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ŸŸ[ô\öXÀXX›[€â N¬àYà
+ÿ›[Y[ùú]Y\ûTŸ[X›‹ä	»ŸŸ[ô\öXÀ\ŸX›[€éõõ›
+öY[äI H	âà…Ÿò]\ò[Y[ù…À	‹ô[]‹ö[‹…◊Kö[ò€Y\ Ÿ[ô\öX–X›[€èÀô]\Ÿ]õ[Ÿ[JJHô[ô\ì[Ÿ[JŸ[ô\öX–X›[€ãô]\Ÿ]õ[Ÿ[JN¬àYà
+€ÿò[\Àó◊ÿX›]ôTõ€HOOH	Ÿ[\ﬁYYI H⁄›‘õ€Tÿ‹ôY[ä	Ÿ[\ﬁYYI N¬üJN¬
