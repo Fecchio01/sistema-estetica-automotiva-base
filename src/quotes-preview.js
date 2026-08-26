@@ -31,6 +31,10 @@ const serviceOptions = [
   { name: 'Proteção cerâmica', price: 1280 },
 ]
 
+export function buildQuoteServiceOptionMarkup(item, index) {
+  return `<label class="quote-service-card" data-quote-service="${index}"><input type="checkbox" name="service-${index}" value="${index}"><span class="quote-service-card-check" aria-hidden="true">✓</span><span class="quote-service-card-copy"><b>${escapeHtml(item.name)}</b><small>Serviço disponível</small></span><strong>${money(item.price)}</strong><span class="quote-service-card-action">Adicionar</span></label>`
+}
+
 const demoQuotes = [
   buildQuotePreviewModel({
     client: 'Arthur',
@@ -67,7 +71,7 @@ export function buildQuotePreviewDialogMarkup() {
 }
 
 function formMarkup() {
-  return `<form class="quote-preview-form" id="quote-preview-form"><div class="quote-form-grid"><label>Cliente<select name="client" required><option value="Arthur">Arthur</option><option value="Rafael Nogueira">Rafael Nogueira</option></select></label><label>Veículo<select name="vehicle" required><option>Honda Civic GRT</option><option>Honda Civic Touring</option></select></label></div><fieldset><legend>Serviços</legend>${serviceOptions.map((item, index) => `<label class="quote-service-option"><input type="checkbox" name="service-${index}" value="${index}"><span>${item.name}</span><b>${money(item.price)}</b></label>`).join('')}</fieldset><label>Desconto<input name="discount" type="number" min="0" step="0.01" value="0"></label><div class="quote-preview-form-total"><span>Total da proposta</span><strong id="quote-preview-form-total">R$ 0,00</strong></div><p class="quote-preview-note">Prévia local: nada será salvo no Supabase nesta etapa.</p><div class="form-actions"><button type="button" class="outline-button" id="quote-preview-cancel">Cancelar</button><button class="primary-button" type="submit">Salvar rascunho</button></div></form>`
+  return `<form class="quote-preview-form" id="quote-preview-form"><div class="quote-form-layout"><div class="quote-form-main"><div class="quote-form-grid"><label>Cliente<select name="client" required><option value="Arthur">Arthur</option><option value="Rafael Nogueira">Rafael Nogueira</option></select></label><label>Veículo<select name="vehicle" required><option>Honda Civic GRT</option><option>Honda Civic Touring</option></select></label></div><fieldset><legend>Escolha os serviços</legend><p class="quote-form-helper">Selecione um ou mais serviços para montar a proposta.</p><div class="quote-service-grid">${serviceOptions.map(buildQuoteServiceOptionMarkup).join('')}</div></fieldset><label>Desconto<input name="discount" type="number" min="0" step="0.01" value="0"></label></div><aside class="quote-form-summary"><span class="eyebrow">RESUMO</span><h3>Sua proposta</h3><div class="quote-summary-items" id="quote-summary-items"><span>Nenhum serviço selecionado</span></div><div class="quote-summary-total"><span>Total</span><strong id="quote-preview-form-total">R$ 0,00</strong></div></aside></div><p class="quote-preview-note">Prévia local: nada será salvo no Supabase nesta etapa.</p><div class="form-actions"><button type="button" class="outline-button" id="quote-preview-cancel">Cancelar</button><button class="primary-button" type="submit">Salvar rascunho</button></div></form>`
 }
 
 function render(root) {
@@ -77,9 +81,11 @@ function render(root) {
   const newButton = root.querySelector('#quote-preview-new')
   const form = root.querySelector('#quote-preview-form')
   const totalElement = root.querySelector('#quote-preview-form-total')
+  const summaryItems = root.querySelector('#quote-summary-items')
   const updateTotal = () => {
     const items = [...form.querySelectorAll('input[type="checkbox"]:checked')].map((input) => serviceOptions[Number(input.value)])
     const discount = Number(form.elements.discount.value) || 0
+    summaryItems.innerHTML = items.length ? items.map((item) => `<span><span>${escapeHtml(item.name)}</span><b>${money(item.price)}</b></span>`).join('') : '<span>Nenhum serviço selecionado</span>'
     totalElement.textContent = money(buildQuotePreviewModel({ items, discount }).total)
   }
   const closeForm = () => { formHost.classList.add('hidden'); newButton.disabled = false; form.reset(); updateTotal() }

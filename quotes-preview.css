@@ -32,6 +32,29 @@
 .quote-preview-modal .quote-service-option { min-height: 48px; border-radius: 15px; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
 .quote-preview-modal .quote-service-option:has(input:checked) { border-color: #a7cfb4; background: #f0f8f3; }
 .quote-preview-modal .quote-service-option:hover { transform: translateX(2px); border-color: #c5dfcd; }
+.quote-form-layout { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 24px; align-items: start; }
+.quote-form-main { display: grid; gap: 18px; min-width: 0; }
+.quote-form-helper { margin: -4px 0 12px; color: #82928a; font-size: 11px; }
+.quote-service-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.quote-service-card { position: relative; display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: center; column-gap: 10px; min-height: 82px; padding: 14px; border: 1px solid #e1ebe5; border-radius: 17px; background: #fbfefc; cursor: pointer; transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+.quote-service-card input { position: absolute; opacity: 0; pointer-events: none; }
+.quote-service-card-check { display: grid; grid-row: 1 / span 2; place-items: center; width: 24px; height: 24px; border: 1px solid #d2e2d7; border-radius: 9px; color: transparent; background: #fff; font-size: 13px; font-weight: 800; }
+.quote-service-card-copy { display: grid; gap: 4px; min-width: 0; }
+.quote-service-card-copy b { overflow: hidden; color: #173b30; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.quote-service-card-copy small { color: #84948c; font-size: 9px; }
+.quote-service-card > strong { color: #216d54; font: 700 11px 'Space Grotesk'; white-space: nowrap; }
+.quote-service-card-action { grid-column: 2 / span 2; justify-self: start; margin-top: 6px; color: #8b9b92; font-size: 9px; }
+.quote-service-card:has(input:checked) { border-color: #8fbea0; background: #eff8f2; box-shadow: 0 8px 18px rgba(35, 105, 77, .08); transform: translateY(-1px); }
+.quote-service-card:has(input:checked) .quote-service-card-check { border-color: #287957; background: #287957; color: #fff; }
+.quote-service-card:has(input:checked) .quote-service-card-action { color: #287957; font-weight: 700; }
+.quote-form-summary { position: sticky; top: 0; display: grid; gap: 10px; padding: 17px; border: 1px solid #dcebe0; border-radius: 20px; background: linear-gradient(160deg, #f5fbf7, #edf7f1); }
+.quote-form-summary h3 { margin: -2px 0 5px; color: #173b30; font: 600 18px 'Space Grotesk'; }
+.quote-summary-items { display: grid; gap: 8px; min-height: 38px; color: #71847a; font-size: 10px; }
+.quote-summary-items > span { display: flex; justify-content: space-between; gap: 8px; }
+.quote-summary-items > span > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quote-summary-items b { color: #52675e; font-weight: 700; white-space: nowrap; }
+.quote-summary-total { display: flex; justify-content: space-between; gap: 10px; padding-top: 13px; border-top: 1px solid #d5e7db; color: #71847a; font-size: 10px; }
+.quote-summary-total strong { color: #173b30; font: 700 16px 'Space Grotesk'; }
 @keyframes quote-modal-in { from { opacity: 0; } to { opacity: 1; } }
 .quote-preview-form { display: grid; gap: 16px; }
 .quote-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -40,4 +63,4 @@
 .quote-service-option { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid #e1ebe5; border-radius: 12px; background: #fff; }
 .quote-preview-note { margin: 0; color: #8a6b2d; font-size: 12px; }
 .hidden { display: none !important; }
-@media (max-width: 800px) { .quote-preview-list, .quote-preview-metrics, .quote-form-grid { grid-template-columns: 1fr; } .quotes-preview-intro, .quote-preview-toolbar { align-items: flex-start; flex-direction: column; } .quote-preview-modal { padding: 24px; border-radius: 22px; } }
+@media (max-width: 800px) { .quote-preview-list, .quote-preview-metrics, .quote-form-grid, .quote-service-grid, .quote-form-layout { grid-template-columns: 1fr; } .quotes-preview-intro, .quote-preview-toolbar { align-items: flex-start; flex-direction: column; } .quote-preview-modal { padding: 24px; border-radius: 22px; } .quote-form-summary { position: static; } }

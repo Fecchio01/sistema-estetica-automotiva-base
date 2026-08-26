@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildQuotePreviewModel, buildQuotePreviewDialogMarkup, QUOTE_STATUSES } from '../src/quotes-preview.js'
+import { buildQuotePreviewModel, buildQuotePreviewDialogMarkup, buildQuoteServiceOptionMarkup, QUOTE_STATUSES } from '../src/quotes-preview.js'
 import { canViewSection } from '../src/permissions.js'
 
 test('orçamentos ficam visíveis para administradora e recepção, mas não para funcionário', () => {
@@ -33,4 +33,12 @@ test('novo orçamento usa uma janela flutuante sem expandir a página', () => {
   assert.match(markup, /class="quote-preview-modal-backdrop"/)
   assert.match(markup, /role="dialog"/)
   assert.match(markup, /data-quote-modal-close/)
+})
+
+test('serviço do orçamento é apresentado como cartão selecionável', () => {
+  const markup = buildQuoteServiceOptionMarkup({ name: 'Polimento técnico', price: 690 }, 1)
+
+  assert.match(markup, /class="quote-service-card"/)
+  assert.match(markup, /data-quote-service="1"/)
+  assert.match(markup, /R\$\s*690,00/)
 })
