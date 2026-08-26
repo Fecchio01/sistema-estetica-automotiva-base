@@ -3,27 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <base href="/" />
     <title>Atelier OS — Protótipo</title>
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="auth.css" />
+    <link rel="stylesheet" href="styles.css?v=20260815-dashboard-2" />
   </head>
   <body>
-    <section class="auth-screen" id="auth-screen">
-      <div class="auth-card">
-        <div class="brand-lockup"><div class="brand-mark">AO</div><div><strong>Atelier OS</strong><span>Operação automotiva</span></div></div>
-        <p class="eyebrow">ACESSO SEGURO</p>
-        <h1>Entre no seu painel</h1>
-        <p class="muted">Use o e-mail e a senha cadastrados para acessar o sistema da estética.</p>
-        <form id="login-form" class="auth-form" method="post" action="/">
-          <label>E-mail<input type="email" name="email" autocomplete="username" required placeholder="voce@empresa.com" /></label>
-          <label>Senha<input type="password" name="password" autocomplete="current-password" required placeholder="Sua senha" /></label>
-          <button class="primary-button" type="submit">Entrar no sistema</button>
-          <p class="auth-message" id="auth-message" role="alert"></p>
-        </form>
-      </div>
-    </section>
-    <div class="app-shell hidden" id="app-shell">
+    <div class="app-shell">
       <aside class="sidebar">
         <div class="brand-lockup">
           <div class="brand-mark">AO</div>
@@ -42,13 +26,12 @@
           <button class="nav-item" data-section="equipe">Equipe</button>
           <button class="nav-item" data-section="conversas">Conversas</button>
           <button class="nav-item" data-section="relatorios">Relat&oacute;rios</button>
-          <button class="nav-item" data-section="faturamento">Faturamento</button>
           <button class="nav-item" data-section="configuracoes">Configura&ccedil;&otilde;es</button>
         </nav>
 
         <div class="sidebar-bottom">
           <div class="workspace-label">Empresa demonstrativa</div>
-          <button class="profile-button" id="logout-button"><span class="avatar" id="profile-avatar">MC</span><span><b id="profile-name">Marina Costa</b><small id="profile-role">Administrador(a)</small></span><span class="chevron">↪</span></button>
+          <button class="profile-button"><span class="avatar">MC</span><span><b>Marina Costa</b><small>Administradora</small></span><span class="chevron">⌄</span></button>
         </div>
       </aside>
 
@@ -65,10 +48,10 @@
           </div>
 
           <div class="metric-grid">
-            <article class="metric-block"><span>Atendimentos</span><strong>00</strong><small>ordens em acompanhamento</small></article>
-            <article class="metric-block"><span>Prontos para retirada</span><strong>00</strong><small>clientes para avisar</small></article>
-            <article class="metric-block"><span>Ordens no mês</span><strong>00</strong><small>registros cadastrados</small></article>
-            <article class="metric-block"><span>Faturamento</span><strong>R$ 0</strong><small>valor das ordens cadastradas</small></article>
+            <article class="metric-block"><span>Em atendimento</span><strong>08</strong><small class="positive">+2 desde ontem</small></article>
+            <article class="metric-block"><span>Aguardando aprovação</span><strong>03</strong><small>R$ 1.840 em propostas</small></article>
+            <article class="metric-block"><span>Prontos para retirada</span><strong>04</strong><small>2 clientes já avisados</small></article>
+            <article class="metric-block"><span>Faturamento do mês</span><strong>R$ 18,7k</strong><small class="positive">+12,4% vs. julho</small></article>
           </div>
 
           <div class="content-grid">
@@ -92,31 +75,13 @@
       </main>
     </div>
 
-    <div class="modal-backdrop hidden" id="service-modal"><div class="modal"><button class="close-button" data-close="service-modal">×</button><p class="eyebrow">NOVA ORDEM DE SERVIÇO</p><h2>Registrar atendimento</h2><p class="muted">Selecione um cliente cadastrado para agendar a entrada. O link será liberado quando o veículo chegar e o atendimento começar.</p><form id="service-form"><label>Cliente<select name="clientId" required><option value="">Carregando clientes...</option></select></label><label>Veículo<select name="vehicleId" required disabled><option value="">Selecione o cliente primeiro</option></select></label><label>Responsável<select name="responsibleId" required><option value="">Carregando equipe...</option></select></label><label>Serviço<select name="service" required><option value="">Selecione um serviço</option><option>Detalhamento interno</option><option>Polimento técnico</option><option>Higienização completa</option><option>Proteção cerâmica</option></select></label><p class="auth-message" id="service-message" role="alert"></p><div class="form-actions"><button type="button" class="outline-button" data-close="service-modal">Cancelar</button><button class="primary-button">Criar atendimento</button></div></form></div></div>
+    <div class="modal-backdrop hidden" id="service-modal"><div class="modal"><button class="close-button" data-close="service-modal">×</button><p class="eyebrow">NOVA ORDEM DE SERVIÇO</p><h2>Registrar atendimento</h2><p class="muted">Ao salvar, o sistema gera automaticamente o link exclusivo para o cliente.</p><form id="service-form"><label>Nome do cliente<input name="client" required placeholder="Ex.: Rafael Nogueira" /></label><label>Veículo<input name="vehicle" required placeholder="Ex.: Honda Civic · RGT-4B21" /></label><label>Serviço<select name="service"><option>Detalhamento interno</option><option>Polimento técnico</option><option>Higienização completa</option><option>Proteção cerâmica</option></select></label><div class="form-actions"><button type="button" class="outline-button" data-close="service-modal">Cancelar</button><button class="primary-button">Criar e gerar link</button></div></form></div></div>
 
     <div class="modal-backdrop hidden" id="client-modal"><div class="client-portal"><button class="close-button" data-close="client-modal">×</button><div class="portal-brand"><span class="brand-mark">AO</span><div><b>Atelier OS</b><small>Acompanhamento do veículo</small></div></div><div class="portal-vehicle"><div><p class="eyebrow">ORDEM #AO-2048</p><h2>Honda Civic Touring</h2><p class="muted">RGT-4B21 · Rafael Nogueira</p></div><span class="status-pill in-progress">Em andamento</span></div><div class="timeline"><div class="timeline-item done"><span>✓</span><div><b>Veículo recebido</b><small>Hoje, 08:42</small></div></div><div class="timeline-item done"><span>✓</span><div><b>Avaliação inicial</b><small>Hoje, 09:05</small></div></div><div class="timeline-item current"><span>03</span><div><b>Detalhamento interno</b><small>Serviço em andamento</small></div></div><div class="timeline-item"><span>04</span><div><b>Inspeção e acabamento</b><small>Aguardando próxima etapa</small></div></div><div class="timeline-item"><span>05</span><div><b>Pronto para retirada</b><small>Previsão: hoje, 17:30</small></div></div></div><div class="portal-footer"><span>Alguma dúvida?</span><button class="text-button">Falar com a equipe →</button></div></div></div>
     <div class="modal-backdrop hidden" id="detail-modal"><div class="modal detail-modal"><button class="close-button" data-close="detail-modal">×</button><p class="eyebrow">ORDEM DE SERVIÇO #AO-2048</p><h2>Honda Civic Touring</h2><p class="muted">Rafael Nogueira · RGT-4B21</p><div class="detail-status"><span class="status-pill in-progress">Em andamento</span><button class="outline-button" id="copy-link">Copiar link do cliente</button></div><div class="detail-progress"><div class="progress-label"><span>Etapa atual: <b>Detalhamento interno</b></span><span>3 de 5</span></div><div class="progress-track"><span style="width:60%"></span></div></div><div class="stage-list"><button class="stage active"><span>03</span><b>Detalhamento interno</b><small>Equipe responsável: Lucas</small></button><button class="stage"><span>04</span><b>Inspeção e acabamento</b><small>Aguardando conclusão da etapa anterior</small></button><button class="stage"><span>05</span><b>Pronto para retirada</b><small>Cliente será avisado pelo WhatsApp</small></button></div><div class="detail-actions"><button class="secondary-button" id="add-photo">Adicionar foto</button><button class="primary-button" id="advance-stage">Avançar etapa</button></div></div></div>
     <div class="modal-backdrop hidden" id="employee-modal"><div class="employee-portal"><button class="close-button" data-close="employee-modal">×</button><div class="employee-heading"><div><p class="eyebrow">PAINEL OPERACIONAL</p><h2>Bom dia, Lucas.</h2><p class="muted">Aqui estão os veículos sob sua responsabilidade hoje.</p></div><span class="role-tag">Funcionário</span></div><div class="employee-metrics"><div><b>03</b><small>Em atendimento</small></div><div><b>01</b><small>Aguardando foto</small></div><div><b>02</b><small>Prontos hoje</small></div></div><div class="employee-list"><div class="employee-job"><div><b>Honda Civic Touring</b><small>RGT-4B21 · Rafael Nogueira</small><span class="status-pill in-progress">Detalhamento interno</span></div><button class="primary-button employee-action" data-action="Abrir ordem do Honda Civic">Abrir ordem</button></div><div class="employee-job"><div><b>BMW 320i M Sport</b><small>GHA-5D92 · Marina Albuquerque</small><span class="status-pill waiting">Aguardando inspeção</span></div><button class="primary-button employee-action" data-action="Abrir ordem da BMW">Abrir ordem</button></div><div class="employee-job"><div><b>Jeep Compass Limited</b><small>EKW-1C73 · João Vitor Mendes</small><span class="status-pill ready">Pronto para retirada</span></div><button class="secondary-button employee-action" data-action="Registrar entrega">Registrar entrega</button></div></div><div class="employee-note"><b>O que o funcionário pode fazer</b><span>Atualizar etapas, adicionar fotos, registrar observações e marcar o veículo como pronto.</span></div></div></div>
-    <div class="role-screen hidden" id="role-screen"><header class="role-screen-header"><div class="brand-lockup"><div class="brand-mark">AO</div><div><strong id="role-screen-title">Painel do funcionário</strong><span id="role-screen-subtitle">Atendimento e operação</span></div></div><button class="outline-button" id="return-admin">← Voltar ao painel do administrador(a)</button></header><main class="role-screen-content" id="role-screen-content"></main></div>
-    <div class="modal-backdrop hidden" id="team-modal"><div class="modal"><button class="close-button" data-close="team-modal">×</button><p class="eyebrow">GESTÃO DE ACESSOS</p><h2>Cadastrar funcionário</h2><p class="muted">A pessoa administradora cria o acesso e entrega a senha diretamente ao funcionário.</p><form id="team-form"><label>Nome completo<input name="name" required minlength="2" /></label><label>E-mail<input type="email" name="email" required /></label><label>Senha inicial<input type="password" name="password" required minlength="8" autocomplete="new-password" /></label><label>Função<select name="role"><option value="reception">Recepção</option><option value="employee">Funcionário</option></select></label><p class="auth-message" id="team-message" role="alert"></p><div class="form-actions"><button type="button" class="outline-button" data-close="team-modal">Cancelar</button><button class="primary-button" type="submit">Criar acesso</button></div></form></div></div>
-    <div class="modal-backdrop hidden confirm-dialog-backdrop" id="confirm-dialog" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-message"><div class="confirm-dialog-panel"><div class="confirm-dialog-icon" aria-hidden="true">!</div><div class="confirm-dialog-copy"><p class="eyebrow">CONFIRMAÇÃO</p><h2 id="confirm-dialog-title" data-confirm-title>Confirmar exclusão?</h2><p id="confirm-dialog-message" data-confirm-message>Este registro será removido do sistema.</p></div><div class="confirm-dialog-actions"><button type="button" class="outline-button" data-confirm-cancel>Cancelar</button><button type="button" class="danger-solid-button" data-confirm-submit>Apagar</button></div></div></div>
+    <div class="role-screen hidden" id="role-screen"><header class="role-screen-header"><div class="brand-lockup"><div class="brand-mark">AO</div><div><strong id="role-screen-title">Painel do funcionário</strong><span id="role-screen-subtitle">Atendimento e operação</span></div></div><button class="outline-button" id="return-admin">← Voltar ao painel da administradora</button></header><main class="role-screen-content" id="role-screen-content"></main></div>
     <div class="toast hidden" id="toast"></div>
-    <script src="app.js"></script>
-    <script type="module" src="src/service-catalog-ui.js"></script>
-    <script type="module" src="src/auth-bootstrap.js"></script>
-    <script type="module" src="src/team.js"></script>
-    <script type="module" src="src/role-access.js"></script>
-    <script type="module" src="src/live-data.js"></script>
-    <script type="module" src="src/employee-orders-ui.js"></script>
-    <script type="module" src="src/employee-agenda-ui.js"></script>
-    <script type="module" src="src/client-live-ui.js"></script>
-    <script type="module" src="src/order-link.js"></script>
-    <script type="module" src="src/billing.js"></script>
-    <script type="module" src="src/report-export.js"></script>
-    <script type="module" src="src/confirm-dialog.js"></script>
-    <script type="module" src="src/agenda-ui.js"></script>
-    <script type="module" src="src/profile-settings.js"></script>
-    <script type="module" src="src/realtime-ui.js"></script>
-    <script type="module" src="src/portal.js"></script>
+    <script src="app.js?v=20260816-dashboard" defer></script>
   </body>
 </html>
