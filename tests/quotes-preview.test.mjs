@@ -55,3 +55,11 @@ test('card de orçamento destaca cliente, total e etapa comercial', () => {
   assert.match(markup, /quote-sales-stage/)
   assert.match(markup, /R\$\s*690,00/)
 })
+
+test('formulário de orçamento usa campos comerciais estilizados', () => {
+  const markup = buildQuotePreviewDialogMarkup()
+
+  assert.match(markup, /class="quote-form-field"/)
+  assert.match(markup, /class="quote-form-select"/)
+  assert.match(markup, /class="quote-preview-modal quote-preview-modal-wide"/)
+})
