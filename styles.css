@@ -111,6 +111,8 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .module-panel select,.module-panel input,.table-toolbar input,.directory-toolbar input,.attendance-tools input{appearance:none}
 .module-panel select{background-image:linear-gradient(45deg,transparent 50%,#6f8378 50%),linear-gradient(135deg,#6f8378 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-repeat:no-repeat;background-size:5px 5px,5px 5px;padding-right:36px}
 .sidebar{background:#e7f0ea}
+.app-shell>.sidebar{background:#dceae1!important}
+.main-content>.topbar{background:#f5f8f5!important;border-bottom:1px solid #e2ebe4}
 
 /* Agenda: leitura por cartões, com mais respiro e menos aparência de planilha. */
 .agenda-live-shell{gap:22px}

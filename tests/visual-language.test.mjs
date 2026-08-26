@@ -7,7 +7,8 @@ const quoteStyles = await readFile(new URL('../quotes-preview.css', import.meta.
 
 test('linguagem visual compartilhada evita controles quadrados e campos nativos quebrados', () => {
   assert.match(styles, /--radius-control:14px/)
-  assert.match(styles, /\.sidebar\{[^}]*background:#e7f0ea/)
+  assert.match(styles, /\.app-shell>\.sidebar\{[^}]*background:#dceae1!important/)
+  assert.match(styles, /\.main-content>\.topbar\{[^}]*background:#f5f8f5!important/)
   assert.match(styles, /\.module-panel select[^}]*appearance:none/)
   assert.match(styles, /\.module-panel[^}]*border-radius:22px/)
   assert.match(quoteStyles, /\.quote-preview-modal \{[^}]*border-radius:\s*26px/)
