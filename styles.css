@@ -124,6 +124,7 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .main-content>.topbar.topbar-integrated{height:58px!important}
 .main-content>.page-section{padding-top:30px}
 .main-content>.topbar.topbar-integrated.topbar-collapsed{height:0!important;min-height:0;padding-top:0;padding-bottom:0;backdrop-filter:none!important;overflow:visible}
+.topbar-collapsed .topbar-actions{display:none!important}
 
 /* Agenda: leitura por cartões, com mais respiro e menos aparência de planilha. */
 .agenda-live-shell{gap:22px}

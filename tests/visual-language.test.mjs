@@ -14,6 +14,7 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(styles, /\.main-content>\.topbar\.topbar-integrated\{[^}]*height:58px!important/)
   assert.match(styles, /\.main-content>\.topbar\.topbar-integrated\.topbar-collapsed\{[^}]*height:0!important/)
   assert.match(styles, /\.main-content>\.topbar\.topbar-integrated\.topbar-collapsed\{[^}]*backdrop-filter:none!important/)
+  assert.match(styles, /\.topbar-collapsed \.topbar-actions\{display:none!important/)
   assert.match(styles, /\.module-panel select[^}]*appearance:none/)
   assert.match(styles, /\.module-panel[^}]*border-radius:22px/)
   assert.match(quoteStyles, /\.quote-preview-modal \{[^}]*border-radius:\s*26px/)
