@@ -1,0 +1,14 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
+
+const styles = await readFile(new URL('../styles.css', import.meta.url), 'utf8')
+const quoteStyles = await readFile(new URL('../quotes-preview.css', import.meta.url), 'utf8')
+
+test('linguagem visual compartilhada evita controles quadrados e campos nativos quebrados', () => {
+  assert.match(styles, /--radius-control:14px/)
+  assert.match(styles, /\.module-panel select[^}]*appearance:none/)
+  assert.match(styles, /\.module-panel[^}]*border-radius:22px/)
+  assert.match(quoteStyles, /\.quote-preview-modal \{[^}]*border-radius:\s*26px/)
+  assert.match(quoteStyles, /\.quote-service-card \{[^}]*border-radius:\s*17px/)
+})

@@ -79,6 +79,38 @@
 .service-price{gap:20px}.service-price>div:first-child{min-width:0;display:grid;gap:5px}.service-price b{display:block}.service-price small{display:block;color:var(--muted);font-size:10px;line-height:1.45;overflow-wrap:anywhere}.service-price span{white-space:nowrap}
 .client-details-modal{width:min(100%,880px);max-height:calc(100vh - 40px);overflow:auto}.client-details-grid{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}.client-history-row>div:first-child{min-width:0;flex:1}.client-history-row>strong{flex:none}
 
+/* Linguagem visual compartilhada: minimalista, arredondada e orientada a conteúdo. */
+:root{--radius-control:14px;--radius-panel:22px;--shadow-soft:0 14px 34px rgba(35,79,57,.055);--surface-soft:#f8fbf9}
+body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--canvas) 54%);letter-spacing:-.006em}
+.sidebar{padding:30px 20px 22px;background:rgba(241,246,242,.88);border-right-color:#dfe9e2}
+.brand-mark{width:38px;height:38px;border-radius:13px;box-shadow:0 8px 18px rgba(29,104,77,.16)}
+.main-nav{margin-top:48px;gap:7px}
+.nav-item{border-radius:13px;padding:13px 14px;transition:background .22s ease,transform .22s ease,color .22s ease}
+.nav-item:hover{transform:translateX(3px)}
+.nav-item.active{background:#e4f1e8;box-shadow:inset 3px 0 0 var(--accent)}
+.topbar{height:82px;background:rgba(255,255,255,.68);backdrop-filter:blur(12px)}
+.outline-button,.primary-button,.secondary-button{border-radius:var(--radius-control);padding:11px 15px}
+.outline-button:hover,.primary-button:hover,.secondary-button:hover{box-shadow:0 8px 18px rgba(35,79,57,.1)}
+.page-section{padding-top:46px}
+.module-panel,.panel,.client-directory,.attendance-list,.table-panel{border-radius:var(--radius-panel);box-shadow:var(--shadow-soft)}
+.module-panel{padding:28px;background:rgba(255,255,255,.92);border-radius:22px}
+.module-toolbar{border-bottom:0;padding-bottom:8px;margin-bottom:3px}
+.module-toolbar input,.table-toolbar input,.directory-toolbar input,.attendance-tools input,.module-panel input,.module-panel select{border-radius:var(--radius-control);padding:12px 14px;background:#fbfefc}
+.module-panel input:focus,.module-panel select:focus,.table-toolbar input:focus,.directory-toolbar input:focus,.attendance-tools input:focus{border-color:#9bc6aa;box-shadow:0 0 0 4px rgba(29,104,77,.08);outline:0}
+.metric-grid{gap:14px;border:0}
+.metric-block{border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.86);box-shadow:0 9px 24px rgba(35,79,57,.04)}
+.metric-block:first-child,.metric-block:last-child{padding-left:19px;border-right:1px solid var(--line)}
+.table-panel,.client-directory{overflow:hidden}
+.table-toolbar,.directory-toolbar{padding:24px 26px;border-bottom:1px solid #edf2ee}
+.client-directory-heading,.attendance-list-heading{background:#f7fbf8;border-radius:20px 20px 0 0}
+.client-record,.attendance-item{transition:background .2s ease,transform .2s ease}
+.client-record:hover,.attendance-item:hover{background:#f7fbf8;transform:translateX(3px)}
+.permission-item,.service-choice,.employee-job{border-radius:var(--radius-control)}
+.empty-panel{border-radius:18px}
+.modal,.client-portal{border-radius:24px;box-shadow:0 24px 70px rgba(24,44,35,.18)}
+.module-panel select,.module-panel input,.table-toolbar input,.directory-toolbar input,.attendance-tools input{appearance:none}
+.module-panel select{background-image:linear-gradient(45deg,transparent 50%,#6f8378 50%),linear-gradient(135deg,#6f8378 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-repeat:no-repeat;background-size:5px 5px,5px 5px;padding-right:36px}
+
 /* Agenda: leitura por cartões, com mais respiro e menos aparência de planilha. */
 .agenda-live-shell{gap:22px}
 .agenda-toolbar{border-radius:24px;padding:22px 24px;background:linear-gradient(135deg,#ffffff,#f3f9f5);box-shadow:0 14px 34px rgba(35,79,57,.06)}
