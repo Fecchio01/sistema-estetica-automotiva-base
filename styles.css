@@ -126,6 +126,23 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .main-content>.topbar.topbar-integrated.topbar-collapsed{height:0!important;min-height:0;padding-top:0;padding-bottom:0;backdrop-filter:none!important;overflow:visible}
 .topbar-collapsed .topbar-actions{display:none!important}
 
+/* Conteúdo principal: contraste quente e sofisticado com a navegação oliva. */
+.main-content{background:#f3f0e8;color:#27332d;--ink:#27332d;--muted:#7b8176;--line:#e7e0d4;--surface:#fffdf8;--canvas:#f3f0e8;--accent:#59684d;--accent-soft:#e9eee2;--warning:#ad7746}
+.main-content .module-panel,.main-content .panel,.main-content .table-panel{background:#fffdf8;border-color:#e7e0d4}
+.main-content .primary-button{background:#59684d;box-shadow:0 7px 18px rgba(89,104,77,.16)}
+.main-content .secondary-button{background:#e9eee2;color:#59684d}
+.main-content .metric-block{background:#fffdf8;border-color:#e7e0d4;box-shadow:0 9px 24px rgba(84,76,58,.05)}
+.main-content .table-toolbar,.main-content .directory-toolbar{border-bottom-color:#ebe5da}
+.main-content .client-directory-heading,.main-content .attendance-list-heading{background:#f8f5ee}
+.main-content .client-record:hover,.main-content .attendance-item:hover{background:#f8f5ee}
+.main-content .module-panel input,.main-content .module-panel select,.main-content .table-toolbar input,.main-content .directory-toolbar input,.main-content .attendance-tools input{background:#fbfaf5;border-color:#ded8cb}
+.main-content .service-choice{background:#fbfaf5;border-color:#e1dbcf}
+.main-content .service-choice:has(input:checked){border-color:#aebba0;background:#eef2e8}
+.main-content .agenda-toolbar,.main-content .agenda-form-panel{background:linear-gradient(135deg,#fffdf8,#f4f0e6)}
+.main-content .agenda-live-grid .calendar-day{background:linear-gradient(180deg,#fffdf8 0%,#faf7ef 100%);box-shadow:0 12px 28px rgba(84,76,58,.06)}
+.main-content .calendar-slot{background:#f7f4ec}
+.main-content .calendar-event-card{background:#f4f0e7}
+
 /* Agenda: leitura por cartões, com mais respiro e menos aparência de planilha. */
 .agenda-live-shell{gap:22px}
 .agenda-toolbar{border-radius:24px;padding:22px 24px;background:linear-gradient(135deg,#ffffff,#f3f9f5);box-shadow:0 14px 34px rgba(35,79,57,.06)}
