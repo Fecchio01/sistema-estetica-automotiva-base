@@ -10,6 +10,23 @@
 .quote-preview-metrics span, .quote-preview-metrics small { display: block; color: #788b83; }
 .quote-preview-metrics strong { display: block; margin: 8px 0 2px; color: #173b30; font-size: 25px; }
 .quote-preview-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.quote-sales-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.quote-sales-card { display: grid; gap: 20px; padding: 24px; border: 1px solid #dbe9df; border-radius: 24px; background: linear-gradient(145deg, #fff 0%, #f8fcf9 100%); box-shadow: 0 18px 38px rgba(29, 77, 58, .075); }
+.quote-sales-card-header,.quote-sales-card-body,.quote-sales-card-footer { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.quote-sales-card h3 { margin: 4px 0 3px; color: #173b30; font: 600 22px 'Space Grotesk'; letter-spacing: -.045em; }
+.quote-sales-card-header p { margin: 0; color: #72857e; font-size: 11px; }
+.quote-sales-stage { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 5px; border-radius: 14px; background: #edf5ef; }
+.quote-sales-stage span { position: relative; padding: 8px 4px; border-radius: 10px; color: #8a9a91; font-size: 9px; text-align: center; }
+.quote-sales-stage span.is-current { background: #fff; color: #216d54; font-weight: 800; box-shadow: 0 3px 10px rgba(29, 77, 58, .08); }
+.quote-sales-card-body { align-items: stretch; padding: 18px 0; border-top: 1px solid #e7f0e9; border-bottom: 1px solid #e7f0e9; }
+.quote-sales-label { display: block; margin-bottom: 9px; color: #8a9a91; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.quote-sales-services { display: grid; gap: 7px; color: #38594a; font-size: 11px; }
+.quote-sales-services span::before { content: '•'; margin-right: 7px; color: #58a27c; }
+.quote-sales-value { min-width: 140px; text-align: right; }
+.quote-sales-value strong { display: block; color: #173b30; font: 700 24px 'Space Grotesk'; letter-spacing: -.04em; }
+.quote-sales-value small { display: block; margin-top: 4px; color: #927436; font-size: 10px; }
+.quote-sales-card-footer { align-items: center; color: #8a9a91; font-size: 10px; }
+.quote-sales-card-footer .quote-card-actions { margin-top: 0; }
 .quote-preview-card { padding: 22px; border: 1px solid #e1ebe5; border-radius: 20px; background: #fff; box-shadow: 0 12px 30px rgba(29, 77, 58, .06); }
 .quote-status-draft { color: #67766f; background: #edf1ef; }
 .quote-status-sent { color: #896d1e; background: #fff2ca; }
@@ -63,4 +80,5 @@
 .quote-service-option { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid #e1ebe5; border-radius: 12px; background: #fff; }
 .quote-preview-note { margin: 0; color: #8a6b2d; font-size: 12px; }
 .hidden { display: none !important; }
-@media (max-width: 800px) { .quote-preview-list, .quote-preview-metrics, .quote-form-grid, .quote-service-grid, .quote-form-layout { grid-template-columns: 1fr; } .quotes-preview-intro, .quote-preview-toolbar { align-items: flex-start; flex-direction: column; } .quote-preview-modal { padding: 24px; border-radius: 22px; } .quote-form-summary { position: static; } }
+@media (max-width: 800px) { .quote-preview-list, .quote-preview-metrics, .quote-form-grid, .quote-service-grid, .quote-form-layout, .quote-sales-list { grid-template-columns: 1fr; } .quotes-preview-intro, .quote-preview-toolbar { align-items: flex-start; flex-direction: column; } .quote-preview-modal { padding: 24px; border-radius: 22px; } .quote-form-summary { position: static; } }
+@media (max-width: 520px) { .quote-sales-card-header,.quote-sales-card-body,.quote-sales-card-footer { flex-direction: column; } .quote-sales-value { min-width: 0; text-align: left; } .quote-sales-card-footer .quote-card-actions { width: 100%; justify-content: flex-start; } }
