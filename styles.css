@@ -113,6 +113,14 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .sidebar{background:#e7f0ea}
 .app-shell>.sidebar{background:#dceae1!important}
 .main-content>.topbar{background:#f5f8f5!important;border-bottom:1px solid #e2ebe4}
+.app-shell>.sidebar.sidebar-olive{background:#2f3b32!important;border-right-color:#46584b}
+.app-shell>.sidebar.sidebar-olive .brand-lockup strong,.app-shell>.sidebar.sidebar-olive .brand-lockup span:not(.brand-mark),.app-shell>.sidebar.sidebar-olive .workspace-label,.app-shell>.sidebar.sidebar-olive .profile-button b{color:#f1f2ea}
+.app-shell>.sidebar.sidebar-olive .brand-lockup span:not(.brand-mark),.app-shell>.sidebar.sidebar-olive .workspace-label,.app-shell>.sidebar.sidebar-olive .profile-button small{color:#b9c5b8}
+.app-shell>.sidebar.sidebar-olive .nav-item{color:#c4d0c3}
+.app-shell>.sidebar.sidebar-olive .nav-item:hover{background:#3b4c40;color:#fff}
+.app-shell>.sidebar.sidebar-olive .nav-item.active{background:#b9c9a9;box-shadow:inset 3px 0 0 #edf2e6;color:#26362c}
+.app-shell>.sidebar.sidebar-olive .chevron{color:#b9c5b8}
+.main-content>.topbar.topbar-integrated{background:transparent!important;border-bottom:0;box-shadow:none}
 
 /* Agenda: leitura por cartões, com mais respiro e menos aparência de planilha. */
 .agenda-live-shell{gap:22px}
