@@ -171,6 +171,7 @@ function canViewCurrentSection(section) {
 }
 const moduleCopy = {
   atendimentos: ['ATENDIMENTOS', 'Atendimentos', 'Ordens de serviço, etapas, fotos e links de acompanhamento.'],
+  orcamentos: ['PRÉ-VENDAS', 'Orçamentos', 'Monte propostas com vários serviços antes de criar um atendimento.'],
   agenda: ['AGENDA OPERACIONAL', 'Agenda', 'Visualize entradas, retiradas e a carga de trabalho da equipe.'],
   servicos: ['CATÁLOGO DA EMPRESA', 'Serviços e preços', 'Configure os serviços exibidos no orçamento e no atendimento.'],
   equipe: ['ACESSOS E PERMISSÕES', 'Equipe', 'Defina o que cada pessoa pode visualizar e alterar no sistema.'],
@@ -249,11 +250,15 @@ function renderModule(section, navigationToken = currentNavigationToken) {
   document.querySelector('#generic-title').textContent = copy[1];
   document.querySelector('#generic-description').textContent = copy[2];
   const genericAction = document.querySelector('#generic-action');
-  const actionLabels = { agenda: '+ Reservar horário', equipe: '+ Adicionar membro', servicos: '+ Novo serviço', atendimentos: '+ Novo atendimento', relatorios: 'Exportar resumo', faturamento: 'Atualizar faturamento', configuracoes: 'Salvar configurações' };
+  const actionLabels = { agenda: '+ Reservar horário', equipe: '+ Adicionar membro', servicos: '+ Novo serviço', atendimentos: '+ Novo atendimento', orcamentos: '+ Novo orçamento', relatorios: 'Exportar resumo', faturamento: 'Atualizar faturamento', configuracoes: 'Salvar configurações' };
   genericAction.textContent = actionLabels[section] || '+ Adicionar registro';
   genericAction.dataset.module = section;
-  genericAction.classList.toggle('hidden', ['atendimentos', 'conversas', 'faturamento'].includes(section));
+  genericAction.classList.toggle('hidden', ['atendimentos', 'orcamentos', 'conversas', 'faturamento'].includes(section));
   const content = document.querySelector('#module-content');
+  if (section === 'orcamentos') {
+    globalThis.__renderQuotesPreview?.(content);
+    return;
+  }
   if (section === 'conversas' && globalThis.__renderWhatsAppInbox) {
     globalThis.__renderWhatsAppInbox(content, () => isCurrentNavigation(navigationToken));
     return;

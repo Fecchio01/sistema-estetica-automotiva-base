@@ -256,6 +256,7 @@ async function refreshConnection(container) {
   const status = container.querySelector('#whatsapp-inbox-status')
   const dot = container.querySelector('#whatsapp-inbox-status-dot')
   const qrButton = container.querySelector('#whatsapp-show-qr')
+  if (!status) return
   try {
     const response = await fetch('/api/whatsapp/connection')
     const data = await response.json()

@@ -29,8 +29,8 @@ const matrix = {
 }
 
 const sectionMatrix = {
-  administrator: new Set(['visao-geral', 'atendimentos', 'agenda', 'clientes', 'servicos', 'equipe', 'conversas', 'relatorios', 'configuracoes', 'faturamento']),
-  reception: new Set(['visao-geral', 'atendimentos', 'agenda', 'clientes', 'conversas', 'relatorios']),
+  administrator: new Set(['visao-geral', 'atendimentos', 'orcamentos', 'agenda', 'clientes', 'servicos', 'equipe', 'conversas', 'relatorios', 'configuracoes', 'faturamento']),
+  reception: new Set(['visao-geral', 'atendimentos', 'orcamentos', 'agenda', 'clientes', 'conversas', 'relatorios']),
   employee: new Set(),
 }
 
