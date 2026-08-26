@@ -20,7 +20,19 @@
 .quote-item-list b, .quote-preview-form-total strong { color: #173b30; }
 .quote-preview-total { color: #7b8d85; font-size: 12px; }
 .quote-card-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
-.quote-preview-form-host { padding: 24px; border: 1px solid #cfe3d7; border-radius: 20px; background: #fbfefc; }
+.quote-preview-form-host { position: fixed; inset: 0; z-index: 6; }
+.quote-preview-modal-backdrop { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(24, 44, 35, .32); backdrop-filter: blur(7px); animation: quote-modal-in .18s ease-out; }
+.quote-preview-modal { position: relative; width: min(100%, 660px); max-height: min(760px, calc(100vh - 48px)); overflow: auto; padding: 30px; border: 1px solid rgba(207, 227, 215, .9); border-radius: 26px; background: #fff; box-shadow: 0 26px 80px rgba(24, 44, 35, .2); }
+.quote-preview-modal-heading { padding-right: 36px; }
+.quote-preview-modal-heading h2 { margin: 3px 0 7px; color: #173b30; font: 600 25px 'Space Grotesk'; letter-spacing: -.04em; }
+.quote-preview-modal-heading p:not(.eyebrow) { margin: 0; color: #72857e; font-size: 12px; line-height: 1.5; }
+.quote-preview-modal-close { position: absolute; top: 20px; right: 20px; display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: #f1f6f2; color: #63766c; font-size: 22px; line-height: 1; cursor: pointer; transition: transform .18s ease, background .18s ease; }
+.quote-preview-modal-close:hover { transform: rotate(5deg); background: #e3f0e8; }
+.quote-preview-modal .quote-preview-form { margin-top: 24px; }
+.quote-preview-modal .quote-service-option { min-height: 48px; border-radius: 15px; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+.quote-preview-modal .quote-service-option:has(input:checked) { border-color: #a7cfb4; background: #f0f8f3; }
+.quote-preview-modal .quote-service-option:hover { transform: translateX(2px); border-color: #c5dfcd; }
+@keyframes quote-modal-in { from { opacity: 0; } to { opacity: 1; } }
 .quote-preview-form { display: grid; gap: 16px; }
 .quote-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .quote-preview-form fieldset { display: grid; gap: 8px; padding: 0; border: 0; }
@@ -28,4 +40,4 @@
 .quote-service-option { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid #e1ebe5; border-radius: 12px; background: #fff; }
 .quote-preview-note { margin: 0; color: #8a6b2d; font-size: 12px; }
 .hidden { display: none !important; }
-@media (max-width: 800px) { .quote-preview-list, .quote-preview-metrics, .quote-form-grid { grid-template-columns: 1fr; } .quotes-preview-intro, .quote-preview-toolbar { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 800px) { .quote-preview-list, .quote-preview-metrics, .quote-form-grid { grid-template-columns: 1fr; } .quotes-preview-intro, .quote-preview-toolbar { align-items: flex-start; flex-direction: column; } .quote-preview-modal { padding: 24px; border-radius: 22px; } }

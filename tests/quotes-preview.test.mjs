@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildQuotePreviewModel, QUOTE_STATUSES } from '../src/quotes-preview.js'
+import { buildQuotePreviewModel, buildQuotePreviewDialogMarkup, QUOTE_STATUSES } from '../src/quotes-preview.js'
 import { canViewSection } from '../src/permissions.js'
 
 test('orçamentos ficam visíveis para administradora e recepção, mas não para funcionário', () => {
@@ -25,4 +25,12 @@ test('prévia de orçamento calcula múltiplos serviços e começa como rascunho
   assert.equal(quote.discount, 70)
   assert.equal(quote.total, 1900)
   assert.equal(quote.items.length, 2)
+})
+
+test('novo orçamento usa uma janela flutuante sem expandir a página', () => {
+  const markup = buildQuotePreviewDialogMarkup()
+
+  assert.match(markup, /class="quote-preview-modal-backdrop"/)
+  assert.match(markup, /role="dialog"/)
+  assert.match(markup, /data-quote-modal-close/)
 })
