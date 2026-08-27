@@ -145,6 +145,8 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .main-content .dashboard-agenda-item{border-radius:14px;margin:2px 0;padding:14px 12px;transition:background .2s ease,box-shadow .2s ease}
 .main-content .dashboard-agenda-item:hover{background:transparent;box-shadow:none;transform:translateY(-2px)}
 .main-content .dashboard-agenda-item:hover .dashboard-arrow{transform:translateX(3px);transition:transform .2s ease}
+.main-content .service-row{border:0;border-radius:14px;padding:15px 12px;transition:transform .2s ease}
+.main-content .service-row:hover{background:transparent;transform:translateY(-2px);box-shadow:none}
 
 /* Agenda: leitura por cartões, com mais respiro e menos aparência de planilha. */
 .agenda-live-shell{gap:22px}

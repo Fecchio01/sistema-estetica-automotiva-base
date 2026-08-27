@@ -21,6 +21,7 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(styles, /\.main-content \.dashboard-agenda-item\{border-radius:14px;margin:2px 0;padding:14px 12px/)
   assert.match(styles, /\.main-content \.dashboard-agenda-item:hover\{background:transparent;box-shadow:none;transform:translateY\(-2px\)/)
   assert.match(styles, /\.main-content \.dashboard-agenda-item:hover \.dashboard-arrow\{transform:translateX\(3px\)/)
+  assert.match(styles, /\.main-content \.service-row:hover\{background:transparent;transform:translateY\(-2px\);box-shadow:none/)
   assert.match(styles, /\.module-panel select[^}]*appearance:none/)
   assert.match(styles, /\.module-panel[^}]*border-radius:22px/)
   assert.match(quoteStyles, /\.quote-preview-modal \{[^}]*border-radius:\s*26px/)
