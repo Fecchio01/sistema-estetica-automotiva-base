@@ -140,9 +140,9 @@ function vehicleVisual(vehicle) {
 }
 let activeServiceIndex = 0;
 const list = document.querySelector('#service-list');
-list.innerHTML = services.map((item, index) => `<button class="service-row" data-service-index="${index}">${vehicleVisual(item.vehicle)}<div class="service-main"><b>${item.client}</b><small>${item.vehicle} · ${item.service} · ${item.time}</small></div><span class="status-pill ${item.tone}">${item.status}</span></button>`).join('');
+list.innerHTML = services.map((item, index) => `<button class="service-row" data-service-index="${index}"><div class="service-main"><b>${item.client}</b><small>${item.vehicle} · ${item.service} · ${item.time}</small></div><span class="status-pill ${item.tone}">${item.status}</span></button>`).join('');
 function refreshServiceList() {
-  list.innerHTML = services.map((item, index) => `<button class="service-row" data-service-index="${index}">${vehicleVisual(item.vehicle)}<div class="service-main"><b>${item.client}</b><small>${item.vehicle} · ${item.service} · ${item.time}</small></div><span class="status-pill ${item.tone}">${item.status}</span></button>`).join('');
+  list.innerHTML = services.map((item, index) => `<button class="service-row" data-service-index="${index}"><div class="service-main"><b>${item.client}</b><small>${item.vehicle} · ${item.service} · ${item.time}</small></div><span class="status-pill ${item.tone}">${item.status}</span></button>`).join('');
   list.querySelectorAll('.service-row').forEach((row) => {
     const stage = document.createElement('small');
     stage.className = 'service-stage';

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises'
 
 const styles = await readFile(new URL('../styles.css', import.meta.url), 'utf8')
 const quoteStyles = await readFile(new URL('../quotes-preview.css', import.meta.url), 'utf8')
+const app = await readFile(new URL('../app.js', import.meta.url), 'utf8')
 
 test('linguagem visual compartilhada evita controles quadrados e campos nativos quebrados', () => {
   assert.match(styles, /--radius-control:14px/)
@@ -26,6 +27,10 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(styles, /\.main-content \.vehicle-mark:before\{[^}]*background:transparent;border:1\.5px solid #59684d/)
   assert.match(styles, /\.main-content \.vehicle-mark:after\{left:11px;top:18px;width:18px;height:4px;border-radius:999px;background:#59684d;box-shadow:none/)
   assert.match(styles, /\.main-content \.vehicle-mark span\{left:15px;top:11px;width:9px;height:9px;border:1\.5px solid #59684d;border-radius:3px;transform:rotate\(45deg\)/)
+  assert.match(app, /<button class="service-row" data-service-index="\$\{index\}"><div class="service-main">/)
+  assert.match(styles, /\.main-content \.service-row\{grid-template-columns:1fr auto/)
+  assert.match(styles, /\.main-content \.vehicle-mark\{display:none!important/)
+  assert.match(styles, /\.main-content \.employee-dashboard-order\{grid-template-columns:minmax\(0,1fr\) auto 16px/)
   assert.match(styles, /\.module-panel select[^}]*appearance:none/)
   assert.match(styles, /\.module-panel[^}]*border-radius:22px/)
   assert.match(quoteStyles, /\.quote-preview-modal \{[^}]*border-radius:\s*26px/)
