@@ -147,6 +147,10 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .main-content .dashboard-agenda-item:hover .dashboard-arrow{transform:translateX(3px);transition:transform .2s ease}
 .main-content .service-row{border:0;border-radius:14px;padding:15px 12px;transition:transform .2s ease}
 .main-content .service-row:hover{background:transparent;transform:translateY(-2px);box-shadow:none}
+.main-content .vehicle-mark{width:40px;height:40px;border-radius:12px;background:#f4f0e6;border-color:#ded6c8}
+.main-content .vehicle-mark:before{background:transparent;border:1.5px solid #59684d}
+.main-content .vehicle-mark:after{background:#59684d;box-shadow:14px 0 0 #59684d}
+.main-content .vehicle-mark span{border-color:#59684d}
 
 /* Agenda: leitura por cartões, com mais respiro e menos aparência de planilha. */
 .agenda-live-shell{gap:22px}
