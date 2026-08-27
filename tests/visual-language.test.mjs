@@ -24,6 +24,8 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(styles, /\.main-content \.service-row:hover\{background:transparent;transform:translateY\(-2px\);box-shadow:none/)
   assert.match(styles, /\.main-content \.vehicle-mark\{width:40px;height:40px;border-radius:12px;background:#f4f0e6;border-color:#ded6c8/)
   assert.match(styles, /\.main-content \.vehicle-mark:before\{[^}]*background:transparent;border:1\.5px solid #59684d/)
+  assert.match(styles, /\.main-content \.vehicle-mark:after\{left:11px;top:18px;width:18px;height:4px;border-radius:999px;background:#59684d;box-shadow:none/)
+  assert.match(styles, /\.main-content \.vehicle-mark span\{left:15px;top:11px;width:9px;height:9px;border:1\.5px solid #59684d;border-radius:3px;transform:rotate\(45deg\)/)
   assert.match(styles, /\.module-panel select[^}]*appearance:none/)
   assert.match(styles, /\.module-panel[^}]*border-radius:22px/)
   assert.match(quoteStyles, /\.quote-preview-modal \{[^}]*border-radius:\s*26px/)
