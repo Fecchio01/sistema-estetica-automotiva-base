@@ -269,5 +269,5 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .main-content .dashboard-attention-item:hover{transform:none;background:#fff;box-shadow:0 12px 26px rgba(35,79,57,.1)}
 .main-content .dashboard-summary-service{animation:none!important;transition:none!important;transform:none!important}
 .main-content .dashboard-summary-service:hover{animation:none!important;transition:none!important;transform:none!important;box-shadow:none!important;background:#fff!important}
-.main-content .dashboard-paddock-row,.main-content .dashboard-attention-item{animation:none!important;transition:none!important;transform:none!important}
-.main-content .dashboard-paddock-row:hover,.main-content .dashboard-attention-item:hover{animation:none!important;transition:none!important;transform:none!important;box-shadow:0 12px 26px rgba(35,79,57,.1);background:#fff!important}
+.main-content .dashboard-paddock-row,.main-content .dashboard-attention-item{animation:none!important;transition:transform .22s ease;transform:none!important}
+.main-content .dashboard-paddock-row:hover,.main-content .dashboard-attention-item:hover{animation:none!important;transition:transform .22s ease;transform:scale(1.012)!important;box-shadow:0 12px 26px rgba(35,79,57,.1)!important;background:#fff!important}
