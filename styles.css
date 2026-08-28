@@ -215,6 +215,9 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .main-content .client-summary>div:hover{transform:translateY(-3px);box-shadow:0 14px 28px rgba(84,76,58,.1);background:#fff}
 .main-content .client-directory-heading{border-radius:0;background:#f8f5ee}
 @media(prefers-reduced-motion:reduce){.main-content .client-summary>div{transition:none!important}.main-content .client-summary>div:hover{transform:none!important;box-shadow:none!important}}
+.main-content{--surface:#fff}
+.main-content .module-panel,.main-content .panel,.main-content .table-panel,.main-content .metric-block,.main-content .dashboard-panel,.main-content .employee-dashboard-panel,.main-content .employee-dashboard-metrics>div,.main-content .billing-summary-live>div{background:#fff;border-color:var(--line)}
+.main-content .client-summary>div,.main-content .attendance-summary>div{background:#fff;border-color:var(--line)}
 .dashboard-timeline-item,.dashboard-attention-item,.dashboard-stage-card,.dashboard-summary-metric{transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
 .dashboard-timeline-item:hover,.dashboard-attention-item:hover,.dashboard-stage-card:hover,.dashboard-summary-metric:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(84,76,58,.08)}
 .dashboard-timeline-item:hover,.dashboard-attention-item:hover{background:transparent}
