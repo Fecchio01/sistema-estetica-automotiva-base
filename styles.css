@@ -267,3 +267,5 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .main-content .dashboard-paddock-row,.main-content .dashboard-attention-item{background:#fff;border-color:var(--line);transition:box-shadow .22s ease}
 .main-content .dashboard-paddock-row:hover{transform:none;background:#fff;box-shadow:0 12px 26px rgba(35,79,57,.1)}
 .main-content .dashboard-attention-item:hover{transform:none;background:#fff;box-shadow:0 12px 26px rgba(35,79,57,.1)}
+.main-content .dashboard-paddock-row,.main-content .dashboard-attention-item,.main-content .dashboard-summary-service{animation:none!important;transition:none!important;transform:none!important}
+.main-content .dashboard-paddock-row:hover,.main-content .dashboard-attention-item:hover,.main-content .dashboard-summary-service:hover{animation:none!important;transition:none!important;transform:none!important;box-shadow:none!important;background:#fff!important}
