@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildQuotePreviewModel, buildQuotePreviewDialogMarkup, buildQuoteServiceOptionMarkup, buildQuoteCardMarkup, QUOTE_STATUSES } from '../src/quotes-preview.js'
+import { buildQuotePreviewModel, buildQuotePreviewDialogMarkup, buildQuoteServiceOptionMarkup, buildQuoteCardMarkup, resolveApprovedWorkOrderInput, QUOTE_STATUSES } from '../src/quotes-preview.js'
 import { canViewSection } from '../src/permissions.js'
 
 test('orçamentos ficam visíveis para administradora e recepção, mas não para funcionário', () => {
@@ -65,4 +65,31 @@ test('formulário de orçamento usa campos comerciais estilizados', () => {
   assert.match(markup, /class="quote-form-field"/)
   assert.match(markup, /class="quote-form-select"/)
   assert.match(markup, /class="quote-preview-modal quote-preview-modal-wide"/)
+})
+
+test('aprovação mapeia orçamento para atendimento recebido no cliente e veículo corretos', () => {
+  const input = resolveApprovedWorkOrderInput({
+    client: 'Arthur',
+    vehicle: 'Honda Civic GRT',
+    items: [{ name: 'Polimento técnico' }, { name: 'Proteção cerâmica' }],
+    total: 1900,
+  }, { id: 'admin-1', company_id: 'company-1' }, [{
+    id: 'client-1',
+    name: 'arthur',
+    vehicles: [{ id: 'vehicle-1', make: 'Honda', model: 'Civic GRT', license_plate: null }],
+  }])
+
+  assert.deepEqual(input, {
+    clientId: 'client-1',
+    vehicleId: 'vehicle-1',
+    responsibleId: 'admin-1',
+    status: 'scheduled',
+    scheduledAt: null,
+    services: ['Polimento técnico', 'Proteção cerâmica'],
+    totalAmount: 1900,
+  })
+})
+
+test('aprovação recusa orçamento sem cliente cadastrado', () => {
+  assert.throws(() => resolveApprovedWorkOrderInput({ client: 'Rafael Nogueira', vehicle: 'Honda Civic Touring', items: [] }, { id: 'admin-1', company_id: 'company-1' }, []), /Cliente do orçamento não está cadastrado/)
 })
