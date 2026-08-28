@@ -40,7 +40,7 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(styles, /\.dashboard-operation-summary-panel\{min-height:320px/)
   assert.match(styles, /\.main-content \.service-row \.status-pill\{font-size:11px;padding:7px 10px/)
   assert.match(styles, /\.metric-block:hover\{transform:translateY\(-3px\);box-shadow:/)
-  assert.match(styles, /\.dashboard-timeline-item,.dashboard-attention-item,.dashboard-stage-card,\.dashboard-summary-metric\{transition:box-shadow \.2s ease,background \.2s ease/)
+  assert.match(styles, /\.dashboard-timeline-item,.dashboard-attention-item,.dashboard-stage-card,\.dashboard-summary-metric\{transition:box-shadow \.22s cubic-bezier\(\.16,1,\.3,1\),background \.22s cubic-bezier\(\.16,1,\.3,1\)/)
   assert.doesNotMatch(styles, /\.dashboard-attention-item:hover[^}]*transform:translateY\(/)
   assert.doesNotMatch(styles, /\.dashboard-stage-card:hover[^}]*transform:translateY\(/)
   assert.doesNotMatch(styles, /\.dashboard-summary-metric:hover[^}]*transform:translateY\(/)

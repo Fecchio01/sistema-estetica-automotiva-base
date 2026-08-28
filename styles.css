@@ -220,7 +220,7 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .main-content .client-summary>div,.main-content .attendance-summary>div{background:#fff;border-color:var(--line)}
 .main-content .agenda-toolbar,.main-content .agenda-form-panel{background:#fff}
 .main-content .agenda-live-grid .calendar-day{background:#fff}
-.dashboard-timeline-item,.dashboard-attention-item,.dashboard-stage-card,.dashboard-summary-metric{transition:box-shadow .2s ease,background .2s ease}
+.dashboard-timeline-item,.dashboard-attention-item,.dashboard-stage-card,.dashboard-summary-metric{transition:box-shadow .22s cubic-bezier(.16,1,.3,1),background .22s cubic-bezier(.16,1,.3,1)}
 .dashboard-timeline-item:hover,.dashboard-attention-item:hover,.dashboard-stage-card:hover,.dashboard-summary-metric:hover{box-shadow:0 10px 22px rgba(84,76,58,.08)}
 .dashboard-timeline-item:hover,.dashboard-attention-item:hover{background:transparent}
 .main-content .employee-job,.main-content .permission-item,.main-content .service-price,.main-content .conversation-row,.main-content .employee-dashboard-order,.main-content .employee-dashboard-agenda-item,.main-content .billing-summary-live>div,.main-content .billing-status-row{transition:transform .2s ease,box-shadow .2s ease,background .2s ease,border-color .2s ease}
