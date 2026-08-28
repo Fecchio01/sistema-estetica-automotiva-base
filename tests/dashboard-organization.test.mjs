@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
+import { buildDashboardAttentionMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
 
 test('painel operacional agrupa ordens por etapa e preserva responsável', () => {
   const model = buildDashboardOrganizationModel([
@@ -38,4 +38,19 @@ test('gráfico de etapas mostra distribuição proporcional das ordens', () => {
   assert.match(markup, /Em execução/)
   assert.match(markup, /Prontos para retirada/)
   assert.match(markup, /width:50%/)
+})
+
+test('painel de atenção reúne alertas diferentes do gráfico e do pátio', () => {
+  const markup = buildDashboardAttentionMarkup({
+    rows: [
+      { client: 'Artur', vehicle: 'Honda Civic', responsible: 'Não atribuído', stageTone: 'received', elapsedMinutes: 310 },
+      { client: 'Luna', vehicle: 'BMW 320i', responsible: 'Pedro Lima', stageTone: 'ready', elapsedMinutes: 40 },
+    ],
+  })
+
+  assert.match(markup, /Atenção operacional/)
+  assert.match(markup, /Sem responsável/)
+  assert.match(markup, /Veículos parados há mais tempo/)
+  assert.match(markup, /Próximas retiradas/)
+  assert.match(markup, /Artur/)
 })
