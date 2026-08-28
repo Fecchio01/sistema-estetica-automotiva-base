@@ -55,6 +55,8 @@ test('card de orçamento destaca cliente, total e etapa comercial', () => {
   assert.match(markup, /quote-sales-stage/)
   assert.match(markup, /R\$\s*690,00/)
   assert.match(markup, /data-quote-action="delete"/)
+  assert.match(markup, /class="quote-status-select"/)
+  assert.match(markup, /value="Recusado"/)
 })
 
 test('formulário de orçamento usa campos comerciais estilizados', () => {
