@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises'
 const styles = await readFile(new URL('../styles.css', import.meta.url), 'utf8')
 const quoteStyles = await readFile(new URL('../quotes-preview.css', import.meta.url), 'utf8')
 const app = await readFile(new URL('../app.js', import.meta.url), 'utf8')
+const clientUi = await readFile(new URL('../src/client-live-ui.js', import.meta.url), 'utf8')
 
 test('linguagem visual compartilhada evita controles quadrados e campos nativos quebrados', () => {
   assert.match(styles, /--radius-control:14px/)
@@ -52,4 +53,7 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(styles, /\.module-panel[^}]*border-radius:22px/)
   assert.match(quoteStyles, /\.quote-preview-modal \{[^}]*border-radius:\s*26px/)
   assert.match(quoteStyles, /\.quote-service-card \{[^}]*border-radius:\s*17px/)
+  assert.match(clientUi, /section\.innerHTML = section\.innerHTML\.replace\('BASE DE RELACIONAMENTO', 'CLIENTES'\)/)
+  assert.match(styles, /\.main-content \.client-summary\{display:grid;grid-template-columns:repeat\(3,1fr\);gap:12px;border:0/)
+  assert.match(styles, /\.main-content \.client-summary>div\{background:#fffdf8;border:1px solid var\(--line\);border-radius:15px/)
 })
