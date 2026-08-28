@@ -79,6 +79,8 @@
 .quote-summary-total strong { color: #173b30; font: 700 16px 'Space Grotesk'; }
 @keyframes quote-modal-in { from { opacity: 0; } to { opacity: 1; } }
 .quote-preview-form { display: grid; gap: 16px; }
+.quote-delete-button { border: 0; padding: 8px 10px; border-radius: 10px; background: #fff1ef; color: #a24e4e; font: 700 10px 'DM Sans'; cursor: pointer; transition: background .18s ease, transform .18s ease; }
+.quote-delete-button:hover { background: #fbe3e3; transform: translateY(-1px); }
 .quote-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .quote-preview-form fieldset { display: grid; gap: 8px; padding: 0; border: 0; }
 .quote-preview-form legend { margin-bottom: 8px; color: #173b30; font-weight: 700; }

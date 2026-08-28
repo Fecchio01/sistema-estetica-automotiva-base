@@ -31,6 +31,7 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(styles, /\.main-content \.service-row\{grid-template-columns:1fr auto/)
   assert.match(styles, /\.main-content \.vehicle-mark\{display:none!important/)
   assert.match(styles, /\.main-content \.employee-dashboard-order\{grid-template-columns:minmax\(0,1fr\) auto 16px/)
+  assert.match(quoteStyles, /\.quote-delete-button\s*\{[^}]*color:\s*#a24e4e/)
   assert.match(styles, /\.main-content \.service-row\{min-height:72px;padding:18px 16px/)
   assert.match(styles, /\.main-content \.service-main b\{font-size:14px/)
   assert.match(styles, /\.main-content \.service-row \.status-pill\{font-size:11px;padding:7px 10px/)

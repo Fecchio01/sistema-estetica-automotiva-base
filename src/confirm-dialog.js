@@ -24,6 +24,11 @@ const confirmationDetails = {
     message: 'Este atendimento será removido do sistema.',
     confirmLabel: 'Apagar ordem',
   },
+  quote: {
+    title: 'Apagar orçamento?',
+    message: 'Este orçamento será removido da lista de propostas.',
+    confirmLabel: 'Apagar orçamento',
+  },
 }
 
 const fallbackDetails = {
