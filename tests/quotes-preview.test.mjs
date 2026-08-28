@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildQuotePreviewModel, buildQuotePreviewDialogMarkup, buildQuoteServiceOptionMarkup, buildQuoteCardMarkup, buildQuoteClientOptionsMarkup, buildQuoteVehicleOptionsMarkup, resolveApprovedWorkOrderInput, QUOTE_STATUSES } from '../src/quotes-preview.js'
+import { buildQuotePreviewModel, buildQuotePreviewDialogMarkup, buildQuoteServiceOptionMarkup, buildQuoteCardMarkup, buildQuoteClientOptionsMarkup, buildQuoteVehicleOptionsMarkup, resolveApprovedWorkOrderInput, shouldRefreshQuotesPreview, QUOTE_STATUSES } from '../src/quotes-preview.js'
 import { canViewSection } from '../src/permissions.js'
 
 test('orçamentos ficam visíveis para administradora e recepção, mas não para funcionário', () => {
@@ -83,6 +83,11 @@ test('formulário de orçamento usa somente clientes e veículos ativos do Supab
 test('opções de cliente e veículo ficam vazias quando não há cadastro ativo', () => {
   assert.match(buildQuoteClientOptionsMarkup([]), /Nenhum cliente ativo cadastrado/)
   assert.match(buildQuoteVehicleOptionsMarkup(null), /Nenhum veículo cadastrado/)
+})
+
+test('prévia de orçamento só reage à atualização quando a aba de orçamento está ativa', () => {
+  assert.equal(shouldRefreshQuotesPreview('orcamentos'), true)
+  assert.equal(shouldRefreshQuotesPreview('atendimentos'), false)
 })
 
 test('aprovação mapeia orçamento para atendimento recebido no cliente e veículo corretos', () => {

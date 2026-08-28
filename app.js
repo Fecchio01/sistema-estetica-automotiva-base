@@ -255,6 +255,7 @@ function renderModule(section, navigationToken = currentNavigationToken) {
   genericAction.dataset.module = section;
   genericAction.classList.toggle('hidden', ['atendimentos', 'orcamentos', 'conversas', 'faturamento'].includes(section));
   const content = document.querySelector('#module-content');
+  content.removeAttribute('data-quotes-preview-root');
   if (section === 'orcamentos') {
     globalThis.__renderQuotesPreview?.(content);
     return;

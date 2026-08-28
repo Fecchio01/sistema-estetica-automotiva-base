@@ -89,6 +89,10 @@ export function resolveApprovedWorkOrderInput(quote, profile, clientRecords = []
   return { clientId: client.id, vehicleId: vehicle.id, responsibleId: profile.id, status: 'scheduled', scheduledAt: null, services: (quote.items || []).map((item) => item.name), totalAmount: quote.total }
 }
 
+export function shouldRefreshQuotesPreview(activeSection) {
+  return activeSection === 'orcamentos'
+}
+
 function render(root) {
   const clientRecords = Array.isArray(globalThis.__clientRecords) ? globalThis.__clientRecords : []
   root.dataset.quotesPreviewRoot = 'true'
@@ -168,8 +172,9 @@ function render(root) {
 }
 
 globalThis.__renderQuotesPreview = render
-if (typeof document !== 'undefined') {
+  if (typeof document !== 'undefined') {
   document.addEventListener('live-data-ready', () => {
+    if (!shouldRefreshQuotesPreview(document.querySelector('#generic-action')?.dataset.module)) return
     const root = document.querySelector('[data-quotes-preview-root]')
     if (root) render(root)
   })
