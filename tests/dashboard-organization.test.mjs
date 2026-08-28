@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildDashboardOrganizationModel, buildDashboardPaddockMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
+import { buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
 
 test('painel operacional agrupa ordens por etapa e preserva responsável', () => {
   const model = buildDashboardOrganizationModel([
@@ -28,4 +28,14 @@ test('pátio usa um contador autoexplicativo em vez de um zero isolado', () => {
 
   assert.match(markup, /0 veículos no pátio/)
   assert.match(markup, /dashboard-paddock-total/)
+})
+
+test('gráfico de etapas mostra distribuição proporcional das ordens', () => {
+  const markup = buildDashboardStageChartMarkup({ stageCounts: { received: 1, inProgress: 2, ready: 1 } })
+
+  assert.match(markup, /Distribuição das ordens/)
+  assert.match(markup, /Aguardando avaliação/)
+  assert.match(markup, /Em execução/)
+  assert.match(markup, /Prontos para retirada/)
+  assert.match(markup, /width:50%/)
 })

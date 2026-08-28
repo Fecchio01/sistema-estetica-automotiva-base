@@ -50,4 +50,19 @@ export function buildDashboardPaddockMarkup(model) {
   return `<section class="dashboard-panel dashboard-paddock-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">PÁTIO AO VIVO</p><h2>Onde estão os veículos</h2></div><span class="dashboard-paddock-total" aria-label="${model.rows.length} ${vehicleLabel} no pátio"><b>${model.rows.length}</b><small>${vehicleLabel} no pátio</small></span></div><p class="muted">Acompanhe cada veículo, etapa, responsável e tempo desde a entrada.</p><div class="dashboard-stage-cards">${stageCards}</div><div class="dashboard-paddock-list">${rows}</div></section>`
 }
 
-globalThis.__dashboardOrganization = { buildDashboardOrganizationModel, buildDashboardPaddockMarkup }
+export function buildDashboardStageChartMarkup(model) {
+  const entries = [
+    ['received', 'Aguardando avaliação', model.stageCounts.received],
+    ['in-progress', 'Em execução', model.stageCounts.inProgress],
+    ['ready', 'Prontos para retirada', model.stageCounts.ready],
+  ]
+  const maxCount = Math.max(1, ...entries.map(([, , count]) => count))
+  const total = entries.reduce((sum, [, , count]) => sum + count, 0)
+  const rows = entries.map(([tone, label, count]) => {
+    const width = Math.round((count / maxCount) * 100)
+    return `<div class="dashboard-chart-row"><div class="dashboard-chart-label"><span><i class="dashboard-stage-dot ${tone}"></i>${label}</span><b>${count}</b></div><div class="dashboard-chart-track"><span class="dashboard-chart-bar ${tone}" style="width:${width}%"></span></div></div>`
+  }).join('')
+  return `<article class="dashboard-panel dashboard-stage-chart-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">FLUXO DA OPERAÇÃO</p><h2>Distribuição das ordens</h2></div><span class="dashboard-chart-total"><b>${total}</b><small>no período atual</small></span></div><p class="muted">Veja rapidamente em qual etapa está concentrado o movimento da estética.</p><div class="dashboard-chart-list">${rows}</div></article>`
+}
+
+globalThis.__dashboardOrganization = { buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup }
