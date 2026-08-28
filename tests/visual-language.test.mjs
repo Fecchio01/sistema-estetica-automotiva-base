@@ -57,6 +57,8 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(styles, /\.main-content \.dashboard-paddock-row::before\{content:"";position:absolute;inset:0;z-index:-1;border:1px solid var\(--line\);border-radius:14px;transition:transform \.22s cubic-bezier\(\.16,1,\.3,1\)/)
   assert.match(styles, /\.main-content \.dashboard-paddock-row:hover::before\{transform:translateY\(-3px\)/)
   assert.match(styles, /\.main-content \.dashboard-attention-item:hover::before\{transform:translateY\(-3px\)/)
+  assert.match(styles, /\.main-content \.dashboard-timeline-list\{gap:10px\}/)
+  assert.match(styles, /\.main-content \.dashboard-timeline-item\{padding:14px 16px;border:1px solid var\(--line\);border-radius:16px/)
   assert.match(styles, /\.main-content \.dashboard-paddock-row:hover\{box-shadow:none;background:transparent\}/)
   assert.match(styles, /\.main-content \.dashboard-attention-item:hover\{box-shadow:none;background:transparent\}/)
   assert.match(styles, /\.main-content \.dashboard-paddock-row:hover::before\{transform:translateY\(-3px\);box-shadow:0 12px 26px rgba\(35,79,57,\.1\)/)
