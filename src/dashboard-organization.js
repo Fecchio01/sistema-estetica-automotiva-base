@@ -17,7 +17,7 @@ export function formatElapsedSince(createdAt, now = new Date()) {
 
 export function buildDashboardOrganizationModel(services = [], states = [], profiles = [], now = new Date()) {
   const profileNames = new Map(profiles.map((profile) => [profile.id, profile.full_name]))
-  const rows = services.map((service, index) => {
+  const allRows = services.map((service, index) => {
     const state = states[index] || {}
     const stage = stages[state.status] || stages[service.tone] || stages.received
     return {
@@ -29,9 +29,11 @@ export function buildDashboardOrganizationModel(services = [], states = [], prof
       elapsedMinutes: service.createdAt ? Math.max(0, Math.floor((new Date(now).getTime() - new Date(service.createdAt).getTime()) / 60000)) : null,
       elapsed: formatElapsedSince(service.createdAt, now),
     }
-  }).filter((row) => row.stageTone !== 'delivered')
+  })
+  const rows = allRows.filter((row) => row.stageTone !== 'delivered')
   return {
     rows,
+    completedRows: allRows.filter((row) => row.stageTone === 'delivered'),
     stageCounts: {
       received: rows.filter((row) => row.stageTone === 'received').length,
       inProgress: rows.filter((row) => row.stageTone === 'in-progress').length,
@@ -87,6 +89,13 @@ export function buildDashboardOperationSummaryMarkup(model, now = new Date()) {
     return createdKey >= weekStart.toISOString().slice(0, 10) && createdKey <= dayKey
   })
   const activeRows = weeklyRows.length || model.rows.some((row) => row.createdAt) ? weeklyRows : model.rows.filter((row) => row.stageTone !== 'delivered')
+  const weekStartKey = weekStart.toISOString().slice(0, 10)
+  const completedThisWeek = (model.completedRows || []).filter((row) => {
+    const completedAt = row.completedAt || row.createdAt
+    if (!completedAt) return false
+    const completedKey = new Date(completedAt).toISOString().slice(0, 10)
+    return completedKey >= weekStartKey && completedKey <= dayKey
+  }).length
   const responsibleCounts = new Map()
   const serviceCounts = new Map()
   activeRows.forEach((row) => {
@@ -102,7 +111,7 @@ export function buildDashboardOperationSummaryMarkup(model, now = new Date()) {
   const workloadMarkup = workload.map(([name, count]) => `<div class="dashboard-summary-row"><div><b>${escapeHtml(name)}</b><small>${count} ${count === 1 ? 'ordem' : 'ordens'}</small></div><span class="dashboard-summary-meter"><i style="width:${Math.round((count / maxWorkload) * 100)}%"></i></span></div>`).join('') || '<p class="dashboard-summary-empty">Nenhuma ordem ativa.</p>'
   const servicesMarkup = popularServices.map(([name, count]) => `<div class="dashboard-summary-service"><b>${escapeHtml(name)}</b><span>${count}x</span></div>`).join('') || '<p class="dashboard-summary-empty">Nenhum serviço registrado.</p>'
   const unassigned = activeRows.filter((row) => row.responsible === 'Não atribuído').length
-  return `<section class="dashboard-panel dashboard-operation-summary-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">LEITURA DO NEGÓCIO</p><h2>Panorama da operação</h2></div><span class="dashboard-count">${activeRows.length}</span></div><p class="muted">Resumo semanal da carga da equipe e do ritmo dos serviços.</p><div class="dashboard-operation-summary-grid"><div><div class="dashboard-summary-heading"><b>Carga por responsável</b><span>${unassigned} sem responsável</span></div><div class="dashboard-summary-list">${workloadMarkup}</div></div><div><div class="dashboard-summary-heading"><b>Serviços mais solicitados</b><span>últimos 7 dias</span></div><div class="dashboard-summary-services">${servicesMarkup}</div></div><div class="dashboard-summary-metric"><small>Tempo médio</small><strong>${averageLabel}</strong><span>das ordens da semana com horário</span></div></div></section>`
+  return `<section class="dashboard-panel dashboard-operation-summary-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">LEITURA DO NEGÓCIO · SEMANAL</p><h2>Panorama da operação</h2></div><span class="dashboard-count">${activeRows.length}</span></div><p class="muted">Resumo dos últimos 7 dias para entender a carga da equipe e o ritmo dos serviços.</p><div class="dashboard-operation-summary-grid"><div><div class="dashboard-summary-heading"><b>Carga por responsável</b><span>${unassigned} sem responsável</span></div><div class="dashboard-summary-list">${workloadMarkup}</div></div><div><div class="dashboard-summary-heading"><b>Serviços mais solicitados</b><span>últimos 7 dias</span></div><div class="dashboard-summary-services">${servicesMarkup}</div></div><div class="dashboard-summary-metrics"><div class="dashboard-summary-metric"><small>Tempo médio em aberto</small><strong>${averageLabel}</strong><span>das ordens da semana</span></div><div class="dashboard-summary-metric"><small>Ordens concluídas na semana</small><strong>${completedThisWeek}</strong><span>finalizadas no período</span></div></div></div></section>`
 }
 
 globalThis.__dashboardOrganization = { buildDashboardAttentionMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup }
