@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildDashboardAttentionMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
+import { buildDashboardAttentionMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
 
 test('painel operacional agrupa ordens por etapa e preserva responsável', () => {
   const model = buildDashboardOrganizationModel([
@@ -53,4 +53,16 @@ test('painel de atenção reúne alertas diferentes do gráfico e do pátio', ()
   assert.match(markup, /Veículos parados há mais tempo/)
   assert.match(markup, /Próximas retiradas/)
   assert.match(markup, /Artur/)
+})
+
+test('linha do tempo mostra somente a movimentação do dia', () => {
+  const markup = buildDashboardTodayTimelineMarkup({ rows: [
+    { client: 'Artur', vehicle: 'Honda Civic', stageTone: 'received', createdAt: '2026-08-28T09:00:00.000Z', elapsed: 'há 1h' },
+    { client: 'Luna', vehicle: 'BMW 320i', stageTone: 'ready', scheduledAt: '2026-08-29T10:00:00.000Z', createdAt: '2026-08-27T09:00:00.000Z', elapsed: 'há 1d' },
+  ] }, new Date('2026-08-28T12:00:00.000Z'))
+
+  assert.match(markup, /Operação de hoje/)
+  assert.match(markup, /Entrada recebida/)
+  assert.match(markup, /Artur/)
+  assert.doesNotMatch(markup, /Luna/)
 })

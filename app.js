@@ -768,11 +768,17 @@ function renderDashboardOrganization() {
   const paddockMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardPaddockMarkup(dashboardOrganizationModel) : '';
   const stageChartMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardStageChartMarkup(dashboardOrganizationModel) : '';
   const attentionMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardAttentionMarkup(dashboardOrganizationModel) : '';
+  const todayTimelineMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardTodayTimelineMarkup(dashboardOrganizationModel) : '';
   workspace.innerHTML = `<div class="dashboard-work-grid"><article class="dashboard-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">ORGANIZA&Ccedil;&Atilde;O</p><h2>Pend&ecirc;ncias de hoje</h2></div><span class="dashboard-count">${tasks.length}</span></div><p class="muted">Pr&oacute;ximas a&ccedil;&otilde;es para a equipe n&atilde;o perder nenhum retorno.</p><div class="dashboard-task-list">${taskMarkup}</div></article><article class="dashboard-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">VIS&Atilde;O R&Aacute;PIDA</p><h2>Ordens em acompanhamento</h2></div><span class="dashboard-count">${counts.total}</span></div><p class="muted">Acesse uma ordem diretamente sem procurar na listagem.</p><div class="dashboard-agenda-list">${agendaMarkup}</div></article></div><article class="dashboard-panel dashboard-shortcuts-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">ROTINA DA OPERA&Ccedil;&Atilde;O</p><h2>Atalhos de organiza&ccedil;&atilde;o</h2></div></div><div class="dashboard-shortcuts"><button class="dashboard-shortcut" data-dashboard-modal="service-modal"><span>01</span><b>Registrar atendimento</b><small>Abra uma nova ordem e atribua um respons&aacute;vel.</small></button><button class="dashboard-shortcut" data-dashboard-modal="new-client-modal"><span>02</span><b>Cadastrar cliente</b><small>Adicione cliente e ve&iacute;culo para a pr&oacute;xima entrada.</small></button><button class="dashboard-shortcut" data-dashboard-section="agenda"><span>03</span><b>Ver agenda</b><small>Confira entradas e retiradas previstas.</small></button><button class="dashboard-shortcut" data-dashboard-role="employee"><span>04</span><b>Abrir painel da equipe</b><small>Veja tarefas da recep&ccedil;&atilde;o e registre uma entrega.</small></button></div></article></section>`;
   if (stageChartMarkup) {
     const chartContainer = document.createElement('div');
     chartContainer.innerHTML = stageChartMarkup;
     workspace.querySelector('.dashboard-work-grid > article:nth-child(2)')?.replaceWith(chartContainer.firstElementChild);
+  }
+  if (todayTimelineMarkup) {
+    const timelineContainer = document.createElement('div');
+    timelineContainer.innerHTML = todayTimelineMarkup;
+    workspace.querySelector('.dashboard-work-grid > article:first-child')?.replaceWith(timelineContainer.firstElementChild);
   }
   if (paddockMarkup) workspace.insertAdjacentHTML('afterbegin', paddockMarkup);
   if (attentionMarkup) workspace.querySelector('.dashboard-shortcuts-panel')?.insertAdjacentHTML('beforebegin', attentionMarkup);
