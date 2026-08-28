@@ -82,6 +82,8 @@ test('panorama da operação mostra indicadores diferentes da rotina diária', (
   assert.match(markup, /1h30/)
   assert.match(markup, /últimos 7 dias/)
   assert.match(markup, /Ordens concluídas na semana/)
+  assert.match(markup, /dashboard-summary-layout-open/)
+  assert.match(markup, /dashboard-summary-section/)
   assert.match(markup, />1</)
   assert.doesNotMatch(markup, /Maya/)
 })
