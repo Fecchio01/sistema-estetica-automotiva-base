@@ -72,6 +72,7 @@ test('panorama da operação mostra indicadores diferentes da rotina diária', (
     { client: 'Artur', service: 'Polimento técnico', responsible: 'Pedro Lima', elapsedMinutes: 60, createdAt: '2026-08-27T11:00:00.000Z' },
     { client: 'Luna', service: 'Polimento técnico', responsible: 'Pedro Lima', elapsedMinutes: 120, createdAt: '2026-08-24T11:00:00.000Z' },
     { client: 'Maya', service: 'Higienização completa', responsible: 'Não atribuído', elapsedMinutes: null, createdAt: '2026-08-10T11:00:00.000Z' },
+    { client: 'Nina', service: 'Proteção cerâmica', responsible: 'Pedro Lima', elapsedMinutes: 120, createdAt: '2026-08-22T11:00:00.000Z' },
   ], completedRows: [{ client: 'João', completedAt: '2026-08-26T11:00:00.000Z' }] }, new Date('2026-08-28T12:00:00.000Z'))
 
   assert.match(markup, /Panorama da operação/)
@@ -80,12 +81,13 @@ test('panorama da operação mostra indicadores diferentes da rotina diária', (
   assert.match(markup, /Polimento técnico/)
   assert.match(markup, /Tempo médio em aberto/)
   assert.match(markup, /1h30/)
-  assert.match(markup, /últimos 7 dias/)
+  assert.match(markup, /semana atual/)
   assert.match(markup, /Ordens concluídas na semana/)
   assert.match(markup, /dashboard-summary-layout-open/)
   assert.match(markup, /dashboard-summary-section/)
   assert.match(markup, />1</)
   assert.doesNotMatch(markup, /Maya/)
+  assert.doesNotMatch(markup, /Nina/)
 })
 
 test('gráfico informa que sua leitura é mensal', () => {
