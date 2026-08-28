@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildDashboardAttentionMarkup, buildDashboardChecklistPendingMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
+import { buildDashboardAttentionMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
 
 test('painel operacional agrupa ordens por etapa e preserva responsável', () => {
   const model = buildDashboardOrganizationModel([
@@ -55,26 +55,20 @@ test('painel de atenção reúne alertas diferentes do gráfico e do pátio', ()
   assert.match(markup, /Artur/)
 })
 
-test('pendências da checklist mostram somente etapas sem foto e abrem o atendimento', () => {
-  const model = buildDashboardOrganizationModel([
-    { client: 'Artur', vehicle: 'Honda Civic', service: 'Polimento técnico', tone: 'in-progress' },
-    { client: 'Luna', vehicle: 'BMW 320i', service: 'Detalhamento interno', tone: 'received' },
-  ], [
-    { status: 'in-progress' },
-    { status: 'received' },
-  ], [], new Date('2026-08-28T12:00:00.000Z'), [
-    [{ stage: 'received' }, { stage: 'assessment' }, { stage: 'execution' }],
-    [{ stage: 'received' }, { stage: 'assessment' }, { stage: 'execution' }, { stage: 'inspection' }, { stage: 'delivery' }],
-  ])
+test('atenção operacional agrupa pendências de fotos por atendimento', () => {
+  const markup = buildDashboardAttentionMarkup({
+    rows: [
+      { orderIndex: 0, client: 'Artur', vehicle: 'Honda Civic', responsible: 'Pedro Lima', stageTone: 'in-progress', elapsedMinutes: 40, checklistPhotos: [{ stage: 'received' }, { stage: 'assessment' }] },
+      { orderIndex: 1, client: 'Luna', vehicle: 'BMW 320i', responsible: 'Pedro Lima', stageTone: 'received', elapsedMinutes: 20, checklistPhotos: [{ stage: 'received' }, { stage: 'assessment' }, { stage: 'execution' }, { stage: 'inspection' }, { stage: 'delivery' }] },
+    ],
+  })
 
-  const markup = buildDashboardChecklistPendingMarkup(model)
-
-  assert.match(markup, /Pendências da checklist/)
+  assert.match(markup, /Pendência de fotos/)
   assert.match(markup, /Artur/)
-  assert.match(markup, /Inspeção/)
-  assert.match(markup, /Entrega/)
+  assert.match(markup, /3 fotos/)
   assert.match(markup, /data-dashboard-order="0"/)
-  assert.doesNotMatch(markup, /Luna/)
+  assert.equal((markup.match(/Artur/g) || []).length, 1)
+  assert.doesNotMatch(markup, /Luna.*Pendência de fotos/)
 })
 
 test('linha do tempo mostra somente a movimentação do dia', () => {
