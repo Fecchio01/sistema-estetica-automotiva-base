@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildDashboardAttentionMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
+import { buildDashboardAttentionMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
 
 test('painel operacional agrupa ordens por etapa e preserva responsável', () => {
   const model = buildDashboardOrganizationModel([
@@ -65,4 +65,19 @@ test('linha do tempo mostra somente a movimentação do dia', () => {
   assert.match(markup, /Entrada recebida/)
   assert.match(markup, /Artur/)
   assert.doesNotMatch(markup, /Luna/)
+})
+
+test('panorama da operação mostra indicadores diferentes da rotina diária', () => {
+  const markup = buildDashboardOperationSummaryMarkup({ rows: [
+    { client: 'Artur', service: 'Polimento técnico', responsible: 'Pedro Lima', elapsedMinutes: 60 },
+    { client: 'Luna', service: 'Polimento técnico', responsible: 'Pedro Lima', elapsedMinutes: 120 },
+    { client: 'Maya', service: 'Higienização completa', responsible: 'Não atribuído', elapsedMinutes: null },
+  ] })
+
+  assert.match(markup, /Panorama da operação/)
+  assert.match(markup, /Carga por responsável/)
+  assert.match(markup, /Pedro Lima/)
+  assert.match(markup, /Polimento técnico/)
+  assert.match(markup, /Tempo médio/)
+  assert.match(markup, /1h30/)
 })

@@ -77,4 +77,24 @@ export function buildDashboardTodayTimelineMarkup(model, now = new Date()) {
   return `<article class="dashboard-panel dashboard-timeline-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">ROTINA DO DIA</p><h2>Operação de hoje</h2></div><span class="dashboard-count">${todayRows.length}</span></div><p class="muted">Entradas, execução e retiradas organizadas em uma sequência diária.</p><div class="dashboard-timeline-list">${rows}</div></article>`
 }
 
-globalThis.__dashboardOrganization = { buildDashboardAttentionMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup }
+export function buildDashboardOperationSummaryMarkup(model) {
+  const activeRows = model.rows.filter((row) => row.stageTone !== 'delivered')
+  const responsibleCounts = new Map()
+  const serviceCounts = new Map()
+  activeRows.forEach((row) => {
+    responsibleCounts.set(row.responsible, (responsibleCounts.get(row.responsible) || 0) + 1)
+    serviceCounts.set(row.service, (serviceCounts.get(row.service) || 0) + 1)
+  })
+  const workload = [...responsibleCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3)
+  const popularServices = [...serviceCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3)
+  const knownDurations = activeRows.filter((row) => Number.isFinite(row.elapsedMinutes))
+  const averageMinutes = knownDurations.length ? Math.round(knownDurations.reduce((total, row) => total + row.elapsedMinutes, 0) / knownDurations.length) : null
+  const averageLabel = averageMinutes === null ? 'sem dados' : averageMinutes >= 60 ? `${Math.floor(averageMinutes / 60)}h${String(averageMinutes % 60).padStart(2, '0')}` : `${averageMinutes} min`
+  const maxWorkload = Math.max(1, ...workload.map(([, count]) => count))
+  const workloadMarkup = workload.map(([name, count]) => `<div class="dashboard-summary-row"><div><b>${escapeHtml(name)}</b><small>${count} ${count === 1 ? 'ordem' : 'ordens'}</small></div><span class="dashboard-summary-meter"><i style="width:${Math.round((count / maxWorkload) * 100)}%"></i></span></div>`).join('') || '<p class="dashboard-summary-empty">Nenhuma ordem ativa.</p>'
+  const servicesMarkup = popularServices.map(([name, count]) => `<div class="dashboard-summary-service"><b>${escapeHtml(name)}</b><span>${count}x</span></div>`).join('') || '<p class="dashboard-summary-empty">Nenhum serviço registrado.</p>'
+  const unassigned = activeRows.filter((row) => row.responsible === 'Não atribuído').length
+  return `<section class="dashboard-panel dashboard-operation-summary-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">LEITURA DO NEGÓCIO</p><h2>Panorama da operação</h2></div><span class="dashboard-count">${activeRows.length}</span></div><p class="muted">Indicadores para entender a carga da equipe e o ritmo dos serviços.</p><div class="dashboard-operation-summary-grid"><div><div class="dashboard-summary-heading"><b>Carga por responsável</b><span>${unassigned} sem responsável</span></div><div class="dashboard-summary-list">${workloadMarkup}</div></div><div><div class="dashboard-summary-heading"><b>Serviços mais solicitados</b><span>ordens ativas</span></div><div class="dashboard-summary-services">${servicesMarkup}</div></div><div class="dashboard-summary-metric"><small>Tempo médio</small><strong>${averageLabel}</strong><span>das ordens com horário registrado</span></div></div></section>`
+}
+
+globalThis.__dashboardOrganization = { buildDashboardAttentionMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup }
