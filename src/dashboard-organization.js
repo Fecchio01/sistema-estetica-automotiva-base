@@ -4,6 +4,14 @@ const stages = Object.freeze({
   ready: { label: 'Pronto para retirada', tone: 'ready' },
 })
 
+const checklistStages = Object.freeze([
+  { id: 'received', label: 'Entrada' },
+  { id: 'assessment', label: 'Avaliação' },
+  { id: 'execution', label: 'Execução' },
+  { id: 'inspection', label: 'Inspeção' },
+  { id: 'delivery', label: 'Entrega' },
+])
+
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character])
 
 export function formatElapsedSince(createdAt, now = new Date()) {
@@ -15,7 +23,7 @@ export function formatElapsedSince(createdAt, now = new Date()) {
   return `há ${hours}h`
 }
 
-export function buildDashboardOrganizationModel(services = [], states = [], profiles = [], now = new Date()) {
+export function buildDashboardOrganizationModel(services = [], states = [], profiles = [], now = new Date(), photos = []) {
   const profileNames = new Map(profiles.map((profile) => [profile.id, profile.full_name]))
   const allRows = services.map((service, index) => {
     const state = states[index] || {}
@@ -26,6 +34,7 @@ export function buildDashboardOrganizationModel(services = [], states = [], prof
       stageLabel: stage.label,
       stageTone: stage.tone,
       responsible: profileNames.get(state.responsible || service.responsibleId) || state.responsible || 'Não atribuído',
+      checklistPhotos: photos[index] || [],
       elapsedMinutes: service.createdAt ? Math.max(0, Math.floor((new Date(now).getTime() - new Date(service.createdAt).getTime()) / 60000)) : null,
       elapsed: formatElapsedSince(service.createdAt, now),
     }
@@ -71,6 +80,15 @@ export function buildDashboardAttentionMarkup(model) {
   return `<section class="dashboard-panel dashboard-attention-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">ACOMPANHAMENTO</p><h2>Atenção operacional</h2></div><span class="dashboard-count">${unassigned.length + stale.length + pickups.length}</span></div><p class="muted">Pontos que merecem uma olhada rápida durante o dia.</p><div class="dashboard-attention-grid"><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Sem responsável</b><span>${unassigned.length}</span></div><div class="dashboard-attention-list">${list(unassigned, 'Todas as ordens têm responsável.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Veículos parados há mais tempo</b><span>${stale.length}</span></div><div class="dashboard-attention-list">${list(stale, 'Nenhum veículo acima de 3h.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Próximas retiradas</b><span>${pickups.length}</span></div><div class="dashboard-attention-list">${list(pickups, 'Nenhuma retirada pendente.')}</div></div></div></section>`
 }
 
+export function buildDashboardChecklistPendingMarkup(model) {
+  const pending = model.rows.flatMap((row) => {
+    const photoStages = new Set((row.checklistPhotos || []).map((photo) => photo?.stage))
+    return checklistStages.filter(({ id }) => !photoStages.has(id)).map((stage) => ({ row, stage }))
+  })
+  const items = pending.slice(0, 6).map(({ row, stage }) => `<button class="dashboard-checklist-pending-item" data-dashboard-order="${row.orderIndex}"><span><b>${escapeHtml(row.client)}</b><small>${escapeHtml(row.vehicle)}</small></span><strong>${stage.label}</strong></button>`).join('')
+  return `<section class="dashboard-panel dashboard-checklist-pending-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">CHECKLIST VISUAL</p><h2>Pendências da checklist</h2></div><span class="dashboard-count">${pending.length}</span></div><p class="muted">Etapas que ainda precisam de uma foto para completar o acompanhamento.</p><div class="dashboard-checklist-pending-list">${items || '<p class="dashboard-empty">Nenhuma etapa pendente de foto.</p>'}</div></section>`
+}
+
 export function buildDashboardTodayTimelineMarkup(model, now = new Date()) {
   const dayKey = new Date(now).toISOString().slice(0, 10)
   const todayRows = model.rows.filter((row) => (row.scheduledAt || row.createdAt) && new Date(row.scheduledAt || row.createdAt).toISOString().slice(0, 10) === dayKey).sort((a, b) => new Date(a.scheduledAt || a.createdAt) - new Date(b.scheduledAt || b.createdAt))
@@ -114,4 +132,4 @@ export function buildDashboardOperationSummaryMarkup(model, now = new Date()) {
   return `<section class="dashboard-panel dashboard-operation-summary-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">LEITURA DO NEGÓCIO · SEMANAL</p><h2>Panorama da operação</h2></div><span class="dashboard-count">${activeRows.length}</span></div><p class="muted">Resumo da semana atual, de domingo a sábado, para entender a carga da equipe e o ritmo dos serviços.</p><div class="dashboard-operation-summary-grid dashboard-summary-layout-open"><div class="dashboard-summary-section"><div class="dashboard-summary-heading"><b>Carga por responsável</b><span>${unassigned} sem responsável</span></div><div class="dashboard-summary-list">${workloadMarkup}</div></div><div class="dashboard-summary-section"><div class="dashboard-summary-heading"><b>Serviços mais solicitados</b><span>semana atual</span></div><div class="dashboard-summary-services">${servicesMarkup}</div></div><div class="dashboard-summary-metrics"><div class="dashboard-summary-metric"><small>Tempo médio em aberto</small><strong>${averageLabel}</strong><span>das ordens da semana</span></div><div class="dashboard-summary-metric"><small>Ordens concluídas na semana</small><strong>${completedThisWeek}</strong><span>finalizadas no período</span></div></div></div></section>`
 }
 
-globalThis.__dashboardOrganization = { buildDashboardAttentionMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup }
+globalThis.__dashboardOrganization = { buildDashboardAttentionMarkup, buildDashboardChecklistPendingMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup }

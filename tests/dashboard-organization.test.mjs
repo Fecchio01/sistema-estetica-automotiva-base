@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildDashboardAttentionMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
+import { buildDashboardAttentionMarkup, buildDashboardChecklistPendingMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
 
 test('painel operacional agrupa ordens por etapa e preserva responsável', () => {
   const model = buildDashboardOrganizationModel([
@@ -53,6 +53,28 @@ test('painel de atenção reúne alertas diferentes do gráfico e do pátio', ()
   assert.match(markup, /Veículos parados há mais tempo/)
   assert.match(markup, /Próximas retiradas/)
   assert.match(markup, /Artur/)
+})
+
+test('pendências da checklist mostram somente etapas sem foto e abrem o atendimento', () => {
+  const model = buildDashboardOrganizationModel([
+    { client: 'Artur', vehicle: 'Honda Civic', service: 'Polimento técnico', tone: 'in-progress' },
+    { client: 'Luna', vehicle: 'BMW 320i', service: 'Detalhamento interno', tone: 'received' },
+  ], [
+    { status: 'in-progress' },
+    { status: 'received' },
+  ], [], new Date('2026-08-28T12:00:00.000Z'), [
+    [{ stage: 'received' }, { stage: 'assessment' }, { stage: 'execution' }],
+    [{ stage: 'received' }, { stage: 'assessment' }, { stage: 'execution' }, { stage: 'inspection' }, { stage: 'delivery' }],
+  ])
+
+  const markup = buildDashboardChecklistPendingMarkup(model)
+
+  assert.match(markup, /Pendências da checklist/)
+  assert.match(markup, /Artur/)
+  assert.match(markup, /Inspeção/)
+  assert.match(markup, /Entrega/)
+  assert.match(markup, /data-dashboard-order="0"/)
+  assert.doesNotMatch(markup, /Luna/)
 })
 
 test('linha do tempo mostra somente a movimentação do dia', () => {
