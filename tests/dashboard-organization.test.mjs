@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildDashboardOrganizationModel, formatElapsedSince } from '../src/dashboard-organization.js'
+import { buildDashboardOrganizationModel, buildDashboardPaddockMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
 
 test('painel operacional agrupa ordens por etapa e preserva responsável', () => {
   const model = buildDashboardOrganizationModel([
@@ -21,4 +21,11 @@ test('tempo parado usa minutos e horas sem inventar uma data', () => {
   assert.equal(formatElapsedSince('2026-08-27T14:45:00.000Z', new Date('2026-08-27T15:00:00.000Z')), 'há 15 min')
   assert.equal(formatElapsedSince('2026-08-27T12:00:00.000Z', new Date('2026-08-27T15:00:00.000Z')), 'há 3h')
   assert.equal(formatElapsedSince(null, new Date('2026-08-27T15:00:00.000Z')), 'tempo não informado')
+})
+
+test('pátio usa um contador autoexplicativo em vez de um zero isolado', () => {
+  const markup = buildDashboardPaddockMarkup({ rows: [], stageCounts: { received: 0, inProgress: 0, ready: 0 } })
+
+  assert.match(markup, /0 veículos no pátio/)
+  assert.match(markup, /dashboard-paddock-total/)
 })
