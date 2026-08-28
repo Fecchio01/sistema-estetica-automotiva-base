@@ -745,6 +745,8 @@ function openDashboardOrder(index) {
 function renderDashboardOrganization() {
   const dashboard = document.querySelector('#dashboard-section');
   if (!dashboard) return;
+  const legacyOverview = dashboard.querySelector('.content-grid');
+  legacyOverview?.remove();
   let workspace = dashboard.querySelector('#dashboard-organization');
   if (!workspace) {
     workspace = document.createElement('section');
