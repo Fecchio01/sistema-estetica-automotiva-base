@@ -36,8 +36,10 @@ function normalizeAdministratorLabels() {
 }
 
 async function refreshResponsibleOptions() {
-  const { data, error } = await supabase.from('profiles').select('full_name, role').eq('active', true).order('full_name')
+  const { data, error } = await supabase.from('profiles').select('id, full_name, role').eq('active', true).order('full_name')
   if (error || !data?.length) return
+  globalThis.__teamProfiles = data
+  document.dispatchEvent(new CustomEvent('team-data-ready'))
   const signature = data.map((profile) => `${profile.full_name}:${profile.role}`).join('|')
   const options = data.map((profile) => `<option value="${escapeHtml(profile.full_name)}">${escapeHtml(profile.full_name)} · ${escapeHtml(roleLabel(profile.role))}</option>`).join('')
   document.querySelectorAll('select[name="responsible"]').forEach((select) => {
