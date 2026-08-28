@@ -56,4 +56,7 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(clientUi, /section\.innerHTML = section\.innerHTML\.replace\('BASE DE RELACIONAMENTO', 'CLIENTES'\)/)
   assert.match(styles, /\.main-content \.client-summary\{display:grid;grid-template-columns:repeat\(3,1fr\);gap:12px;border:0/)
   assert.match(styles, /\.main-content \.client-summary>div\{background:#fffdf8;border:1px solid var\(--line\);border-radius:15px/)
+  assert.match(styles, /\.main-content \.client-summary>div\{[^}]*transition:transform \.22s cubic-bezier\(\.16,1,\.3,1\)/)
+  assert.match(styles, /\.main-content \.client-summary>div:hover\{transform:translateY\(-3px\);box-shadow:/)
+  assert.match(styles, /\.main-content \.client-directory-heading\{border-radius:0;background:#f8f5ee/)
 })

@@ -211,6 +211,10 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .main-content .client-summary>div{background:#fffdf8;border:1px solid var(--line);border-radius:15px;padding:17px 18px 18px;box-shadow:0 8px 22px rgba(84,76,58,.05)}
 .main-content .client-summary>div:first-child,.main-content .client-summary>div:last-child{padding-left:18px;border-right:1px solid var(--line)}
 @media(max-width:850px){.main-content .client-summary{gap:10px}.main-content .client-summary>div{border:1px solid var(--line)}.main-content .client-summary>div:nth-child(3){border-top:1px solid var(--line);padding-left:18px}}
+.main-content .client-summary>div{transition:transform .22s cubic-bezier(.16,1,.3,1),box-shadow .22s cubic-bezier(.16,1,.3,1),background .22s ease}
+.main-content .client-summary>div:hover{transform:translateY(-3px);box-shadow:0 14px 28px rgba(84,76,58,.1);background:#fff}
+.main-content .client-directory-heading{border-radius:0;background:#f8f5ee}
+@media(prefers-reduced-motion:reduce){.main-content .client-summary>div{transition:none!important}.main-content .client-summary>div:hover{transform:none!important;box-shadow:none!important}}
 .dashboard-timeline-item,.dashboard-attention-item,.dashboard-stage-card,.dashboard-summary-metric{transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
 .dashboard-timeline-item:hover,.dashboard-attention-item:hover,.dashboard-stage-card:hover,.dashboard-summary-metric:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(84,76,58,.08)}
 .dashboard-timeline-item:hover,.dashboard-attention-item:hover{background:transparent}
