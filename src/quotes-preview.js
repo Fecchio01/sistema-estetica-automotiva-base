@@ -35,17 +35,7 @@ export function buildQuoteServiceOptionMarkup(item, index) {
   return `<label class="quote-service-card" data-quote-service="${index}"><input type="checkbox" name="service-${index}" value="${index}"><span class="quote-service-card-check" aria-hidden="true">✓</span><span class="quote-service-card-copy"><b>${escapeHtml(item.name)}</b><small>Serviço disponível</small></span><strong>${money(item.price)}</strong><span class="quote-service-card-action">Adicionar</span></label>`
 }
 
-const demoQuotes = [
-  buildQuotePreviewModel({
-    client: 'Arthur',
-    vehicle: 'Honda Civic GRT',
-    items: [serviceOptions[1], serviceOptions[3]],
-    discount: 70,
-    status: QUOTE_STATUSES.sent,
-  }),
-]
-
-let quotes = [...demoQuotes]
+let quotes = []
 
 function money(value) {
   return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -62,12 +52,27 @@ export function buildQuoteCardMarkup(quote, index) {
   return `<article class="quote-sales-card"><div class="quote-sales-card-header"><div><span class="eyebrow">PROPOSTA ${String(index + 1).padStart(2, '0')}</span><h3>${escapeHtml(quote.client)}</h3><p>${escapeHtml(quote.vehicle)}</p></div><span class="quote-status quote-status-${statusClass}">${escapeHtml(quote.status)}</span></div><div class="quote-sales-stage" aria-label="Etapa do orçamento">${stages}</div><div class="quote-sales-card-body"><div><span class="quote-sales-label">Serviços incluídos</span><div class="quote-sales-services">${quote.items.map((item) => `<span>${escapeHtml(item.name)}</span>`).join('')}</div></div><div class="quote-sales-value"><span class="quote-sales-label">Total da proposta</span><strong>${money(quote.total)}</strong>${quote.discount ? `<small>Desconto de ${money(quote.discount)}</small>` : ''}</div></div><div class="quote-sales-card-footer"><span>${quote.items.length} ${quote.items.length === 1 ? 'serviço' : 'serviços'}</span><div class="quote-card-actions"><label class="quote-status-control"><span>Status</span><select class="quote-status-select" data-quote-action="status" data-quote-index="${index}">${statusOptions}</select></label><button class="text-button" type="button" data-quote-action="edit" data-quote-index="${index}">Editar</button><button class="outline-button" type="button" data-quote-action="approve" data-quote-index="${index}">Aprovar</button><button class="quote-delete-button" type="button" data-quote-action="delete" data-quote-index="${index}">Apagar</button></div></div></article>`
 }
 
-export function buildQuotePreviewDialogMarkup() {
-  return `<div class="quote-preview-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="quote-preview-modal-title"><div class="quote-preview-modal quote-preview-modal-wide"><button type="button" class="quote-preview-modal-close" data-quote-modal-close aria-label="Fechar">×</button><div class="quote-preview-modal-heading"><p class="eyebrow">NOVA PROPOSTA</p><h2 id="quote-preview-modal-title">Criar orçamento</h2><p>Selecione os serviços e veja o total antes de enviar ao cliente.</p></div>${formMarkup()}</div></div>`
+export function buildQuoteClientOptionsMarkup(clientRecords = []) {
+  if (!clientRecords.length) return '<option value="">Nenhum cliente ativo cadastrado</option>'
+  return clientRecords.map((record) => `<option value="${escapeHtml(record.id)}">${escapeHtml(record.name)}</option>`).join('')
 }
 
-function formMarkup() {
-  return `<form class="quote-preview-form" id="quote-preview-form"><div class="quote-form-layout"><div class="quote-form-main"><div class="quote-form-grid"><label class="quote-form-field"><span>Cliente</span><select class="quote-form-select" name="client" required><option value="Arthur">Arthur</option></select></label><label class="quote-form-field"><span>Veículo</span><select class="quote-form-select" name="vehicle" required><option>Honda Civic GRT</option><option>Honda Civic Touring</option></select></label></div><fieldset><legend>Escolha os serviços</legend><p class="quote-form-helper">Selecione um ou mais serviços para montar a proposta.</p><div class="quote-service-grid">${serviceOptions.map(buildQuoteServiceOptionMarkup).join('')}</div></fieldset><label class="quote-form-field"><span>Desconto</span><input name="discount" type="number" min="0" step="0.01" value="0"></label></div><aside class="quote-form-summary"><span class="eyebrow">RESUMO</span><h3>Sua proposta</h3><div class="quote-summary-items" id="quote-summary-items"><span>Nenhum serviço selecionado</span></div><div class="quote-summary-total"><span>Total</span><strong id="quote-preview-form-total">R$ 0,00</strong></div></aside></div><p class="quote-preview-note">Ao aprovar, a proposta será registrada como atendimento no sistema.</p><div class="form-actions"><button type="button" class="outline-button" id="quote-preview-cancel">Cancelar</button><button class="primary-button" type="submit">Salvar rascunho</button></div></form>`
+export function buildQuoteVehicleOptionsMarkup(record) {
+  const vehicles = record?.vehicles || []
+  if (!vehicles.length) return '<option value="">Nenhum veículo cadastrado</option>'
+  return vehicles.map((vehicle) => {
+    const label = [vehicle.make, vehicle.model, vehicle.license_plate].filter(Boolean).join(' · ')
+    return `<option value="${escapeHtml(vehicle.id)}">${escapeHtml(label)}</option>`
+  }).join('')
+}
+
+export function buildQuotePreviewDialogMarkup(clientRecords = []) {
+  return `<div class="quote-preview-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="quote-preview-modal-title"><div class="quote-preview-modal quote-preview-modal-wide"><button type="button" class="quote-preview-modal-close" data-quote-modal-close aria-label="Fechar">×</button><div class="quote-preview-modal-heading"><p class="eyebrow">NOVA PROPOSTA</p><h2 id="quote-preview-modal-title">Criar orçamento</h2><p>Selecione os serviços e veja o total antes de enviar ao cliente.</p></div>${formMarkup(clientRecords)}</div></div>`
+}
+
+function formMarkup(clientRecords) {
+  const firstClient = clientRecords[0]
+  return `<form class="quote-preview-form" id="quote-preview-form"><div class="quote-form-layout"><div class="quote-form-main"><div class="quote-form-grid"><label class="quote-form-field"><span>Cliente</span><select class="quote-form-select" name="client" required>${buildQuoteClientOptionsMarkup(clientRecords)}</select></label><label class="quote-form-field"><span>Veículo</span><select class="quote-form-select" name="vehicle" required>${buildQuoteVehicleOptionsMarkup(firstClient)}</select></label></div><fieldset><legend>Escolha os serviços</legend><p class="quote-form-helper">Selecione um ou mais serviços para montar a proposta.</p><div class="quote-service-grid">${serviceOptions.map(buildQuoteServiceOptionMarkup).join('')}</div></fieldset><label class="quote-form-field"><span>Desconto</span><input name="discount" type="number" min="0" step="0.01" value="0"></label></div><aside class="quote-form-summary"><span class="eyebrow">RESUMO</span><h3>Sua proposta</h3><div class="quote-summary-items" id="quote-summary-items"><span>Nenhum serviço selecionado</span></div><div class="quote-summary-total"><span>Total</span><strong id="quote-preview-form-total">R$ 0,00</strong></div></aside></div><p class="quote-preview-note">Ao aprovar, a proposta será registrada como atendimento no sistema.</p><div class="form-actions"><button type="button" class="outline-button" id="quote-preview-cancel">Cancelar</button><button class="primary-button" type="submit">Salvar rascunho</button></div></form>`
 }
 
 export function resolveApprovedWorkOrderInput(quote, profile, clientRecords = []) {
@@ -85,11 +90,16 @@ export function resolveApprovedWorkOrderInput(quote, profile, clientRecords = []
 }
 
 function render(root) {
-  root.innerHTML = `<div class="quotes-preview-shell"><div class="quotes-preview-intro"><div><p class="eyebrow">FLUXO COMERCIAL</p><h2>Orçamentos</h2><p>Monte propostas com vários serviços e transforme uma aprovação em atendimento.</p></div><span class="quote-preview-badge">Conectado ao atendimento</span></div><div class="quote-preview-metrics"><div><span>Rascunhos</span><strong>${quotes.filter((quote) => quote.status === QUOTE_STATUSES.draft).length}</strong><small>em preparação</small></div><div><span>Enviados</span><strong>${quotes.filter((quote) => quote.status === QUOTE_STATUSES.sent).length}</strong><small>aguardando cliente</small></div><div><span>Valor em propostas</span><strong>${money(quotes.reduce((total, quote) => total + quote.total, 0))}</strong><small>somatório da prévia</small></div></div><div class="quote-preview-toolbar"><div><h3>Propostas recentes</h3><p>A aprovação cria um atendimento recebido e remove a proposta desta lista.</p></div><button class="primary-button" type="button" id="quote-preview-new">+ Novo orçamento</button></div><div class="quote-sales-list">${quotes.map(buildQuoteCardMarkup).join('')}</div><div class="quote-preview-form-host hidden" id="quote-preview-form-host">${buildQuotePreviewDialogMarkup()}</div></div>`
+  const clientRecords = Array.isArray(globalThis.__clientRecords) ? globalThis.__clientRecords : []
+  root.dataset.quotesPreviewRoot = 'true'
+  root.innerHTML = `<div class="quotes-preview-shell"><div class="quotes-preview-intro"><div><p class="eyebrow">FLUXO COMERCIAL</p><h2>Orçamentos</h2><p>Monte propostas com vários serviços e transforme uma aprovação em atendimento.</p></div><span class="quote-preview-badge">Conectado ao atendimento</span></div><div class="quote-preview-metrics"><div><span>Rascunhos</span><strong>${quotes.filter((quote) => quote.status === QUOTE_STATUSES.draft).length}</strong><small>em preparação</small></div><div><span>Enviados</span><strong>${quotes.filter((quote) => quote.status === QUOTE_STATUSES.sent).length}</strong><small>aguardando cliente</small></div><div><span>Valor em propostas</span><strong>${money(quotes.reduce((total, quote) => total + quote.total, 0))}</strong><small>somatório da prévia</small></div></div><div class="quote-preview-toolbar"><div><h3>Propostas recentes</h3><p>A aprovação cria um atendimento recebido e remove a proposta desta lista.</p></div><button class="primary-button" type="button" id="quote-preview-new">+ Novo orçamento</button></div><div class="quote-sales-list">${quotes.length ? quotes.map(buildQuoteCardMarkup).join('') : '<p class="quote-preview-empty">Nenhum orçamento criado ainda. Crie uma proposta com um cliente cadastrado.</p>'}</div><div class="quote-preview-form-host hidden" id="quote-preview-form-host">${buildQuotePreviewDialogMarkup(clientRecords)}</div></div>`
 
   const formHost = root.querySelector('#quote-preview-form-host')
   const newButton = root.querySelector('#quote-preview-new')
   const form = root.querySelector('#quote-preview-form')
+  const clientSelect = form.querySelector('[name="client"]')
+  const vehicleSelect = form.querySelector('[name="vehicle"]')
+  vehicleSelect.disabled = !(clientRecords[0]?.vehicles?.length)
   const totalElement = root.querySelector('#quote-preview-form-total')
   const summaryItems = root.querySelector('#quote-summary-items')
   const updateTotal = () => {
@@ -103,12 +113,20 @@ function render(root) {
   root.querySelectorAll('#quote-preview-cancel, [data-quote-modal-close]').forEach((button) => button.addEventListener('click', closeForm))
   root.querySelector('.quote-preview-modal-backdrop').addEventListener('click', (event) => { if (event.target === event.currentTarget) closeForm() })
   root.querySelector('.quote-preview-modal').addEventListener('click', (event) => event.stopPropagation())
+  clientSelect.addEventListener('change', () => {
+    const record = clientRecords.find((item) => item.id === clientSelect.value)
+    vehicleSelect.innerHTML = buildQuoteVehicleOptionsMarkup(record)
+    vehicleSelect.disabled = !(record?.vehicles?.length)
+  })
   form.querySelectorAll('input').forEach((input) => input.addEventListener('input', updateTotal))
   form.addEventListener('submit', (event) => {
     event.preventDefault()
     const items = [...form.querySelectorAll('input[type="checkbox"]:checked')].map((input) => serviceOptions[Number(input.value)])
     if (!items.length) return
-    quotes = [buildQuotePreviewModel({ client: form.elements.client.value, vehicle: form.elements.vehicle.value, items, discount: form.elements.discount.value }), ...quotes]
+    const client = clientRecords.find((item) => item.id === clientSelect.value)
+    const vehicle = client?.vehicles?.find((item) => item.id === vehicleSelect.value)
+    if (!client || !vehicle) return
+    quotes = [buildQuotePreviewModel({ client: client.name, vehicle: [vehicle.make, vehicle.model, vehicle.license_plate].filter(Boolean).join(' '), items, discount: form.elements.discount.value }), ...quotes]
     render(root)
   })
   const approveQuote = async (index, trigger) => {
@@ -136,7 +154,23 @@ function render(root) {
   root.querySelectorAll('[data-quote-action="approve"]').forEach((button) => button.addEventListener('click', () => approveQuote(Number(button.dataset.quoteIndex), button)))
   root.querySelectorAll('[data-quote-action="status"]').forEach((select) => select.addEventListener('change', () => { const index = Number(select.dataset.quoteIndex); if (select.value === QUOTE_STATUSES.approved) { approveQuote(index, root.querySelector(`[data-quote-action="approve"][data-quote-index="${index}"]`)); return } quotes[index] = { ...quotes[index], status: select.value }; render(root) }))
   root.querySelectorAll('[data-quote-action="delete"]').forEach((button) => button.addEventListener('click', async () => { const confirmed = await globalThis.__requestConfirmation?.('quote'); if (!confirmed) return; quotes.splice(Number(button.dataset.quoteIndex), 1); render(root) }))
-  root.querySelectorAll('[data-quote-action="edit"]').forEach((button) => button.addEventListener('click', () => { formHost.classList.remove('hidden'); newButton.disabled = true; form.elements.client.value = quotes[Number(button.dataset.quoteIndex)].client; form.elements.vehicle.value = quotes[Number(button.dataset.quoteIndex)].vehicle }))
+  root.querySelectorAll('[data-quote-action="edit"]').forEach((button) => button.addEventListener('click', () => {
+    const quote = quotes[Number(button.dataset.quoteIndex)]
+    const client = clientRecords.find((item) => item.name === quote.client)
+    const vehicle = client?.vehicles?.find((item) => [item.make, item.model, item.license_plate].filter(Boolean).join(' ') === quote.vehicle)
+    formHost.classList.remove('hidden')
+    newButton.disabled = true
+    clientSelect.value = client?.id || ''
+    vehicleSelect.innerHTML = buildQuoteVehicleOptionsMarkup(client)
+    vehicleSelect.disabled = !(client?.vehicles?.length)
+    vehicleSelect.value = vehicle?.id || ''
+  }))
 }
 
 globalThis.__renderQuotesPreview = render
+if (typeof document !== 'undefined') {
+  document.addEventListener('live-data-ready', () => {
+    const root = document.querySelector('[data-quotes-preview-root]')
+    if (root) render(root)
+  })
+}

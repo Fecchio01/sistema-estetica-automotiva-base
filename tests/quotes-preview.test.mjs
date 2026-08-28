@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildQuotePreviewModel, buildQuotePreviewDialogMarkup, buildQuoteServiceOptionMarkup, buildQuoteCardMarkup, resolveApprovedWorkOrderInput, QUOTE_STATUSES } from '../src/quotes-preview.js'
+import { buildQuotePreviewModel, buildQuotePreviewDialogMarkup, buildQuoteServiceOptionMarkup, buildQuoteCardMarkup, buildQuoteClientOptionsMarkup, buildQuoteVehicleOptionsMarkup, resolveApprovedWorkOrderInput, QUOTE_STATUSES } from '../src/quotes-preview.js'
 import { canViewSection } from '../src/permissions.js'
 
 test('orçamentos ficam visíveis para administradora e recepção, mas não para funcionário', () => {
@@ -65,6 +65,24 @@ test('formulário de orçamento usa campos comerciais estilizados', () => {
   assert.match(markup, /class="quote-form-field"/)
   assert.match(markup, /class="quote-form-select"/)
   assert.match(markup, /class="quote-preview-modal quote-preview-modal-wide"/)
+})
+
+test('formulário de orçamento usa somente clientes e veículos ativos do Supabase', () => {
+  const records = [{
+    id: 'client-1',
+    name: 'Luna Martins',
+    vehicles: [{ id: 'vehicle-1', make: 'Honda', model: 'Civic Touring', license_plate: 'ABC1D23' }],
+  }]
+  const markup = buildQuotePreviewDialogMarkup(records)
+
+  assert.match(markup, /value="client-1"[^>]*>Luna Martins/)
+  assert.match(markup, /value="vehicle-1"[^>]*>Honda · Civic Touring · ABC1D23/)
+  assert.doesNotMatch(markup, /Arthur|Rafael Nogueira/)
+})
+
+test('opções de cliente e veículo ficam vazias quando não há cadastro ativo', () => {
+  assert.match(buildQuoteClientOptionsMarkup([]), /Nenhum cliente ativo cadastrado/)
+  assert.match(buildQuoteVehicleOptionsMarkup(null), /Nenhum veículo cadastrado/)
 })
 
 test('aprovação mapeia orçamento para atendimento recebido no cliente e veículo corretos', () => {
