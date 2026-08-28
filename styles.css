@@ -260,10 +260,10 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 /* Evita oscilação: o hover não move a área que está sob o cursor. */
 .main-content .dashboard-paddock-row:hover::before{transform:none;box-shadow:0 12px 26px rgba(35,79,57,.1)}
 .main-content .dashboard-attention-item:hover::before{transform:none;box-shadow:0 12px 26px rgba(35,79,57,.1)}
-.main-content .dashboard-summary-service{transition:transform .22s ease,box-shadow .22s ease,background .22s ease}
-.main-content .dashboard-summary-service:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(35,79,57,.1);background:#fff}
+.main-content .dashboard-summary-service{transition:box-shadow .22s ease,background .22s ease}
+.main-content .dashboard-summary-service:hover{transform:none;box-shadow:0 12px 26px rgba(35,79,57,.1);background:#fff}
 .main-content .dashboard-paddock-row::before{display:none!important}
 .main-content .dashboard-attention-item::before{display:none!important}
-.main-content .dashboard-paddock-row,.main-content .dashboard-attention-item{background:#fff;border-color:var(--line);transition:transform .22s ease,box-shadow .22s ease,background .22s ease}
-.main-content .dashboard-paddock-row:hover{transform:translateY(-3px);background:#fff;box-shadow:0 12px 26px rgba(35,79,57,.1)}
-.main-content .dashboard-attention-item:hover{transform:translateY(-3px);background:#fff;box-shadow:0 12px 26px rgba(35,79,57,.1)}
+.main-content .dashboard-paddock-row,.main-content .dashboard-attention-item{background:#fff;border-color:var(--line);transition:box-shadow .22s ease,background .22s ease}
+.main-content .dashboard-paddock-row:hover{transform:none;background:#fff;box-shadow:0 12px 26px rgba(35,79,57,.1)}
+.main-content .dashboard-attention-item:hover{transform:none;background:#fff;box-shadow:0 12px 26px rgba(35,79,57,.1)}
