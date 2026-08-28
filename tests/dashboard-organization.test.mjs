@@ -69,10 +69,10 @@ test('linha do tempo mostra somente a movimentação do dia', () => {
 
 test('panorama da operação mostra indicadores diferentes da rotina diária', () => {
   const markup = buildDashboardOperationSummaryMarkup({ rows: [
-    { client: 'Artur', service: 'Polimento técnico', responsible: 'Pedro Lima', elapsedMinutes: 60 },
-    { client: 'Luna', service: 'Polimento técnico', responsible: 'Pedro Lima', elapsedMinutes: 120 },
-    { client: 'Maya', service: 'Higienização completa', responsible: 'Não atribuído', elapsedMinutes: null },
-  ] })
+    { client: 'Artur', service: 'Polimento técnico', responsible: 'Pedro Lima', elapsedMinutes: 60, createdAt: '2026-08-27T11:00:00.000Z' },
+    { client: 'Luna', service: 'Polimento técnico', responsible: 'Pedro Lima', elapsedMinutes: 120, createdAt: '2026-08-24T11:00:00.000Z' },
+    { client: 'Maya', service: 'Higienização completa', responsible: 'Não atribuído', elapsedMinutes: null, createdAt: '2026-08-10T11:00:00.000Z' },
+  ] }, new Date('2026-08-28T12:00:00.000Z'))
 
   assert.match(markup, /Panorama da operação/)
   assert.match(markup, /Carga por responsável/)
@@ -80,4 +80,16 @@ test('panorama da operação mostra indicadores diferentes da rotina diária', (
   assert.match(markup, /Polimento técnico/)
   assert.match(markup, /Tempo médio/)
   assert.match(markup, /1h30/)
+  assert.match(markup, /últimos 7 dias/)
+  assert.doesNotMatch(markup, /Maya/)
+})
+
+test('gráfico informa que sua leitura é mensal', () => {
+  const markup = buildDashboardStageChartMarkup({
+    rows: [{ stageTone: 'received', createdAt: '2026-08-10T11:00:00.000Z' }],
+    stageCounts: { received: 1, inProgress: 0, ready: 0 },
+  }, new Date('2026-08-28T12:00:00.000Z'))
+
+  assert.match(markup, /Fluxo mensal/)
+  assert.match(markup, /ordens criadas neste mês/)
 })

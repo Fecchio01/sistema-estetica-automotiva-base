@@ -46,11 +46,11 @@ export function buildDashboardPaddockMarkup(model) {
   return `<section class="dashboard-panel dashboard-paddock-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">PÁTIO AO VIVO</p><h2>Onde estão os veículos</h2></div><span class="dashboard-paddock-total" aria-label="${model.rows.length} ${vehicleLabel} no pátio"><b>${model.rows.length}</b><small>${vehicleLabel} no pátio</small></span></div><p class="muted">Acompanhe cada veículo, etapa, responsável e tempo desde a entrada.</p><div class="dashboard-paddock-list">${rows}</div></section>`
 }
 
-export function buildDashboardStageChartMarkup(model) {
+export function buildDashboardStageChartMarkup(model, now = new Date()) {
   const entries = [
-    ['received', 'Aguardando avaliação', model.stageCounts.received],
-    ['in-progress', 'Em execução', model.stageCounts.inProgress],
-    ['ready', 'Prontos para retirada', model.stageCounts.ready],
+    ['received', 'Aguardando avaliação', model.rows?.filter((row) => row.createdAt && new Date(row.createdAt).getUTCMonth() === new Date(now).getUTCMonth() && new Date(row.createdAt).getUTCFullYear() === new Date(now).getUTCFullYear() && row.stageTone === 'received').length ?? model.stageCounts.received],
+    ['in-progress', 'Em execução', model.rows?.filter((row) => row.createdAt && new Date(row.createdAt).getUTCMonth() === new Date(now).getUTCMonth() && new Date(row.createdAt).getUTCFullYear() === new Date(now).getUTCFullYear() && row.stageTone === 'in-progress').length ?? model.stageCounts.inProgress],
+    ['ready', 'Prontos para retirada', model.rows?.filter((row) => row.createdAt && new Date(row.createdAt).getUTCMonth() === new Date(now).getUTCMonth() && new Date(row.createdAt).getUTCFullYear() === new Date(now).getUTCFullYear() && row.stageTone === 'ready').length ?? model.stageCounts.ready],
   ]
   const maxCount = Math.max(1, ...entries.map(([, , count]) => count))
   const total = entries.reduce((sum, [, , count]) => sum + count, 0)
@@ -58,7 +58,7 @@ export function buildDashboardStageChartMarkup(model) {
     const width = Math.round((count / maxCount) * 100)
     return `<div class="dashboard-chart-row"><div class="dashboard-chart-label"><span><i class="dashboard-stage-dot ${tone}"></i>${label}</span><b>${count}</b></div><div class="dashboard-chart-track"><span class="dashboard-chart-bar ${tone}" style="width:${width}%"></span></div></div>`
   }).join('')
-  return `<article class="dashboard-panel dashboard-stage-chart-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">FLUXO DA OPERAÇÃO</p><h2>Distribuição das ordens</h2></div><span class="dashboard-chart-total"><b>${total}</b><small>no período atual</small></span></div><p class="muted">Veja rapidamente em qual etapa está concentrado o movimento da estética.</p><div class="dashboard-chart-list">${rows}</div></article>`
+  return `<article class="dashboard-panel dashboard-stage-chart-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">FLUXO DA OPERAÇÃO</p><h2>Fluxo mensal</h2></div><span class="dashboard-chart-total"><b>${total}</b><small>ordens criadas neste mês</small></span></div><p class="muted">Distribuição das ordens para acompanhar o fluxo da estética no mês.</p><div class="dashboard-chart-list">${rows}</div></article>`
 }
 
 export function buildDashboardAttentionMarkup(model) {
@@ -77,8 +77,16 @@ export function buildDashboardTodayTimelineMarkup(model, now = new Date()) {
   return `<article class="dashboard-panel dashboard-timeline-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">ROTINA DO DIA</p><h2>Operação de hoje</h2></div><span class="dashboard-count">${todayRows.length}</span></div><p class="muted">Entradas, execução e retiradas organizadas em uma sequência diária.</p><div class="dashboard-timeline-list">${rows}</div></article>`
 }
 
-export function buildDashboardOperationSummaryMarkup(model) {
-  const activeRows = model.rows.filter((row) => row.stageTone !== 'delivered')
+export function buildDashboardOperationSummaryMarkup(model, now = new Date()) {
+  const dayKey = new Date(now).toISOString().slice(0, 10)
+  const weekStart = new Date(now)
+  weekStart.setUTCDate(weekStart.getUTCDate() - 6)
+  const weeklyRows = model.rows.filter((row) => {
+    if (!row.createdAt) return false
+    const createdKey = new Date(row.createdAt).toISOString().slice(0, 10)
+    return createdKey >= weekStart.toISOString().slice(0, 10) && createdKey <= dayKey
+  })
+  const activeRows = weeklyRows.length || model.rows.some((row) => row.createdAt) ? weeklyRows : model.rows.filter((row) => row.stageTone !== 'delivered')
   const responsibleCounts = new Map()
   const serviceCounts = new Map()
   activeRows.forEach((row) => {
@@ -94,7 +102,7 @@ export function buildDashboardOperationSummaryMarkup(model) {
   const workloadMarkup = workload.map(([name, count]) => `<div class="dashboard-summary-row"><div><b>${escapeHtml(name)}</b><small>${count} ${count === 1 ? 'ordem' : 'ordens'}</small></div><span class="dashboard-summary-meter"><i style="width:${Math.round((count / maxWorkload) * 100)}%"></i></span></div>`).join('') || '<p class="dashboard-summary-empty">Nenhuma ordem ativa.</p>'
   const servicesMarkup = popularServices.map(([name, count]) => `<div class="dashboard-summary-service"><b>${escapeHtml(name)}</b><span>${count}x</span></div>`).join('') || '<p class="dashboard-summary-empty">Nenhum serviço registrado.</p>'
   const unassigned = activeRows.filter((row) => row.responsible === 'Não atribuído').length
-  return `<section class="dashboard-panel dashboard-operation-summary-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">LEITURA DO NEGÓCIO</p><h2>Panorama da operação</h2></div><span class="dashboard-count">${activeRows.length}</span></div><p class="muted">Indicadores para entender a carga da equipe e o ritmo dos serviços.</p><div class="dashboard-operation-summary-grid"><div><div class="dashboard-summary-heading"><b>Carga por responsável</b><span>${unassigned} sem responsável</span></div><div class="dashboard-summary-list">${workloadMarkup}</div></div><div><div class="dashboard-summary-heading"><b>Serviços mais solicitados</b><span>ordens ativas</span></div><div class="dashboard-summary-services">${servicesMarkup}</div></div><div class="dashboard-summary-metric"><small>Tempo médio</small><strong>${averageLabel}</strong><span>das ordens com horário registrado</span></div></div></section>`
+  return `<section class="dashboard-panel dashboard-operation-summary-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">LEITURA DO NEGÓCIO</p><h2>Panorama da operação</h2></div><span class="dashboard-count">${activeRows.length}</span></div><p class="muted">Resumo semanal da carga da equipe e do ritmo dos serviços.</p><div class="dashboard-operation-summary-grid"><div><div class="dashboard-summary-heading"><b>Carga por responsável</b><span>${unassigned} sem responsável</span></div><div class="dashboard-summary-list">${workloadMarkup}</div></div><div><div class="dashboard-summary-heading"><b>Serviços mais solicitados</b><span>últimos 7 dias</span></div><div class="dashboard-summary-services">${servicesMarkup}</div></div><div class="dashboard-summary-metric"><small>Tempo médio</small><strong>${averageLabel}</strong><span>das ordens da semana com horário</span></div></div></section>`
 }
 
 globalThis.__dashboardOrganization = { buildDashboardAttentionMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup }
