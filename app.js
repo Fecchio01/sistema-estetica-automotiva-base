@@ -37,7 +37,20 @@ const serviceMilestones = [
   { received: '08/08/2026 às 07:55', evaluated: '08/08/2026 às 08:20' },
   { received: '07/08/2026 às 14:10', evaluated: '07/08/2026 às 14:30' }
 ];
+const PHOTO_CHECKLIST_STAGES = [
+  { id: 'received', label: 'Entrada', hint: 'Estado do veículo ao chegar.' },
+  { id: 'assessment', label: 'Avaliação', hint: 'Avarias e pontos identificados.' },
+  { id: 'execution', label: 'Execução', hint: 'Acompanhamento do serviço.' },
+  { id: 'inspection', label: 'Inspeção', hint: 'Conferência do acabamento.' },
+  { id: 'delivery', label: 'Entrega', hint: 'Resultado final do veículo.' }
+];
 const servicePhotos = services.map(() => []);
+function photoGroups(photos = []) {
+  const groups = Object.fromEntries(PHOTO_CHECKLIST_STAGES.map(({ id }) => [id, []]));
+  groups.general = [];
+  photos.forEach((photo) => { const stage = PHOTO_CHECKLIST_STAGES.some(({ id }) => id === photo?.stage) ? photo.stage : 'general'; groups[stage].push(photo); });
+  return groups;
+}
 function vehicleParts(vehicle) {
   const parts = String(vehicle || '').split(String.fromCharCode(183));
   return { model: (parts[0] || '').replace(/Ã‚|Â$/g, '').trim(), plate: (parts[1] || '').trim() };
@@ -383,17 +396,23 @@ if (whatsappButton) {
 }
 function addClientPhotos(portal) {
   if (!portal || portal.querySelector('.portal-photos')) return;
-  portal.querySelector('.portal-footer').insertAdjacentHTML('beforebegin', `<section class="portal-photos"><div class="portal-section-heading"><div><p class="eyebrow">REGISTRO VISUAL</p><h3>Fotos do serviço</h3></div><span class="photo-count">3 fotos</span></div><div class="photo-grid"><figure><img src="https://images.squarespace-cdn.com/content/v1/62b21428251d255436cd2356/e61f43e0-c9fb-456a-aeb3-d9621d4291ff/GridArt_20230731_160914788.jpg" alt="Veículo antes e depois do serviço" /><figcaption>Antes e depois · Hoje, 08:45</figcaption></figure><figure><img src="https://images.squarespace-cdn.com/content/v1/62b21428251d255436cd2356/bae8f1fc-35fd-4465-88df-3f9b9fda6096/GridArt_20231204_172529008.jpg" alt="Interior e exterior do veículo em limpeza" /><figcaption>Interior e exterior · Hoje, 11:20</figcaption></figure><figure><img src="https://images.squarespace-cdn.com/content/v1/62b21428251d255436cd2356/793806e4-c939-4f89-96c8-9b7a62011617/GridArt_20231204_165303090.jpg" alt="Resultado final do detalhamento automotivo" /><figcaption>Resultado final · Hoje, 13:05</figcaption></figure></div></section>`);
+  portal.querySelector('.portal-footer').insertAdjacentHTML('beforebegin', `<section class="portal-photos"><div class="portal-section-heading"><div><p class="eyebrow">CHECKLIST VISUAL</p><h3>Fotos por etapa</h3><small class="muted">Acompanhe o estado do veículo do recebimento à entrega.</small></div><span class="photo-count">3 fotos</span></div><div class="photo-checklist" data-client-photo-checklist></div></section>`);
+  refreshClientPhotos();
 }
 function refreshClientPhotos() {
   document.querySelectorAll('.client-portal').forEach((portal) => {
-    const grid = portal.querySelector('.photo-grid');
-    if (!grid) return;
-    grid.querySelectorAll('[data-uploaded-photo]').forEach((photo) => photo.remove());
-    const uploaded = servicePhotos[activeServiceIndex] || [];
-    uploaded.forEach((photo) => grid.insertAdjacentHTML('beforeend', `<figure data-uploaded-photo><img src="${photo.url}" alt="Foto adicionada pela equipe" /><figcaption>${photo.name} · Enviado agora</figcaption></figure>`));
+    const checklist = portal.querySelector('[data-client-photo-checklist]');
+    if (!checklist) return;
+    const seeded = [
+      { stage: 'received', url: 'https://images.squarespace-cdn.com/content/v1/62b21428251d255436cd2356/e61f43e0-c9fb-456a-aeb3-d9621d4291ff/GridArt_20230731_160914788.jpg', name: 'Estado inicial · Hoje, 08:45' },
+      { stage: 'execution', url: 'https://images.squarespace-cdn.com/content/v1/62b21428251d255436cd2356/bae8f1fc-35fd-4465-88df-3f9b9fda6096/GridArt_20231204_172529008.jpg', name: 'Durante o serviço · Hoje, 11:20' },
+      { stage: 'delivery', url: 'https://images.squarespace-cdn.com/content/v1/62b21428251d255436cd2356/793806e4-c939-4f89-96c8-9b7a62011617/GridArt_20231204_165303090.jpg', name: 'Resultado final · Hoje, 13:05' }
+    ];
+    const allPhotos = [...seeded, ...(servicePhotos[activeServiceIndex] || [])];
+    const groups = photoGroups(allPhotos);
+    checklist.innerHTML = PHOTO_CHECKLIST_STAGES.map(({ id, label, hint }) => `<section class="photo-checklist-stage"><div class="photo-checklist-heading"><div><b>${label}</b><small>${hint}</small></div><span>${groups[id].length} ${groups[id].length === 1 ? 'foto' : 'fotos'}</span></div><div class="photo-grid">${groups[id].map((photo) => `<figure><img src="${photo.url}" alt="Foto do veículo na etapa ${label.toLowerCase()}" /><figcaption>${photo.name}</figcaption></figure>`).join('') || '<p class="photo-stage-empty">Nenhuma foto registrada nesta etapa.</p>'}</div></section>`).join('') + (groups.general.length ? `<section class="photo-checklist-stage"><div class="photo-checklist-heading"><div><b>Registro geral</b><small>Fotos antigas sem etapa definida.</small></div><span>${groups.general.length} fotos</span></div><div class="photo-grid">${groups.general.map((photo) => `<figure><img src="${photo.url}" alt="Foto adicional do veículo" /><figcaption>${photo.name}</figcaption></figure>`).join('')}</div></section>` : '');
     const count = portal.querySelector('.photo-count');
-    if (count) count.textContent = `${3 + uploaded.length} fotos`;
+    if (count) count.textContent = `${allPhotos.length} fotos`;
   });
 }
 document.querySelectorAll('.client-portal').forEach(addClientPhotos);
@@ -530,16 +549,18 @@ function renderEmployeeOrder(index) {
   const state = serviceStates[index];
   if (!item || !state) return;
   const photos = servicePhotos[index] || [];
-  const photoMarkup = photos.map((photo) => `<figure><img src="${photo.url}" alt="Foto adicionada pela equipe" /><figcaption>${photo.name}</figcaption></figure>`).join('') || '<p class="employee-empty">Nenhuma foto adicionada nesta ordem.</p>';
+  const groups = photoGroups(photos);
+  const photoMarkup = PHOTO_CHECKLIST_STAGES.map(({ id, label, hint }, stageIndex) => `<section class="employee-photo-stage"><div class="employee-section-heading"><div><b>${String(stageIndex + 1).padStart(2, '0')} · ${label}</b><small>${hint}</small></div><button class="outline-button employee-stage-photo" data-photo-stage="${id}" type="button">Adicionar foto</button></div><div class="employee-photo-grid">${groups[id].map((photo) => `<figure><img src="${photo.url}" alt="Foto adicionada na etapa ${label.toLowerCase()}" /><figcaption>${photo.name}</figcaption></figure>`).join('') || '<p class="employee-empty">Nenhuma foto adicionada nesta etapa.</p>'}</div></section>`).join('') + (groups.general.length ? `<section class="employee-photo-stage"><div class="employee-section-heading"><div><b>Registro geral</b><small>Fotos antigas sem etapa definida.</small></div></div><div class="employee-photo-grid">${groups.general.map((photo) => `<figure><img src="${photo.url}" alt="Foto adicional do veículo" /><figcaption>${photo.name}</figcaption></figure>`).join('')}</div></section>` : '');
   const vehicle = vehicleParts(item.vehicle);
   const advanceButton = state.stage < 4 ? '<button class="outline-button" id="employee-advance">Avan&ccedil;ar etapa</button>' : '';
   const backButton = state.stage > 0 ? '<button class="outline-button" id="employee-back-stage">Voltar etapa</button>' : '';
   const deliveryButton = state.deliveryStatus === 'delivered' ? '<button class="outline-button" id="employee-cancel-delivery">Cancelar entrega</button>' : '<button class="primary-button" id="employee-delivery" disabled>Registrar entrega</button>';
   const deliveryAction = state.status === 'ready' ? '<button class="primary-button" id="employee-delivery">Registrar entrega</button>' : deliveryButton;
-  roleScreenContent.innerHTML = `<section class="employee-order-screen"><div class="employee-order-heading"><div><p class="eyebrow">ORDEM OPERACIONAL</p><h1>${vehicle.model}</h1><p class="muted">${item.client} · ${vehicle.plate}</p></div><button class="outline-button" id="employee-back">Voltar para minhas ordens</button></div><div class="employee-order-grid"><article class="employee-order-main"><div class="employee-order-status"><div><span class="status-pill ${item.tone}">${item.status}</span><b>${stageNames[state.stage]}</b></div><small>Respons&aacute;vel: ${state.responsible}</small></div><div class="employee-stage-strip"><span class="completed">Entrada</span><span class="${state.stage >= 1 ? 'completed' : ''}">Avalia&ccedil;&atilde;o</span><span class="${state.stage >= 2 ? 'completed' : 'current'}">Execu&ccedil;&atilde;o</span><span class="${state.stage >= 3 ? 'completed' : ''}">Inspe&ccedil;&atilde;o</span><span class="${state.stage >= 4 ? 'completed' : ''}">Retirada</span></div><div class="employee-order-actions"><button class="secondary-button" id="employee-add-photo">Adicionar foto</button>${backButton}${advanceButton}${deliveryAction}<input id="employee-photo-input" type="file" accept="image/*" multiple hidden /></div><section class="employee-photo-board"><div class="employee-section-heading"><div><p class="eyebrow">REGISTRO VISUAL</p><h2>Fotos do atendimento</h2></div><span>${photos.length} foto${photos.length === 1 ? '' : 's'}</span></div><div class="employee-photo-grid">${photoMarkup}</div></section><section class="employee-observation"><label>Observa&ccedil;&atilde;o interna<textarea id="employee-observation" rows="3" placeholder="Registre um detalhe importante para a equipe.">${state.note || ''}</textarea><small class="form-helper">Vis&iacute;vel somente para a equipe da opera&ccedil;&atilde;o; n&atilde;o aparece para o cliente.</small></label><button class="outline-button" id="employee-save-note">Salvar observa&ccedil;&atilde;o</button></section></article><aside class="employee-order-aside"><div><span>Servi&ccedil;o</span><b>${item.service}</b></div><div><span>Entrada</span><b>${serviceMilestones[index]?.received || item.time}</b></div><div><span>Previs&atilde;o</span><b>${formatEstimate(index)}</b></div><div><span>Cliente</span><b>${item.client}</b><button class="text-button" id="employee-client-ficha">Ver ficha do cliente</button></div></aside></div></section>`;
+  roleScreenContent.innerHTML = `<section class="employee-order-screen"><div class="employee-order-heading"><div><p class="eyebrow">ORDEM OPERACIONAL</p><h1>${vehicle.model}</h1><p class="muted">${item.client} · ${vehicle.plate}</p></div><button class="outline-button" id="employee-back">Voltar para minhas ordens</button></div><div class="employee-order-grid"><article class="employee-order-main"><div class="employee-order-status"><div><span class="status-pill ${item.tone}">${item.status}</span><b>${stageNames[state.stage]}</b></div><small>Respons&aacute;vel: ${state.responsible}</small></div><div class="employee-stage-strip"><span class="completed">Entrada</span><span class="${state.stage >= 1 ? 'completed' : ''}">Avalia&ccedil;&atilde;o</span><span class="${state.stage >= 2 ? 'completed' : 'current'}">Execu&ccedil;&atilde;o</span><span class="${state.stage >= 3 ? 'completed' : ''}">Inspe&ccedil;&atilde;o</span><span class="${state.stage >= 4 ? 'completed' : ''}">Retirada</span></div><div class="employee-order-actions">${backButton}${advanceButton}${deliveryAction}<input id="employee-photo-input" type="file" accept="image/*" multiple hidden /></div><section class="employee-photo-board"><div class="employee-section-heading"><div><p class="eyebrow">CHECKLIST VISUAL</p><h2>Fotos por etapa</h2><small class="muted">${photos.length} foto${photos.length === 1 ? '' : 's'} registrada${photos.length === 1 ? '' : 's'} neste atendimento.</small></div></div>${photoMarkup}</section><section class="employee-observation"><label>Observa&ccedil;&atilde;o interna<textarea id="employee-observation" rows="3" placeholder="Registre um detalhe importante para a equipe.">${state.note || ''}</textarea><small class="form-helper">Vis&iacute;vel somente para a equipe da opera&ccedil;&atilde;o; n&atilde;o aparece para o cliente.</small></label><button class="outline-button" id="employee-save-note">Salvar observa&ccedil;&atilde;o</button></section></article><aside class="employee-order-aside"><div><span>Servi&ccedil;o</span><b>${item.service}</b></div><div><span>Entrada</span><b>${serviceMilestones[index]?.received || item.time}</b></div><div><span>Previs&atilde;o</span><b>${formatEstimate(index)}</b></div><div><span>Cliente</span><b>${item.client}</b><button class="text-button" id="employee-client-ficha">Ver ficha do cliente</button></div></aside></div></section>`;
   roleScreenContent.querySelector('#employee-back').addEventListener('click', () => showRoleScreen('employee'));
-  roleScreenContent.querySelector('#employee-add-photo').addEventListener('click', () => roleScreenContent.querySelector('#employee-photo-input').click());
-  roleScreenContent.querySelector('#employee-photo-input').addEventListener('change', (event) => { servicePhotos[index].push(...Array.from(event.target.files).map((file) => ({ url: URL.createObjectURL(file), name: file.name }))); refreshClientPhotos(); renderEmployeeOrder(index); showToast('Foto adicionada ao atendimento e portal do cliente.'); });
+  let selectedPhotoStage = 'received';
+  roleScreenContent.querySelectorAll('.employee-stage-photo').forEach((button) => button.addEventListener('click', () => { selectedPhotoStage = button.dataset.photoStage; roleScreenContent.querySelector('#employee-photo-input').click(); }));
+  roleScreenContent.querySelector('#employee-photo-input').addEventListener('change', (event) => { servicePhotos[index].push(...Array.from(event.target.files).map((file) => ({ url: URL.createObjectURL(file), name: file.name, stage: selectedPhotoStage }))); refreshClientPhotos(); renderEmployeeOrder(index); showToast('Foto adicionada à etapa e ao portal do cliente.'); });
   const advance = roleScreenContent.querySelector('#employee-advance');
   if (advance) advance.addEventListener('click', () => { activeServiceIndex = index; stageIndex = Math.min(4, state.stage + 1); syncStage(); renderEmployeeOrder(index); showToast('Etapa atualizada para toda a equipe.'); });
   const backStage = roleScreenContent.querySelector('#employee-back-stage');
