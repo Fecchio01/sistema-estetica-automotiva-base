@@ -38,6 +38,7 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(app, /workspace\.querySelector\('\.dashboard-shortcuts-panel'\)\?\.remove\(\)/)
   assert.match(styles, /\.dashboard-operation-summary-panel\{min-height:320px/)
   assert.match(styles, /\.main-content \.service-row \.status-pill\{font-size:11px;padding:7px 10px/)
+  assert.match(styles, /\.metric-block:hover\{transform:translateY\(-3px\);box-shadow:/)
   assert.match(styles, /\.module-panel select[^}]*appearance:none/)
   assert.match(styles, /\.module-panel[^}]*border-radius:22px/)
   assert.match(quoteStyles, /\.quote-preview-modal \{[^}]*border-radius:\s*26px/)
