@@ -64,4 +64,6 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(styles, /\.main-content\{--surface:#fff\}/)
   assert.match(styles, /\.main-content \.module-panel,\.main-content \.panel,\.main-content \.table-panel,\.main-content \.metric-block,\.main-content \.dashboard-panel,\.main-content \.employee-dashboard-panel,\.main-content \.employee-dashboard-metrics>div,\.main-content \.billing-summary-live>div\{background:#fff;border-color:var\(--line\)/)
   assert.match(styles, /\.main-content \.client-summary>div,\.main-content \.attendance-summary>div\{background:#fff;border-color:var\(--line\)/)
+  assert.match(styles, /\.main-content \.agenda-toolbar,\.main-content \.agenda-form-panel\{background:#fff\}/)
+  assert.match(styles, /\.main-content \.agenda-live-grid \.calendar-day\{background:#fff\}/)
 })
