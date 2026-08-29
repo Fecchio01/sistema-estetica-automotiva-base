@@ -26,3 +26,15 @@ export function classifyFollowUp(followUp, now = new Date()) {
   if (due < tomorrow) return 'today'
   return 'upcoming'
 }
+
+export function groupFollowUps(items = []) {
+  const groups = new Map()
+  items.forEach((item) => {
+    const key = `${item.client_id}:${item.vehicle_id}`
+    if (!groups.has(key)) groups.set(key, { key, clientId: item.client_id, vehicleId: item.vehicle_id, items: [], pendingCount: 0 })
+    const group = groups.get(key)
+    group.items.push(item)
+    if (item.status === 'pending') group.pendingCount += 1
+  })
+  return [...groups.values()]
+}

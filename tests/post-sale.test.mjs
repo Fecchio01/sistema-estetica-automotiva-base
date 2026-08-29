@@ -1,6 +1,18 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildPostSalePlan, classifyFollowUp } from '../src/post-sale-rules.js'
+import { buildPostSalePlan, classifyFollowUp, groupFollowUps } from '../src/post-sale-rules.js'
+
+test('agrupa acompanhamentos do mesmo cliente e veículo em um único card', () => {
+  const grouped = groupFollowUps([
+    { id: '1', client_id: 'c1', vehicle_id: 'v1', follow_up_type: 'check_in', status: 'pending' },
+    { id: '2', client_id: 'c1', vehicle_id: 'v1', follow_up_type: 'review', status: 'pending' },
+    { id: '3', client_id: 'c2', vehicle_id: 'v2', follow_up_type: 'return', status: 'sent' },
+  ])
+  assert.equal(grouped.length, 2)
+  assert.equal(grouped[0].items.length, 2)
+  assert.equal(grouped[0].pendingCount, 2)
+  assert.equal(grouped[1].pendingCount, 0)
+})
 
 test('cria uma sequência de pós-venda somente para atendimento concluído', () => {
   const plan = buildPostSalePlan({

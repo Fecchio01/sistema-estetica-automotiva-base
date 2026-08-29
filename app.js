@@ -268,7 +268,7 @@ function renderModule(section, navigationToken = currentNavigationToken) {
   const actionLabels = { agenda: '+ Reservar horário', equipe: '+ Adicionar membro', servicos: '+ Novo serviço', atendimentos: '+ Novo atendimento', orcamentos: '+ Novo orçamento', relatorios: 'Exportar resumo', faturamento: 'Atualizar faturamento', configuracoes: 'Salvar configurações' };
   genericAction.textContent = actionLabels[section] || '+ Adicionar registro';
   genericAction.dataset.module = section;
-  genericAction.classList.toggle('hidden', ['atendimentos', 'orcamentos', 'conversas', 'faturamento'].includes(section));
+  genericAction.classList.toggle('hidden', ['atendimentos', 'orcamentos', 'conversas', 'faturamento', 'pos-venda'].includes(section));
   const content = document.querySelector('#module-content');
   content.removeAttribute('data-quotes-preview-root');
   if (section === 'orcamentos') {
