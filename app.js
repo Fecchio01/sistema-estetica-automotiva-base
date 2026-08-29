@@ -456,7 +456,8 @@ function addEstimateEditor() {
   });
   if (!detail || detail.querySelector('.estimate-editor')) return;
   detail.querySelector('.detail-progress').insertAdjacentHTML('afterend', `<section class="estimate-editor"><div><p class="eyebrow">PREVISÃO DE ENTREGA</p><strong id="detail-estimate-label">A definir após avaliação</strong><small>Defina o prazo depois de avaliar o serviço.</small></div><div class="estimate-fields"><label>Data<input id="estimate-date" type="date" /></label><label>Horário<input id="estimate-time" type="time" /></label><button class="outline-button" id="save-estimate">Salvar previsão</button></div></section>`);
-  detail.querySelector('.detail-actions').insertAdjacentHTML('afterbegin', '<div class="order-management-actions"><button class="outline-button hidden" id="cancel-delivery">Cancelar entrega</button><button class="outline-button danger-button" id="delete-order">Apagar ordem</button></div>');
+  detail.querySelector('.detail-actions').insertAdjacentHTML('afterbegin', '<div class="order-management-actions"><button class="primary-button hidden" id="confirm-delivery">Confirmar entrega</button><button class="outline-button hidden" id="cancel-delivery">Cancelar entrega</button><button class="outline-button danger-button" id="delete-order">Apagar ordem</button></div>');
+  detail.querySelector('#confirm-delivery').addEventListener('click', async () => { const state = serviceStates[activeServiceIndex]; const active = services[activeServiceIndex]; if (state.status !== 'ready' || !['administrator', 'reception'].includes(globalThis.__activeRole)) return; state.deliveryStatus = 'delivered'; state.deliveryAt = getCurrentEntryData().received; syncStage(); try { if (active.orderId && globalThis.__updateLiveWorkOrder) await globalThis.__updateLiveWorkOrder(active.orderId, 'completed'); showToast('Entrega confirmada e atendimento finalizado.'); } catch (error) { showToast(error.message || 'Não foi possível confirmar a entrega.'); } });
   detail.querySelector('#cancel-delivery').addEventListener('click', () => { serviceStates[activeServiceIndex].deliveryStatus = null; stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); showToast('Entrega cancelada. O veículo voltou para retirada.'); });
   detail.querySelector('#delete-order').addEventListener('click', async () => { if (!(await globalThis.__requestConfirmation?.('order'))) return; const deleted = services[activeServiceIndex]; const deletedClient = deleted.client; try { if (deleted.orderId && globalThis.__deleteLiveWorkOrder) await globalThis.__deleteLiveWorkOrder(deleted.orderId); else removeService(activeServiceIndex); closeModal('detail-modal'); showToast(`Ordem de ${deletedClient} apagada do sistema.`); } catch (error) { showToast(error.message || 'Não foi possível apagar a ordem.'); } });
   detail.querySelector('#save-estimate').addEventListener('click', () => {
@@ -505,6 +506,8 @@ function syncStage() {
   status.textContent = active.status;
   status.className = `status-pill ${active.tone}`;
   const cancelDelivery = detail.querySelector('#cancel-delivery');
+  const confirmDelivery = detail.querySelector('#confirm-delivery');
+  if (confirmDelivery) confirmDelivery.classList.toggle('hidden', state.status !== 'ready' || !['administrator', 'reception'].includes(globalThis.__activeRole));
   if (cancelDelivery) cancelDelivery.classList.toggle('hidden', state.deliveryStatus !== 'delivered');
   document.querySelectorAll('.attendance-item').forEach((row) => { const index = Number(row.dataset.serviceIndex); const item = services[index]; const state = serviceStates[index]; if (!item || !state) return; const pill = row.querySelector('.status-pill'); if (pill) { pill.textContent = item.status; pill.className = `status-pill ${item.tone}`; } const stage = row.querySelector('.attendance-stage'); if (stage) stage.textContent = `Etapa: ${stageNames[state.stage]}`; row.dataset.status = item.tone === 'in-progress' ? 'andamento' : item.tone === 'waiting' ? 'aprovacao' : item.tone === 'ready' ? 'prontos' : 'recebido'; });
   document.querySelectorAll('.attendance-item').forEach((row) => { const index = Number(row.dataset.serviceIndex); const state = serviceStates[index]; if (!state) return; const responsible = row.querySelector('.attendance-person span:last-child'); if (responsible) responsible.textContent = state.responsible || 'Não atribuído'; });
@@ -593,7 +596,7 @@ function bindEmployeeOrderActions(portal) {
     let index = services.findIndex((item) => item.orderId === order.orderId);
     if (index < 0) {
       index = services.push(order) - 1;
-      serviceStates.push({ stage: order.tone === 'delivered' ? 4 : order.tone === 'in-progress' ? 2 : 0, status: order.tone === 'delivered' ? 'delivered' : order.tone === 'in-progress' ? 'in-progress' : 'received', responsible: order.responsibleId || 'Não atribuído' });
+      serviceStates.push({ stage: order.tone === 'delivered' || order.tone === 'ready' ? 4 : order.tone === 'in-progress' ? 2 : 0, status: order.tone === 'delivered' ? 'delivered' : order.tone === 'ready' ? 'ready' : order.tone === 'in-progress' ? 'in-progress' : 'received', deliveryStatus: order.tone === 'delivered' ? 'delivered' : null, responsible: order.responsibleId || 'Não atribuído' });
       serviceEstimates.push({ date: order.scheduledAt ? new Date(order.scheduledAt).toISOString().slice(0, 10) : '', time: order.scheduledAt ? new Date(order.scheduledAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '' });
       serviceMilestones.push({ received: order.time, evaluated: '' });
       servicePhotos.push([]);
@@ -751,7 +754,7 @@ document.querySelector('#copy-link').addEventListener('click', async () => {
   }
 });
 document.querySelector('#add-photo').addEventListener('click', () => { addClientPhotos(document.querySelector('.client-portal')); showToast('Área de fotos aberta para a equipe.'); });
-document.querySelector('#advance-stage').addEventListener('click', () => { if (stageIndex < 4) stageIndex += 1; syncStage(); showToast(stageIndex === 4 ? 'Veículo marcado como pronto e cliente notificado.' : 'Etapa atualizada e cliente notificado.'); });
+document.querySelector('#advance-stage').addEventListener('click', async () => { if (stageIndex < 4) stageIndex += 1; syncStage(); try { const active = services[activeServiceIndex]; if (active?.orderId && globalThis.__updateLiveWorkOrder) await globalThis.__updateLiveWorkOrder(active.orderId, stageIndex === 4 ? 'ready_for_pickup' : stageIndex === 0 ? 'scheduled' : 'in_progress'); showToast(stageIndex === 4 ? 'Veículo marcado como pronto e cliente notificado.' : 'Etapa atualizada e cliente notificado.'); } catch (error) { showToast(error.message || 'Não foi possível salvar a etapa.'); } });
 const backStageButton = document.createElement('button');
 backStageButton.className = 'outline-button';
 backStageButton.textContent = '← Voltar etapa';

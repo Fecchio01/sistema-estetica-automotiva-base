@@ -5,6 +5,7 @@ const statusMap = {
   scheduled: { label: 'Recebido', tone: 'received', state: 'received' },
   in_progress: { label: 'Em andamento', tone: 'in-progress', state: 'in-progress' },
   awaiting_approval: { label: 'Em andamento', tone: 'in-progress', state: 'in-progress' },
+  ready_for_pickup: { label: 'Pronto para retirada', tone: 'ready', state: 'ready' },
   completed: { label: 'Finalizado', tone: 'delivered', state: 'delivered' },
   cancelled: { label: 'Cancelado', tone: 'received', state: 'delivered' },
 }
@@ -23,7 +24,7 @@ export function buildLiveService(order, clientRecords = []) {
 
 function publishLiveData(services, clientRecords) {
   const liveClients = clientRecords.map((client) => [client.name, client.vehicleLabel, client.latestService, client.latestStatus, client.latestTone, client.orderCount, client.createdAt])
-  const states = services.map((service) => ({ stage: service.tone === 'delivered' ? 4 : service.tone === 'in-progress' ? 2 : 0, status: statusMap[service.orderStatus]?.state || 'received', responsible: service.responsibleId || '' }))
+  const states = services.map((service) => ({ stage: service.tone === 'delivered' || service.tone === 'ready' ? 4 : service.tone === 'in-progress' ? 2 : 0, status: statusMap[service.orderStatus]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '' }))
   globalThis.__liveServices = services
   globalThis.__liveStates = states
   globalThis.__clientRecords = clientRecords
@@ -54,7 +55,7 @@ async function loadLiveData(profile) {
     return { id: client.id, name: client.full_name, phone: client.phone || '', createdAt: client.created_at, vehicles: (vehiclesResult.data ?? []).filter((item) => item.client_id === client.id), orders: clientOrders, vehicleLabel: vehicleLabel(vehicle), latestService: latest?.service || 'Sem histórico', latestStatus: latest?.status || 'Sem atendimento', latestTone: latest?.tone || 'received', orderCount: clientOrders.length }
   })
   const liveClients = clientRecords.map((client) => [client.name, client.vehicleLabel, client.latestService, client.latestStatus, client.latestTone, client.orderCount, client.createdAt])
-  const states = services.map((service) => ({ stage: service.tone === 'delivered' ? 4 : service.tone === 'in-progress' ? 2 : 0, status: statusMap[ordersResult.data.find((order) => order.id === service.orderId)?.status]?.state || 'received', responsible: service.responsibleId || '' }))
+  const states = services.map((service) => ({ stage: service.tone === 'delivered' || service.tone === 'ready' ? 4 : service.tone === 'in-progress' ? 2 : 0, status: statusMap[ordersResult.data.find((order) => order.id === service.orderId)?.status]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '' }))
   try { await syncPostSalePlans(profile, services, clientRecords) } catch (error) { console.warn('Pós-venda ainda não sincronizado:', error.message) }
   publishLiveData(services, clientRecords)
 }
@@ -65,6 +66,14 @@ globalThis.__deleteLiveWorkOrder = async (orderId) => {
   if (!profile?.company_id || !orderId) throw new Error('Ordem inválida.')
   const { error } = await supabase.from('work_orders').delete().eq('id', orderId).eq('company_id', profile.company_id)
   if (error) throw new Error(error.message || 'Não foi possível apagar a ordem.')
+  await loadLiveData(profile)
+}
+globalThis.__updateLiveWorkOrder = async (orderId, status) => {
+  const profile = globalThis.__sessionProfile
+  if (!profile?.company_id || !orderId) throw new Error('Ordem inválida.')
+  const payload = { status, ...(status === 'completed' ? { completed_at: new Date().toISOString() } : status === 'ready_for_pickup' ? { completed_at: null } : {}) }
+  const { error } = await supabase.from('work_orders').update(payload).eq('id', orderId).eq('company_id', profile.company_id)
+  if (error) throw new Error(error.message || 'Não foi possível atualizar a etapa da ordem.')
   await loadLiveData(profile)
 }
 globalThis.__addLiveWorkOrder = (order) => {

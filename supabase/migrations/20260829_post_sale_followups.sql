@@ -18,6 +18,9 @@ create table if not exists public.post_sale_followups (
   foreign key (company_id, created_by) references public.profiles(company_id, id) on delete set null
 );
 
+alter table public.work_orders drop constraint if exists work_orders_status_check;
+alter table public.work_orders add constraint work_orders_status_check check (status in ('scheduled','in_progress','awaiting_approval','ready_for_pickup','completed','cancelled'));
+
 create index if not exists post_sale_company_due_idx on public.post_sale_followups(company_id, status, due_at);
 alter table public.post_sale_followups enable row level security;
 revoke all on table public.post_sale_followups from anon;
