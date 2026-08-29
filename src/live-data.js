@@ -1,4 +1,5 @@
 import { supabase } from './supabase-client.js'
+import { syncPostSalePlans } from './post-sale.js'
 
 const statusMap = {
   scheduled: { label: 'Recebido', tone: 'received', state: 'received' },
@@ -54,6 +55,7 @@ async function loadLiveData(profile) {
   })
   const liveClients = clientRecords.map((client) => [client.name, client.vehicleLabel, client.latestService, client.latestStatus, client.latestTone, client.orderCount, client.createdAt])
   const states = services.map((service) => ({ stage: service.tone === 'delivered' ? 4 : service.tone === 'in-progress' ? 2 : 0, status: statusMap[ordersResult.data.find((order) => order.id === service.orderId)?.status]?.state || 'received', responsible: service.responsibleId || '' }))
+  try { await syncPostSalePlans(profile, services, clientRecords) } catch (error) { console.warn('Pós-venda ainda não sincronizado:', error.message) }
   publishLiveData(services, clientRecords)
 }
 

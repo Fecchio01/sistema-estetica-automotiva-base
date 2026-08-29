@@ -189,6 +189,7 @@ const moduleCopy = {
   servicos: ['CATÁLOGO DA EMPRESA', 'Serviços e preços', 'Configure os serviços exibidos no orçamento e no atendimento.'],
   equipe: ['ACESSOS E PERMISSÕES', 'Equipe', 'Defina o que cada pessoa pode visualizar e alterar no sistema.'],
   conversas: ['RELACIONAMENTO', 'Conversas', 'Centralize os retornos dos clientes e mantenha cada conversa ligada à ordem certa.'],
+  'pos-venda': ['FIDELIZAÇÃO', 'Pós-venda', 'Acompanhe clientes depois da entrega e transforme retornos em relacionamento.'],
   relatorios: ['GESTÃO DA OPERAÇÃO', 'Relatórios', 'Acompanhe volume, status e gargalos com base nos registros atuais.'],
   configuracoes: ['CONFIGURAÇÕES', 'Configurações', 'Ajuste acessos, preferências e regras da operação.'],
   faturamento: ['GESTÃO FINANCEIRA', 'Faturamento', 'Acompanhe receitas, pagamentos, ordens e resultados por período.']
@@ -272,6 +273,10 @@ function renderModule(section, navigationToken = currentNavigationToken) {
   content.removeAttribute('data-quotes-preview-root');
   if (section === 'orcamentos') {
     globalThis.__renderQuotesPreview?.(content);
+    return;
+  }
+  if (section === 'pos-venda') {
+    globalThis.__renderPostSale?.(content, navigationToken);
     return;
   }
   if (section === 'conversas' && globalThis.__renderWhatsAppInbox) {
