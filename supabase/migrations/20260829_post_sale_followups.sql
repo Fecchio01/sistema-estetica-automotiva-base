@@ -21,6 +21,11 @@ create table if not exists public.post_sale_followups (
 alter table public.work_orders drop constraint if exists work_orders_status_check;
 alter table public.work_orders add constraint work_orders_status_check check (status in ('scheduled','in_progress','awaiting_approval','ready_for_pickup','completed','cancelled'));
 
+drop policy if exists orders_update_admin_reception on public.work_orders;
+create policy orders_update_admin_reception on public.work_orders for update to authenticated
+  using (private.is_admin_or_reception(company_id))
+  with check (private.is_admin_or_reception(company_id) and private.order_refs_belong_to_company(company_id, client_id, vehicle_id));
+
 create index if not exists post_sale_company_due_idx on public.post_sale_followups(company_id, status, due_at);
 alter table public.post_sale_followups enable row level security;
 revoke all on table public.post_sale_followups from anon;
