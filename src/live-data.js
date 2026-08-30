@@ -1,5 +1,5 @@
 import { supabase } from './supabase-client.js'
-import { syncPostSalePlans } from './post-sale.js'
+import { loadPostSaleFollowUps, syncPostSalePlans } from './post-sale.js'
 
 const statusMap = {
   scheduled: { label: 'Recebido', tone: 'received', state: 'received' },
@@ -22,13 +22,13 @@ export function buildLiveService(order, clientRecords = []) {
   return { initials: initials(record?.name), clientId: order.client_id, client: record?.name || 'Cliente', vehicle: vehicleLabel(vehicle), vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status || 'scheduled', paymentStatus: order.payment_status || 'pending', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(createdAt).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id }
 }
 
-function publishLiveData(services, clientRecords) {
+function publishLiveData(services, clientRecords, postSaleFollowUps = globalThis.__postSaleFollowUps || []) {
   const liveClients = clientRecords.map((client) => [client.name, client.vehicleLabel, client.latestService, client.latestStatus, client.latestTone, client.orderCount, client.createdAt])
   const states = services.map((service) => ({ stage: service.tone === 'delivered' || service.tone === 'ready' ? 4 : service.tone === 'in-progress' ? 2 : 0, status: statusMap[service.orderStatus]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '' }))
   globalThis.__liveServices = services
   globalThis.__liveStates = states
   globalThis.__clientRecords = clientRecords
-  document.dispatchEvent(new CustomEvent('live-data-ready', { detail: { services, clients: liveClients, clientRecords, states } }))
+  document.dispatchEvent(new CustomEvent('live-data-ready', { detail: { services, clients: liveClients, clientRecords, states, postSaleFollowUps } }))
 }
 
 async function loadLiveData(profile) {
@@ -57,7 +57,10 @@ async function loadLiveData(profile) {
   const liveClients = clientRecords.map((client) => [client.name, client.vehicleLabel, client.latestService, client.latestStatus, client.latestTone, client.orderCount, client.createdAt])
   const states = services.map((service) => ({ stage: service.tone === 'delivered' || service.tone === 'ready' ? 4 : service.tone === 'in-progress' ? 2 : 0, status: statusMap[ordersResult.data.find((order) => order.id === service.orderId)?.status]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '' }))
   try { await syncPostSalePlans(profile, services, clientRecords) } catch (error) { console.warn('Pós-venda ainda não sincronizado:', error.message) }
-  publishLiveData(services, clientRecords)
+  let postSaleFollowUps = []
+  try { postSaleFollowUps = await loadPostSaleFollowUps(profile) } catch (error) { console.warn('Pós-venda ainda não carregado:', error.message) }
+  globalThis.__postSaleFollowUps = postSaleFollowUps
+  publishLiveData(services, clientRecords, postSaleFollowUps)
 }
 
 globalThis.__reloadLiveData = () => { if (globalThis.__sessionProfile) loadLiveData(globalThis.__sessionProfile) }
@@ -92,6 +95,7 @@ function subscribeToLiveData(profile) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'work_orders', filter: `company_id=eq.${profile.company_id}` }, () => loadLiveData(profile))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'clients', filter: `company_id=eq.${profile.company_id}` }, () => loadLiveData(profile))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles', filter: `company_id=eq.${profile.company_id}` }, () => loadLiveData(profile))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'post_sale_followups', filter: `company_id=eq.${profile.company_id}` }, () => loadLiveData(profile))
     .subscribe()
 }
 

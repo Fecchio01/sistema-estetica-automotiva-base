@@ -1,6 +1,6 @@
 import { supabase } from './supabase-client.js'
-import { buildPostSalePlan, classifyFollowUp } from './post-sale-rules.js'
-export { buildPostSalePlan, classifyFollowUp }
+import { buildPostSalePlan, buildFollowUpStatusPatch, classifyFollowUp } from './post-sale-rules.js'
+export { buildPostSalePlan, buildFollowUpStatusPatch, classifyFollowUp }
 
 export async function syncPostSalePlans(profile, services = [], clientRecords = [], client = supabase) {
   if (!profile?.company_id) return
@@ -39,7 +39,7 @@ export async function loadPostSaleFollowUps(profile, client = supabase) {
 }
 
 export async function updateFollowUp(profile, id, status, client = supabase) {
-  const patch = { status, ...(status === 'sent' ? { sent_at: new Date().toISOString() } : {}) }
+  const patch = buildFollowUpStatusPatch(status)
   const { error } = await client.from('post_sale_followups').update(patch).eq('id', id).eq('company_id', profile.company_id)
   if (error) throw new Error(error.message || 'Não foi possível atualizar o acompanhamento.')
 }

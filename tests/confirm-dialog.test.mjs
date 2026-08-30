@@ -17,3 +17,11 @@ test('usa confirmação segura para tipos desconhecidos', () => {
     confirmLabel: 'Apagar',
   })
 })
+
+test('confirma o cancelamento de um envio de pós-venda', () => {
+  assert.deepEqual(getConfirmationDetails('post-sale'), {
+    title: 'Desfazer envio?',
+    message: 'Este acompanhamento voltará para pendente e poderá ser enviado novamente.',
+    confirmLabel: 'Desfazer envio',
+  })
+})

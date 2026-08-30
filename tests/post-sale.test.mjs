@@ -1,6 +1,21 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildPostSalePlan, classifyFollowUp, groupFollowUps } from '../src/post-sale-rules.js'
+import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch } from '../src/post-sale-rules.js'
+
+test('resume pendências de pós-venda por cliente, sem repetir o mesmo cliente', () => {
+  const grouped = summarizePendingFollowUps([
+    { id: '1', client_id: 'c1', vehicle_id: 'v1', status: 'pending' },
+    { id: '2', client_id: 'c1', vehicle_id: 'v1', status: 'pending' },
+    { id: '3', client_id: 'c1', vehicle_id: 'v1', status: 'sent' },
+    { id: '4', client_id: 'c2', vehicle_id: 'v2', status: 'sent' },
+  ])
+  assert.deepEqual(grouped.map(({ clientId, pendingCount }) => ({ clientId, pendingCount })), [{ clientId: 'c1', pendingCount: 2 }])
+})
+
+test('desfazer envio retorna o follow-up para pendente e remove sent_at', () => {
+  assert.deepEqual(buildFollowUpStatusPatch('pending'), { status: 'pending', sent_at: null })
+  assert.deepEqual(buildFollowUpStatusPatch('sent', '2026-08-29T12:00:00.000Z'), { status: 'sent', sent_at: '2026-08-29T12:00:00.000Z' })
+})
 
 test('agrupa acompanhamentos do mesmo cliente e veículo em um único card', () => {
   const grouped = groupFollowUps([

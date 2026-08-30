@@ -38,3 +38,11 @@ export function groupFollowUps(items = []) {
   })
   return [...groups.values()]
 }
+
+export function summarizePendingFollowUps(items = []) {
+  return groupFollowUps(items.filter((item) => item.status === 'pending'))
+}
+
+export function buildFollowUpStatusPatch(status, sentAt = new Date().toISOString()) {
+  return status === 'sent' ? { status, sent_at: sentAt } : { status, sent_at: null }
+}

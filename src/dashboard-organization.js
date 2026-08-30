@@ -23,7 +23,7 @@ export function formatElapsedSince(createdAt, now = new Date()) {
   return `há ${hours}h`
 }
 
-export function buildDashboardOrganizationModel(services = [], states = [], profiles = [], now = new Date(), photos = []) {
+export function buildDashboardOrganizationModel(services = [], states = [], profiles = [], now = new Date(), photos = [], postSaleFollowUps = []) {
   const profileNames = new Map(profiles.map((profile) => [profile.id, profile.full_name]))
   const allRows = services.map((service, index) => {
     const state = states[index] || {}
@@ -43,6 +43,7 @@ export function buildDashboardOrganizationModel(services = [], states = [], prof
   return {
     rows,
     completedRows: allRows.filter((row) => row.stageTone === 'delivered'),
+    postSaleFollowUps,
     stageCounts: {
       received: rows.filter((row) => row.stageTone === 'received').length,
       inProgress: rows.filter((row) => row.stageTone === 'in-progress').length,
@@ -77,9 +78,11 @@ export function buildDashboardAttentionMarkup(model) {
   const stale = model.rows.filter((row) => row.elapsedMinutes !== null && row.elapsedMinutes >= 180).sort((a, b) => b.elapsedMinutes - a.elapsedMinutes)
   const pickups = model.rows.filter((row) => row.stageTone === 'ready')
   const photoPending = model.rows.map((row) => ({ row, missing: checklistStages.filter(({ id }) => !(row.checklistPhotos || []).some((photo) => photo?.stage === id)).length })).filter(({ missing }) => missing > 0)
+  const postSalePending = summarizePendingFollowUps(model.postSaleFollowUps || [])
   const list = (items, empty) => items.length ? items.slice(0, 3).map((row) => `<button class="dashboard-attention-item" data-dashboard-order="${row.orderIndex}"><span><b>${escapeHtml(row.client)}</b><small>${escapeHtml(row.vehicle)}</small></span><strong>${escapeHtml(row.elapsed)}</strong></button>`).join('') : `<p class="dashboard-attention-empty">${empty}</p>`
   const photoList = photoPending.length ? photoPending.slice(0, 3).map(({ row, missing }) => `<button class="dashboard-attention-item" data-dashboard-order="${row.orderIndex}"><span><b>${escapeHtml(row.client)}</b><small>${escapeHtml(row.vehicle)} · Pendência de fotos</small></span><strong>${missing} ${missing === 1 ? 'foto' : 'fotos'}</strong></button>`).join('') : '<p class="dashboard-attention-empty">Todas as etapas têm foto.</p>'
-  return `<section class="dashboard-panel dashboard-attention-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">ACOMPANHAMENTO</p><h2>Atenção operacional</h2></div><span class="dashboard-count">${unassigned.length + stale.length + pickups.length + photoPending.length}</span></div><p class="muted">Pontos que merecem uma olhada rápida durante o dia.</p><div class="dashboard-attention-grid"><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Sem responsável</b><span>${unassigned.length}</span></div><div class="dashboard-attention-list">${list(unassigned, 'Todas as ordens têm responsável.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Veículos parados há mais tempo</b><span>${stale.length}</span></div><div class="dashboard-attention-list">${list(stale, 'Nenhum veículo acima de 3h.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Próximas retiradas</b><span>${pickups.length}</span></div><div class="dashboard-attention-list">${list(pickups, 'Nenhuma retirada pendente.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Pendência de fotos</b><span>${photoPending.length}</span></div><div class="dashboard-attention-list">${photoList}</div></div></div></section>`
+  const postSaleList = postSalePending.length ? postSalePending.slice(0, 3).map((group) => { const item = group.items[0]; const client = item.clients?.full_name || 'Cliente'; const vehicle = [item.vehicles?.make, item.vehicles?.model, item.vehicles?.license_plate].filter(Boolean).join(' · ') || 'Veículo não informado'; return `<button class="dashboard-attention-item" data-dashboard-section="pos-venda"><span><b>${escapeHtml(client)}</b><small>${escapeHtml(vehicle)} · Follow-ups pendentes</small></span><strong>${group.pendingCount} ${group.pendingCount === 1 ? 'mensagem' : 'mensagens'}</strong></button>` }).join('') : '<p class="dashboard-attention-empty">Nenhum envio pendente.</p>'
+  return `<section class="dashboard-panel dashboard-attention-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">ACOMPANHAMENTO</p><h2>Atenção operacional</h2></div><span class="dashboard-count">${unassigned.length + stale.length + pickups.length + photoPending.length + postSalePending.length}</span></div><p class="muted">Pontos que merecem uma olhada rápida durante o dia.</p><div class="dashboard-attention-grid"><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Sem responsável</b><span>${unassigned.length}</span></div><div class="dashboard-attention-list">${list(unassigned, 'Todas as ordens têm responsável.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Veículos parados há mais tempo</b><span>${stale.length}</span></div><div class="dashboard-attention-list">${list(stale, 'Nenhum veículo acima de 3h.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Próximas retiradas</b><span>${pickups.length}</span></div><div class="dashboard-attention-list">${list(pickups, 'Nenhuma retirada pendente.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Pendência de fotos</b><span>${photoPending.length}</span></div><div class="dashboard-attention-list">${photoList}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Mensagens de pós-venda</b><span>${postSalePending.length}</span></div><div class="dashboard-attention-list">${postSaleList}</div></div></div></section>`
 }
 
 export function buildDashboardTodayTimelineMarkup(model, now = new Date()) {
@@ -126,3 +129,4 @@ export function buildDashboardOperationSummaryMarkup(model, now = new Date()) {
 }
 
 globalThis.__dashboardOrganization = { buildDashboardAttentionMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup }
+import { summarizePendingFollowUps } from './post-sale-rules.js'

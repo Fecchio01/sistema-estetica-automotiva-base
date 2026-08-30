@@ -71,6 +71,19 @@ test('atenção operacional agrupa pendências de fotos por atendimento', () => 
   assert.doesNotMatch(markup, /Luna.*Pendência de fotos/)
 })
 
+test('atenção operacional mostra follow-ups pendentes agrupados por cliente', () => {
+  const markup = buildDashboardAttentionMarkup({ rows: [], postSaleFollowUps: [
+    { client_id: 'client-1', vehicle_id: 'vehicle-1', status: 'pending', clients: { full_name: 'Artur Silva' }, vehicles: { make: 'Honda', model: 'Civic' } },
+    { client_id: 'client-1', vehicle_id: 'vehicle-1', status: 'pending', clients: { full_name: 'Artur Silva' }, vehicles: { make: 'Honda', model: 'Civic' } },
+  ] })
+
+  assert.match(markup, /Mensagens de pós-venda/)
+  assert.match(markup, /Artur Silva/)
+  assert.match(markup, /2 mensagens/)
+  assert.equal((markup.match(/Artur Silva/g) || []).length, 1)
+  assert.match(markup, /data-dashboard-section="pos-venda"/)
+})
+
 test('linha do tempo mostra somente a movimentação do dia', () => {
   const markup = buildDashboardTodayTimelineMarkup({ rows: [
     { client: 'Artur', vehicle: 'Honda Civic', stageTone: 'received', createdAt: '2026-08-28T09:00:00.000Z', elapsed: 'há 1h' },

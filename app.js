@@ -794,7 +794,7 @@ function renderDashboardOrganization() {
   const taskMarkup = tasks.slice(0, 4).map((task) => `<div class="dashboard-task"><span class="dashboard-task-status ${task.tone}"></span><div class="dashboard-task-copy"><b>${task.title}</b><small>${task.detail}</small></div><button class="dashboard-task-action" data-dashboard-order="${task.index}">Abrir ordem</button></div>`).join('') || '<p class="dashboard-empty">Nenhuma pend&ecirc;ncia operacional agora.</p>';
   const agendaMarkup = services.slice(0, 4).map((item, index) => `<button class="dashboard-agenda-item" data-dashboard-order="${index}"><span class="dashboard-agenda-time">${item.time.replace('Entrada ', '')}</span><span class="dashboard-agenda-copy"><b>${item.client}</b><small>${item.vehicle.split(' Â· ')[0]} · ${getServicePresentation(index).label}</small></span><span class="dashboard-arrow">Abrir</span></button>`).join('') || '<p class="dashboard-empty">Nenhum atendimento cadastrado.</p>';
   const dashboardOrganization = globalThis.__dashboardOrganization;
-  const dashboardOrganizationModel = dashboardOrganization ? dashboardOrganization.buildDashboardOrganizationModel(services, serviceStates, globalThis.__teamProfiles || [], new Date(), servicePhotos) : null;
+  const dashboardOrganizationModel = dashboardOrganization ? dashboardOrganization.buildDashboardOrganizationModel(services, serviceStates, globalThis.__teamProfiles || [], new Date(), servicePhotos, globalThis.__postSaleFollowUps || []) : null;
   const paddockMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardPaddockMarkup(dashboardOrganizationModel) : '';
   const stageChartMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardStageChartMarkup(dashboardOrganizationModel) : '';
   const attentionMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardAttentionMarkup(dashboardOrganizationModel) : '';
@@ -820,10 +820,12 @@ function renderDashboardOrganization() {
 }
 syncStage();
 document.addEventListener('team-data-ready', renderDashboardOrganization);
+document.addEventListener('post-sale-data-ready', renderDashboardOrganization);
 function showToast(message) { const toast = document.querySelector('#toast'); toast.textContent = message; toast.classList.remove('hidden'); toast.classList.add('show'); setTimeout(() => toast.classList.add('hidden'), 3200); }
 document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.addEventListener('click', (event) => { if (event.target === backdrop) backdrop.classList.add('hidden'); }));
 document.addEventListener('live-data-ready', (event) => {
-  const { services: liveServices, clients: liveClients, states } = event.detail;
+  const { services: liveServices, clients: liveClients, states, postSaleFollowUps } = event.detail;
+  if (postSaleFollowUps) globalThis.__postSaleFollowUps = postSaleFollowUps;
   services.splice(0, services.length, ...liveServices);
   clients.splice(0, clients.length, ...liveClients);
   serviceStates.splice(0, serviceStates.length, ...states);
@@ -832,6 +834,7 @@ document.addEventListener('live-data-ready', (event) => {
   servicePhotos.splice(0, servicePhotos.length, ...liveServices.map(() => []));
   refreshServiceList();
   refreshGlobalCounts();
+  renderDashboardOrganization();
   if (document.querySelector('#clients-section:not(.hidden)')) renderClients();
   const genericAction = document.querySelector('#generic-action');
   if (document.querySelector('#generic-section:not(.hidden)') && genericAction?.dataset.module === 'atendimentos') renderModule('atendimentos');

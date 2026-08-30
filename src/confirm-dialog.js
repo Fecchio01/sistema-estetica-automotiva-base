@@ -29,6 +29,11 @@ const confirmationDetails = {
     message: 'Este orçamento será removido da lista de propostas.',
     confirmLabel: 'Apagar orçamento',
   },
+  'post-sale': {
+    title: 'Desfazer envio?',
+    message: 'Este acompanhamento voltará para pendente e poderá ser enviado novamente.',
+    confirmLabel: 'Desfazer envio',
+  },
 }
 
 const fallbackDetails = {
