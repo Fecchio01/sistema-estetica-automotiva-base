@@ -25,3 +25,11 @@ test('confirma o cancelamento de um envio de pós-venda', () => {
     confirmLabel: 'Desfazer envio',
   })
 })
+
+test('confirma o envio de um follow-up pelo WhatsApp', () => {
+  assert.deepEqual(getConfirmationDetails('post-sale-send'), {
+    title: 'Enviar pelo WhatsApp?',
+    message: 'A mensagem será enviada para o número cadastrado deste cliente.',
+    confirmLabel: 'Enviar mensagem',
+  })
+})

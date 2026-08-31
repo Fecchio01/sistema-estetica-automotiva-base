@@ -34,6 +34,11 @@ const confirmationDetails = {
     message: 'Este acompanhamento voltará para pendente e poderá ser enviado novamente.',
     confirmLabel: 'Desfazer envio',
   },
+  'post-sale-send': {
+    title: 'Enviar pelo WhatsApp?',
+    message: 'A mensagem será enviada para o número cadastrado deste cliente.',
+    confirmLabel: 'Enviar mensagem',
+  },
 }
 
 const fallbackDetails = {

@@ -1,6 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch } from '../src/post-sale-rules.js'
+import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch, buildFollowUpMessagePatch } from '../src/post-sale-rules.js'
+
+test('prepara uma mensagem editada sem aceitar texto vazio', () => {
+  assert.deepEqual(buildFollowUpMessagePatch('  Olá, João!  '), { message: 'Olá, João!' })
+  assert.throws(() => buildFollowUpMessagePatch('   '), /mensagem/i)
+})
 
 test('resume pendências de pós-venda por cliente, sem repetir o mesmo cliente', () => {
   const grouped = summarizePendingFollowUps([

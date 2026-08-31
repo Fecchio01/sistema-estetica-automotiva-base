@@ -46,3 +46,9 @@ export function summarizePendingFollowUps(items = []) {
 export function buildFollowUpStatusPatch(status, sentAt = new Date().toISOString()) {
   return status === 'sent' ? { status, sent_at: sentAt } : { status, sent_at: null }
 }
+
+export function buildFollowUpMessagePatch(message) {
+  const normalized = String(message ?? '').trim()
+  if (!normalized) throw new Error('Informe uma mensagem para o acompanhamento.')
+  return { message: normalized }
+}
