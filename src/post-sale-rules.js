@@ -40,6 +40,10 @@ export function buildAutomationControlState(item = {}) {
   return { enabled, label: enabled ? 'Envio automático ativo' : 'Ativar envio automático' }
 }
 
+export function buildFollowUpHistorySummary(events = []) {
+  return { label: 'Ver histórico', count: events.length }
+}
+
 export function getDueAutomaticFollowUps(items = [], now = new Date()) {
   const current = new Date(now).getTime()
   return items.filter((item) => item.status === 'pending' && item.auto_send === true && new Date(item.due_at).getTime() <= current)

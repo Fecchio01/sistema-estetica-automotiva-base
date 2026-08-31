@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch, buildFollowUpMessagePatch, renderMessageTemplate, buildMessageTemplatePreview, buildFollowUpEvent, buildAutomationControlState, getDueAutomaticFollowUps } from '../src/post-sale-rules.js'
+import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch, buildFollowUpMessagePatch, renderMessageTemplate, buildMessageTemplatePreview, buildFollowUpEvent, buildAutomationControlState, buildFollowUpHistorySummary, getDueAutomaticFollowUps } from '../src/post-sale-rules.js'
 
 test('renderiza variáveis no modelo de mensagem', () => {
   assert.equal(renderMessageTemplate('Olá, {{cliente}}! Seu {{veiculo}} está pronto.', { cliente: 'João', veiculo: 'BMW 320i' }), 'Olá, João! Seu BMW 320i está pronto.')
@@ -17,6 +17,10 @@ test('monta um evento imutável para o histórico do follow-up', () => {
 test('expõe o estado correto do controle de envio automático', () => {
   assert.deepEqual(buildAutomationControlState({ auto_send: true }), { enabled: true, label: 'Envio automático ativo' })
   assert.deepEqual(buildAutomationControlState({ auto_send: false }), { enabled: false, label: 'Ativar envio automático' })
+})
+
+test('mantém o acesso ao histórico mesmo sem eventos', () => {
+  assert.deepEqual(buildFollowUpHistorySummary([]), { label: 'Ver histórico', count: 0 })
 })
 
 test('seleciona somente follow-ups pendentes com automação habilitada e vencidos', () => {
