@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch, buildFollowUpMessagePatch, renderMessageTemplate, buildMessageTemplatePreview, getDueAutomaticFollowUps } from '../src/post-sale-rules.js'
+import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch, buildFollowUpMessagePatch, renderMessageTemplate, buildMessageTemplatePreview, buildFollowUpEvent, getDueAutomaticFollowUps } from '../src/post-sale-rules.js'
 
 test('renderiza variáveis no modelo de mensagem', () => {
   assert.equal(renderMessageTemplate('Olá, {{cliente}}! Seu {{veiculo}} está pronto.', { cliente: 'João', veiculo: 'BMW 320i' }), 'Olá, João! Seu BMW 320i está pronto.')
@@ -8,6 +8,10 @@ test('renderiza variáveis no modelo de mensagem', () => {
 
 test('monta uma prévia contextual para o modelo selecionado', () => {
   assert.deepEqual(buildMessageTemplatePreview({ name: 'Check-in', message: 'Olá, {{cliente}}! Seu {{veiculo}} está pronto.' }), { title: 'Check-in', message: 'Olá, Cliente! Seu seu veículo está pronto.' })
+})
+
+test('monta um evento imutável para o histórico do follow-up', () => {
+  assert.deepEqual(buildFollowUpEvent({ companyId: 'company-1', followUpId: 'follow-up-1', eventType: 'sent', channel: 'whatsapp', message: 'Olá, João!', actorId: 'user-1' }), { company_id: 'company-1', follow_up_id: 'follow-up-1', event_type: 'sent', channel: 'whatsapp', message_snapshot: 'Olá, João!', actor_id: 'user-1' })
 })
 
 test('seleciona somente follow-ups pendentes com automação habilitada e vencidos', () => {

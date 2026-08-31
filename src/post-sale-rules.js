@@ -23,6 +23,18 @@ export function buildMessageTemplatePreview(template, variables = { cliente: 'Cl
   return { title: template?.name || 'Modelo de mensagem', message: renderMessageTemplate(template?.message, variables) }
 }
 
+export function buildFollowUpEvent(event = {}) {
+  return {
+    company_id: event.companyId,
+    follow_up_id: event.followUpId,
+    event_type: event.eventType,
+    ...(event.channel ? { channel: event.channel } : {}),
+    ...(event.message ? { message_snapshot: event.message } : {}),
+    ...(event.errorMessage ? { error_message: event.errorMessage } : {}),
+    actor_id: event.actorId,
+  }
+}
+
 export function getDueAutomaticFollowUps(items = [], now = new Date()) {
   const current = new Date(now).getTime()
   return items.filter((item) => item.status === 'pending' && item.auto_send === true && new Date(item.due_at).getTime() <= current)

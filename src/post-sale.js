@@ -1,6 +1,6 @@
 import { supabase } from './supabase-client.js'
-import { buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp, defaultMessageTemplates } from './post-sale-rules.js'
-export { buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp, defaultMessageTemplates }
+import { buildFollowUpEvent, buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp, defaultMessageTemplates } from './post-sale-rules.js'
+export { buildFollowUpEvent, buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp, defaultMessageTemplates }
 
 export async function ensureDefaultMessageTemplates(profile, client = supabase) {
   if (!profile?.company_id) return []
@@ -29,6 +29,7 @@ export async function setFollowUpAutomation(profile, id, options = {}, client = 
   const patch = { auto_send: Boolean(options.autoSend), ...(options.templateId ? { template_id: options.templateId } : {}), ...(options.scheduledFor ? { due_at: options.scheduledFor } : {}) }
   const { error } = await client.from('post_sale_followups').update(patch).eq('id', id).eq('company_id', profile.company_id)
   if (error) throw new Error(error.message || 'Não foi possível configurar a automação.')
+  await recordFollowUpEvent(profile, { followUpId: id, eventType: options.autoSend ? 'scheduled' : 'automation_disabled', channel: 'system' }, client)
 }
 
 export async function syncPostSalePlans(profile, services = [], clientRecords = [], client = supabase) {
@@ -67,10 +68,25 @@ export async function loadPostSaleFollowUps(profile, client = supabase) {
   return data || []
 }
 
+export async function loadPostSaleFollowUpEvents(profile, followUpIds = [], client = supabase) {
+  if (!profile?.company_id || !followUpIds.length) return []
+  const { data, error } = await client.from('post_sale_followup_events').select('id, follow_up_id, event_type, channel, message_snapshot, error_message, actor_id, created_at').eq('company_id', profile.company_id).in('follow_up_id', followUpIds).order('created_at', { ascending: false })
+  if (error) throw new Error(error.message || 'Não foi possível carregar o histórico do pós-venda.')
+  return data || []
+}
+
+export async function recordFollowUpEvent(profile, event, client = supabase) {
+  if (!profile?.company_id || !event?.followUpId || !event?.eventType) return
+  const payload = buildFollowUpEvent({ ...event, companyId: profile.company_id, actorId: profile.id })
+  const { error } = await client.from('post_sale_followup_events').insert(payload)
+  if (error) throw new Error(error.message || 'Não foi possível registrar o histórico do pós-venda.')
+}
+
 export async function updateFollowUp(profile, id, status, client = supabase, message = null) {
   const patch = { ...buildFollowUpStatusPatch(status), ...(message === null ? {} : buildFollowUpMessagePatch(message)) }
   const { error } = await client.from('post_sale_followups').update(patch).eq('id', id).eq('company_id', profile.company_id)
   if (error) throw new Error(error.message || 'Não foi possível atualizar o acompanhamento.')
+  await recordFollowUpEvent(profile, { followUpId: id, eventType: status === 'sent' ? 'sent' : message !== null ? 'message_edited' : 'undone', channel: status === 'sent' ? 'whatsapp' : 'system', message }, client)
 }
 
-globalThis.__postSale = { ensureDefaultMessageTemplates, loadPostSaleFollowUps, loadPostSaleTemplates, saveMessageTemplate, setFollowUpAutomation, syncPostSalePlans, updateFollowUp, classifyFollowUp }
+globalThis.__postSale = { ensureDefaultMessageTemplates, loadPostSaleFollowUpEvents, loadPostSaleFollowUps, loadPostSaleTemplates, recordFollowUpEvent, saveMessageTemplate, setFollowUpAutomation, syncPostSalePlans, updateFollowUp, classifyFollowUp }
