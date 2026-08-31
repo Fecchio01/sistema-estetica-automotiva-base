@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
+    "test:e2e": "node --test tests/whatsapp-e2e.test.mjs",
     "dev": "node dev-server.mjs"
   },
   "dependencies": {

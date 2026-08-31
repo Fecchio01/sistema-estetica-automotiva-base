@@ -2,7 +2,9 @@
 
 ## Cenários automatizados locais
 
-Executados por `tests/whatsapp-e2e.test.mjs`:
+Executados exclusivamente por `npm run test:e2e`, que aponta para `tests/whatsapp-e2e.test.mjs`:
+
+Esta é a sequência oficial de validação reportada para o fluxo do WhatsApp. A suíte geral (`npm test`) é uma verificação complementar do repositório, não entra na contagem dos testes E2E.
 
 1. Rota de conexão
 2. Rota de QR Code
