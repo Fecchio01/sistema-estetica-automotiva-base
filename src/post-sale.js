@@ -1,6 +1,35 @@
 import { supabase } from './supabase-client.js'
-import { buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp } from './post-sale-rules.js'
-export { buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp }
+import { buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp, defaultMessageTemplates } from './post-sale-rules.js'
+export { buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp, defaultMessageTemplates }
+
+export async function ensureDefaultMessageTemplates(profile, client = supabase) {
+  if (!profile?.company_id) return []
+  const payload = defaultMessageTemplates.map((template) => ({ company_id: profile.company_id, follow_up_type: template.followUpType, name: template.name, message: template.message, created_by: profile.id }))
+  const { error } = await client.from('post_sale_message_templates').upsert(payload, { onConflict: 'company_id,follow_up_type,name', ignoreDuplicates: true })
+  if (error) throw new Error(error.message || 'Não foi possível preparar os modelos de mensagem.')
+  return loadPostSaleTemplates(profile, client)
+}
+
+export async function loadPostSaleTemplates(profile, client = supabase) {
+  if (!profile?.company_id) return []
+  const { data, error } = await client.from('post_sale_message_templates').select('id, follow_up_type, name, message, active, created_at, updated_at').eq('company_id', profile.company_id).eq('active', true).order('follow_up_type').order('name')
+  if (error) throw new Error(error.message || 'Não foi possível carregar os modelos de mensagem.')
+  return data || []
+}
+
+export async function saveMessageTemplate(profile, template, client = supabase) {
+  if (!profile?.company_id || !template?.followUpType || !template?.name) throw new Error('Modelo de mensagem inválido.')
+  const payload = { company_id: profile.company_id, follow_up_type: template.followUpType, name: template.name.trim(), message: buildFollowUpMessagePatch(template.message).message, active: true, created_by: profile.id, updated_at: new Date().toISOString() }
+  const query = template.id ? client.from('post_sale_message_templates').update(payload).eq('id', template.id).eq('company_id', profile.company_id) : client.from('post_sale_message_templates').insert(payload)
+  const { error } = await query
+  if (error) throw new Error(error.message || 'Não foi possível salvar o modelo de mensagem.')
+}
+
+export async function setFollowUpAutomation(profile, id, options = {}, client = supabase) {
+  const patch = { auto_send: Boolean(options.autoSend), ...(options.templateId ? { template_id: options.templateId } : {}), ...(options.scheduledFor ? { due_at: options.scheduledFor } : {}) }
+  const { error } = await client.from('post_sale_followups').update(patch).eq('id', id).eq('company_id', profile.company_id)
+  if (error) throw new Error(error.message || 'Não foi possível configurar a automação.')
+}
 
 export async function syncPostSalePlans(profile, services = [], clientRecords = [], client = supabase) {
   if (!profile?.company_id) return
@@ -33,7 +62,7 @@ export async function syncPostSalePlans(profile, services = [], clientRecords = 
 
 export async function loadPostSaleFollowUps(profile, client = supabase) {
   if (!profile?.company_id) return []
-  const { data, error } = await client.from('post_sale_followups').select('id, work_order_id, client_id, vehicle_id, follow_up_type, due_at, status, message, sent_at, clients(full_name, phone), vehicles(make, model, license_plate), work_orders(service_description)').eq('company_id', profile.company_id).order('due_at', { ascending: true })
+  const { data, error } = await client.from('post_sale_followups').select('id, work_order_id, client_id, vehicle_id, follow_up_type, template_id, auto_send, due_at, status, message, sent_at, last_error, clients(full_name, phone), vehicles(make, model, license_plate), work_orders(service_description)').eq('company_id', profile.company_id).order('due_at', { ascending: true })
   if (error) throw new Error(error.message || 'Não foi possível carregar o pós-venda.')
   return data || []
 }
@@ -44,4 +73,4 @@ export async function updateFollowUp(profile, id, status, client = supabase, mes
   if (error) throw new Error(error.message || 'Não foi possível atualizar o acompanhamento.')
 }
 
-globalThis.__postSale = { loadPostSaleFollowUps, syncPostSalePlans, updateFollowUp, classifyFollowUp }
+globalThis.__postSale = { ensureDefaultMessageTemplates, loadPostSaleFollowUps, loadPostSaleTemplates, saveMessageTemplate, setFollowUpAutomation, syncPostSalePlans, updateFollowUp, classifyFollowUp }

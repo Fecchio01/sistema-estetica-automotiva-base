@@ -6,7 +6,23 @@ const steps = [
   ['return', 30, 'Lembrete de retorno', (name, vehicle) => `Olá, ${name}! Já faz um tempo desde o cuidado do ${vehicle}. Quer deixar um próximo retorno pré-agendado?`],
 ]
 
+export const defaultMessageTemplates = Object.freeze([
+  { followUpType: 'check_in', name: 'Check-in', message: 'Olá, {{cliente}}! Tudo certo com o {{veiculo}} depois do serviço?' },
+  { followUpType: 'care_tip', name: 'Dica de cuidado', message: 'Olá, {{cliente}}! Uma dica para conservar o resultado do seu {{servico}}: evite produtos abrasivos e conte com a nossa equipe quando precisar.' },
+  { followUpType: 'review', name: 'Avaliação', message: 'Olá, {{cliente}}! Como você avalia o atendimento? Sua opinião ajuda muito a nossa equipe.' },
+  { followUpType: 'return', name: 'Lembrete de retorno', message: 'Olá, {{cliente}}! Já faz um tempo desde o cuidado do {{veiculo}}. Quer deixar um próximo retorno pré-agendado?' },
+])
+
 const isoPlusDays = (value, days) => new Date(new Date(value).getTime() + days * DAY).toISOString()
+
+export function renderMessageTemplate(template, variables = {}) {
+  return String(template ?? '').replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (_, key) => String(variables[key] ?? ''))
+}
+
+export function getDueAutomaticFollowUps(items = [], now = new Date()) {
+  const current = new Date(now).getTime()
+  return items.filter((item) => item.status === 'pending' && item.auto_send === true && new Date(item.due_at).getTime() <= current)
+}
 
 export function buildPostSalePlan(order) {
   if (!order?.id || order.status !== 'completed' || !order.completed_at) return []

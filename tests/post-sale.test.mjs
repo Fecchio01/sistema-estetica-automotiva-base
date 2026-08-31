@@ -1,6 +1,20 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch, buildFollowUpMessagePatch } from '../src/post-sale-rules.js'
+import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch, buildFollowUpMessagePatch, renderMessageTemplate, getDueAutomaticFollowUps } from '../src/post-sale-rules.js'
+
+test('renderiza variáveis no modelo de mensagem', () => {
+  assert.equal(renderMessageTemplate('Olá, {{cliente}}! Seu {{veiculo}} está pronto.', { cliente: 'João', veiculo: 'BMW 320i' }), 'Olá, João! Seu BMW 320i está pronto.')
+})
+
+test('seleciona somente follow-ups pendentes com automação habilitada e vencidos', () => {
+  const due = getDueAutomaticFollowUps([
+    { id: '1', status: 'pending', auto_send: true, due_at: '2026-08-31T09:00:00.000Z' },
+    { id: '2', status: 'pending', auto_send: false, due_at: '2026-08-31T08:00:00.000Z' },
+    { id: '3', status: 'sent', auto_send: true, due_at: '2026-08-31T08:00:00.000Z' },
+    { id: '4', status: 'pending', auto_send: true, due_at: '2026-09-01T08:00:00.000Z' },
+  ], new Date('2026-08-31T10:00:00.000Z'))
+  assert.deepEqual(due.map((item) => item.id), ['1'])
+})
 
 test('prepara uma mensagem editada sem aceitar texto vazio', () => {
   assert.deepEqual(buildFollowUpMessagePatch('  Olá, João!  '), { message: 'Olá, João!' })
