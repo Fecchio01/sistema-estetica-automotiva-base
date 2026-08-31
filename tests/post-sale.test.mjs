@@ -1,9 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch, buildFollowUpMessagePatch, renderMessageTemplate, getDueAutomaticFollowUps } from '../src/post-sale-rules.js'
+import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch, buildFollowUpMessagePatch, renderMessageTemplate, buildMessageTemplatePreview, getDueAutomaticFollowUps } from '../src/post-sale-rules.js'
 
 test('renderiza variáveis no modelo de mensagem', () => {
   assert.equal(renderMessageTemplate('Olá, {{cliente}}! Seu {{veiculo}} está pronto.', { cliente: 'João', veiculo: 'BMW 320i' }), 'Olá, João! Seu BMW 320i está pronto.')
+})
+
+test('monta uma prévia contextual para o modelo selecionado', () => {
+  assert.deepEqual(buildMessageTemplatePreview({ name: 'Check-in', message: 'Olá, {{cliente}}! Seu {{veiculo}} está pronto.' }), { title: 'Check-in', message: 'Olá, Cliente! Seu seu veículo está pronto.' })
 })
 
 test('seleciona somente follow-ups pendentes com automação habilitada e vencidos', () => {

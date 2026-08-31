@@ -19,6 +19,10 @@ export function renderMessageTemplate(template, variables = {}) {
   return String(template ?? '').replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (_, key) => String(variables[key] ?? ''))
 }
 
+export function buildMessageTemplatePreview(template, variables = { cliente: 'Cliente', veiculo: 'seu veículo', servico: 'serviço' }) {
+  return { title: template?.name || 'Modelo de mensagem', message: renderMessageTemplate(template?.message, variables) }
+}
+
 export function getDueAutomaticFollowUps(items = [], now = new Date()) {
   const current = new Date(now).getTime()
   return items.filter((item) => item.status === 'pending' && item.auto_send === true && new Date(item.due_at).getTime() <= current)
