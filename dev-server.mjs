@@ -7,6 +7,7 @@ import { buildAutomaticReply } from './src/whatsapp-auto-reply.js'
 import { normalizeEvolutionEvent } from './src/whatsapp-inbox.js'
 import { buildConnectionRequest, buildQrRequest, buildLogoutRequest, buildManualSendRequest, buildMarkReadRequest, buildReactionRequest, buildDeleteMessageRequest, buildWebhookSetupRequest } from './src/whatsapp-server.js'
 import { buildChatsRequest, buildContactsRequest, buildMediaRequest, buildMessagesRequest, findEvolutionContactName, mergeEvolutionChats, mergeEvolutionContacts, normalizeEvolutionChat, normalizeEvolutionMessage, sortEvolutionMessages } from './src/evolution-chats.js'
+import { createServerSupabaseClient, runPostSaleAutomation } from './src/post-sale-automation.js'
 
 const root = fileURLToPath(new URL('.', import.meta.url))
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.mjs': 'application/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8' }
@@ -32,10 +33,31 @@ function normalizeMessageUpdateStatus(value) {
 }
 
 try { process.loadEnvFile?.(join(root, '.env.local')) } catch {}
+const postSaleAutomationClient = createServerSupabaseClient(process.env)
+let postSaleAutomationRunning = false
 
 function sendJson(response, status, body) {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store, no-cache, must-revalidate' })
   response.end(JSON.stringify(body))
+}
+
+async function runPostSaleAutomationCycle() {
+  if (postSaleAutomationRunning) return
+  postSaleAutomationRunning = true
+  try {
+    const result = await runPostSaleAutomation(process.env, { client: postSaleAutomationClient })
+    if (result.sent || result.failed) console.log(`Pós-venda automático: ${result.sent} enviado(s), ${result.failed} falha(s), ${result.skipped} ignorado(s).`)
+  } catch (error) {
+    console.warn(`Pós-venda automático indisponível: ${error.message}`)
+  } finally {
+    postSaleAutomationRunning = false
+  }
+}
+
+function startPostSaleAutomation() {
+  const timer = setInterval(runPostSaleAutomationCycle, 60_000)
+  timer.unref?.()
+  runPostSaleAutomationCycle()
 }
 
 function recordsFromMessages(data) {
@@ -375,4 +397,4 @@ createServer(async (request, response) => {
     response.writeHead(200, { 'Content-Type': types[extname(filePath)] ?? 'application/octet-stream' })
     response.end(await readFile(filePath))
   } catch { response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); response.end('not found') }
-}).listen(Number(process.env.PORT || 4174), () => console.log(`Atelier OS local server: http://127.0.0.1:${Number(process.env.PORT || 4174)}/`))
+}).listen(Number(process.env.PORT || 4174), () => { console.log(`Atelier OS local server: http://127.0.0.1:${Number(process.env.PORT || 4174)}/`); startPostSaleAutomation() })

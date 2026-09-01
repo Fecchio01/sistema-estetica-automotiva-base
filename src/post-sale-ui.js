@@ -1,37 +1,10 @@
-import { buildAutomationControlState, buildFollowUpHistorySummary, buildMessageTemplatePreview, classifyFollowUp, getDueAutomaticFollowUps, groupFollowUps, renderMessageTemplate } from './post-sale-rules.js'
+import { buildAutomationControlState, buildFollowUpHistorySummary, buildMessageTemplatePreview, classifyFollowUp, groupFollowUps, renderMessageTemplate } from './post-sale-rules.js'
 
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]))
 const typeLabel = { check_in: 'Check-in', care_tip: 'Dica de cuidado', review: 'Avaliação', return: 'Lembrete de retorno' }
 const statusLabel = { today: 'Hoje', overdue: 'Atrasado', upcoming: 'Próximo', done: 'Concluído' }
 const eventLabel = { message_edited: 'Mensagem editada', scheduled: 'Automação programada', automation_disabled: 'Automação desativada', sent: 'Mensagem enviada', send_failed: 'Falha no envio', undone: 'Envio desfeito' }
 const profile = () => globalThis.__sessionProfile
-let automationTimer = null
-
-async function processAutomaticSends() {
-  const currentProfile = profile()
-  if (!currentProfile?.company_id) return
-  try {
-    const items = await globalThis.__postSale.loadPostSaleFollowUps(currentProfile)
-    const dueItems = getDueAutomaticFollowUps(items)
-    if (!dueItems.length) return
-    const connection = await fetch('/api/whatsapp/connection')
-    const connectionData = await connection.json()
-    if (!connection.ok || !['open', 'connected'].includes(String(connectionData.state).toLowerCase())) return
-    for (const item of dueItems) {
-      const number = item.clients?.phone
-      if (!number) continue
-      const response = await fetch('/api/whatsapp/send', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ number, text: item.message }) })
-      if (!response.ok) { await globalThis.__postSale.recordFollowUpEvent(currentProfile, { followUpId: item.id, eventType: 'send_failed', channel: 'whatsapp', message: item.message, errorMessage: 'A API não confirmou o envio automático.' }).catch(() => {}); continue }
-      await globalThis.__postSale.updateFollowUp(currentProfile, item.id, 'sent', undefined, item.message)
-    }
-    globalThis.__reloadLiveData?.()
-  } catch { /* a próxima execução tentará novamente sem interromper a fila */ }
-}
-
-function startAutomaticSends() {
-  if (automationTimer) return
-  automationTimer = window.setInterval(processAutomaticSends, 60_000)
-}
 
 async function render(root) {
   root.innerHTML = '<div class="post-sale-loading">Carregando acompanhamentos…</div>'
@@ -56,8 +29,7 @@ async function render(root) {
     }).join('') || '<div class="post-sale-empty"><b>Nenhum acompanhamento criado ainda</b><span>Quando um atendimento for concluído, os próximos contatos aparecerão aqui.</span></div>'
     const templateCards = templates.map((template, index) => { const preview = buildMessageTemplatePreview(template); return `<article class="post-sale-template-row" data-post-sale-template-row="${template.id}"><button class="post-sale-template-trigger" type="button" aria-expanded="false" data-post-sale-template-toggle="${template.id}"><span class="post-sale-template-index">${String(index + 1).padStart(2, '0')}</span><span class="post-sale-template-name"><b>${escapeHtml(template.name)}</b><small>${escapeHtml(typeLabel[template.follow_up_type] || template.follow_up_type)}</small></span><span class="post-sale-template-snippet">${escapeHtml(preview.message)}</span><span class="post-sale-template-chevron">⌄</span></button><form class="post-sale-template-editor hidden" data-post-sale-template-form="${template.id}"><label>Mensagem<textarea name="message" rows="3" required>${escapeHtml(template.message)}</textarea></label><div class="post-sale-template-editor-footer"><small>Use {{cliente}}, {{veiculo}} ou {{servico}} para personalizar.</small><button class="outline-button" type="submit">Salvar modelo</button></div></form></article>` }).join('')
     const firstPreview = buildMessageTemplatePreview(templates[0])
-    root.innerHTML = `<div class="post-sale-summary">${metric('Para hoje', counts.today, 'contatos prioritários', 'today')}${metric('Atrasados', counts.overdue, 'precisam de retorno', 'overdue')}${metric('Próximos', counts.upcoming, 'já programados', 'upcoming')}</div><section class="module-panel post-sale-templates-panel"><div class="module-toolbar"><div><h2>Modelos de mensagem</h2><p class="muted">Edite os textos usados nos contatos automáticos. O envio automático verifica a fila a cada minuto enquanto o sistema estiver aberto.</p></div><span class="status-pill in-progress">${templates.length} modelos</span></div><div class="post-sale-template-layout"><div class="post-sale-template-list">${templateCards}</div><aside class="post-sale-template-preview"><span class="post-sale-preview-label">Prévia da mensagem</span><b data-post-sale-preview-title>${escapeHtml(firstPreview.title)}</b><div class="post-sale-preview-window"><span class="post-sale-preview-contact">Cliente</span><p data-post-sale-preview-message>${escapeHtml(firstPreview.message)}</p><time>agora</time></div><small>A prévia usa valores de exemplo. Na fila, os dados reais do cliente substituem as variáveis.</small></aside></div></section><section class="module-panel post-sale-panel"><div class="module-toolbar"><div><h2>Clientes em acompanhamento</h2><p class="muted">Entre em um cliente para ver todas as próximas ações.</p></div><span class="status-pill in-progress">${grouped.length} clientes</span></div><div class="post-sale-list">${cards}</div></section>`
-    startAutomaticSends()
+    root.innerHTML = `<div class="post-sale-summary">${metric('Para hoje', counts.today, 'contatos prioritários', 'today')}${metric('Atrasados', counts.overdue, 'precisam de retorno', 'overdue')}${metric('Próximos', counts.upcoming, 'já programados', 'upcoming')}</div><section class="module-panel post-sale-templates-panel"><div class="module-toolbar"><div><h2>Modelos de mensagem</h2><p class="muted">Edite os textos usados nos contatos automáticos. O servidor verifica a fila a cada minuto.</p></div><span class="status-pill in-progress">${templates.length} modelos</span></div><div class="post-sale-template-layout"><div class="post-sale-template-list">${templateCards}</div><aside class="post-sale-template-preview"><span class="post-sale-preview-label">Prévia da mensagem</span><b data-post-sale-preview-title>${escapeHtml(firstPreview.title)}</b><div class="post-sale-preview-window"><span class="post-sale-preview-contact">Cliente</span><p data-post-sale-preview-message>${escapeHtml(firstPreview.message)}</p><time>agora</time></div><small>A prévia usa valores de exemplo. Na fila, os dados reais do cliente substituem as variáveis.</small></aside></div></section><section class="module-panel post-sale-panel"><div class="module-toolbar"><div><h2>Clientes em acompanhamento</h2><p class="muted">Entre em um cliente para ver todas as próximas ações.</p></div><span class="status-pill in-progress">${grouped.length} clientes</span></div><div class="post-sale-list">${cards}</div></section>`
     root.querySelectorAll('.post-sale-automation-toggle input').forEach((input) => input.addEventListener('change', () => { const label = input.parentElement?.querySelector('span:last-child'); if (label) label.textContent = input.checked ? 'Envio automático ativo' : 'Ativar envio automático' }))
     const previewTitle = root.querySelector('[data-post-sale-preview-title]')
     const previewMessage = root.querySelector('[data-post-sale-preview-message]')

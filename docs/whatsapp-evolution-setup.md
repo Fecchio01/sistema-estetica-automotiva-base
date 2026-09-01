@@ -18,6 +18,12 @@ EVOLUTION_WEBHOOK_SECRET=segredo-longo-e-aleatorio
 
 Nunca coloque `EVOLUTION_API_KEY` em código do navegador, GitHub ou mensagem de chat.
 
+## Automação de pós-venda
+
+O processo do servidor verifica os follow-ups vencidos a cada minuto. Para ativar esse worker, o servidor precisa receber `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (ou `SUPABASE_SERVICE_ROLE_KEY`), `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE` e `EVOLUTION_COMPANY_ID`.
+
+A chave secreta do Supabase é usada somente no servidor para consultar a fila protegida. O worker cria uma trava temporária antes de enviar, registra o resultado no histórico e libera a mensagem para nova tentativa quando a Evolution falha. Nunca coloque essa chave no navegador ou no Git.
+
 ## Edge Function
 
 Configure na função `evolution-webhook`:
