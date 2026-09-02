@@ -128,3 +128,24 @@ test('gráfico informa que sua leitura é mensal', () => {
   assert.match(markup, /Fluxo mensal/)
   assert.match(markup, /ordens criadas neste mês/)
 })
+
+test('panorama semanal organiza cargas e serviços em gráficos independentes', () => {
+  const markup = buildDashboardOperationSummaryMarkup({ rows: [
+    { client: 'Artur', service: 'Polimento técnico', responsible: 'Pedro Lima', elapsedMinutes: 60, createdAt: '2026-08-27T11:00:00.000Z' },
+    { client: 'Luna', service: 'Higienização completa', responsible: 'Luna Martins', elapsedMinutes: 90, createdAt: '2026-08-27T12:00:00.000Z' },
+  ] }, new Date('2026-08-28T12:00:00.000Z'))
+
+  assert.match(markup, /dashboard-summary-insights/)
+  assert.match(markup, /dashboard-summary-bar-chart/)
+  assert.match(markup, /Carga por responsável/)
+  assert.match(markup, /Serviços mais solicitados/)
+  assert.match(markup, /dashboard-summary-metric-card/)
+  assert.match(markup, /Tempo médio em aberto/)
+  assert.match(markup, /Ordens concluídas na semana/)
+})
+
+test('panorama mostra período legível quando a semana atravessa meses', () => {
+  const markup = buildDashboardOperationSummaryMarkup({ rows: [] }, new Date('2026-09-01T12:00:00.000Z'))
+
+  assert.match(markup, /Semana de 30 de agosto a 5 de setembro de 2026/)
+})
