@@ -779,7 +779,7 @@ function renderDashboardOrganization() {
   if (!workspace) {
     workspace = document.createElement('section');
     workspace.id = 'dashboard-organization';
-    workspace.className = 'dashboard-organization';
+    workspace.className = 'dashboard-organization dashboard-live-overview';
     dashboard.appendChild(workspace);
   }
   const counts = getServiceCounts();

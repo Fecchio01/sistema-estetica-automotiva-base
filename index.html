@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <title>Atelier OS — Protótipo</title>
-    <style>body.app-booting{background:#f5f7f5}body.app-booting #auth-screen,body.app-booting #app-shell{visibility:hidden}</style>
+    <style>html,body{background:#f5f7f5}body.app-booting{overflow:hidden}body.app-booting #auth-screen,body.app-booting #app-shell{display:none}</style>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="auth.css" />
     <link rel="stylesheet" href="whatsapp-inbox.css" />
@@ -69,11 +69,11 @@
             <button class="primary-button" id="new-service">+ Novo atendimento</button>
           </div>
 
-          <div class="metric-grid dashboard-metric-bento">
-            <article class="metric-block dashboard-metric-card dashboard-metric-card-primary"><span>Atendimentos</span><strong>00</strong><small>ordens em acompanhamento</small></article>
-            <article class="metric-block dashboard-metric-card dashboard-metric-card-secondary"><span>Prontos para retirada</span><strong>00</strong><small>clientes para avisar</small></article>
-            <article class="metric-block dashboard-metric-card dashboard-metric-card-secondary"><span>Ordens no mês</span><strong>00</strong><small>registros cadastrados</small></article>
-            <article class="metric-block dashboard-metric-card dashboard-metric-card-secondary"><span>Faturamento</span><strong>R$ 0</strong><small>valor das ordens cadastradas</small></article>
+          <div class="metric-grid">
+            <article class="metric-block"><span>Atendimentos</span><strong>00</strong><small>ordens em acompanhamento</small></article>
+            <article class="metric-block"><span>Prontos para retirada</span><strong>00</strong><small>clientes para avisar</small></article>
+            <article class="metric-block"><span>Ordens no mês</span><strong>00</strong><small>registros cadastrados</small></article>
+            <article class="metric-block"><span>Faturamento</span><strong>R$ 0</strong><small>valor das ordens cadastradas</small></article>
           </div>
           <div id="whatsapp-dashboard-notifications" aria-live="polite"></div>
 
