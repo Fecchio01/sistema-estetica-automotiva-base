@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <title>Atelier OS — Protótipo</title>
+    <style>body.app-booting{background:#f5f7f5}body.app-booting #auth-screen,body.app-booting #app-shell{visibility:hidden}</style>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="auth.css" />
     <link rel="stylesheet" href="whatsapp-inbox.css" />
     <link rel="stylesheet" href="quotes-preview.css" />
   </head>
-  <body>
+  <body class="app-booting">
     <section class="auth-screen" id="auth-screen">
       <div class="auth-card">
         <div class="brand-lockup"><div class="brand-mark">AO</div><div><strong>Atelier OS</strong><span>Operação automotiva</span></div></div>
@@ -68,20 +69,20 @@
             <button class="primary-button" id="new-service">+ Novo atendimento</button>
           </div>
 
-          <div class="metric-grid">
-            <article class="metric-block"><span>Atendimentos</span><strong>00</strong><small>ordens em acompanhamento</small></article>
-            <article class="metric-block"><span>Prontos para retirada</span><strong>00</strong><small>clientes para avisar</small></article>
-            <article class="metric-block"><span>Ordens no mês</span><strong>00</strong><small>registros cadastrados</small></article>
-            <article class="metric-block"><span>Faturamento</span><strong>R$ 0</strong><small>valor das ordens cadastradas</small></article>
+          <div class="metric-grid dashboard-metric-bento">
+            <article class="metric-block dashboard-metric-card dashboard-metric-card-primary"><span>Atendimentos</span><strong>00</strong><small>ordens em acompanhamento</small></article>
+            <article class="metric-block dashboard-metric-card dashboard-metric-card-secondary"><span>Prontos para retirada</span><strong>00</strong><small>clientes para avisar</small></article>
+            <article class="metric-block dashboard-metric-card dashboard-metric-card-secondary"><span>Ordens no mês</span><strong>00</strong><small>registros cadastrados</small></article>
+            <article class="metric-block dashboard-metric-card dashboard-metric-card-secondary"><span>Faturamento</span><strong>R$ 0</strong><small>valor das ordens cadastradas</small></article>
           </div>
           <div id="whatsapp-dashboard-notifications" aria-live="polite"></div>
 
-          <div class="content-grid">
-            <section class="panel service-panel">
+          <div class="content-grid dashboard-overview-primary-grid">
+            <section class="panel service-panel dashboard-recent-panel">
               <div class="panel-heading"><div><p class="eyebrow">OPERAÇÃO DE HOJE</p><h2>Atendimentos recentes</h2></div><button class="text-button" data-section="atendimentos">Ver todos →</button></div>
               <div class="service-list" id="service-list"></div>
             </section>
-            <aside class="panel side-panel">
+            <aside class="panel side-panel dashboard-followup-panel">
               <div class="panel-heading"><div><p class="eyebrow">ACOMPANHAMENTO</p><h2>Links enviados</h2></div><span class="counter">12</span></div>
               <p class="muted">Clientes acessaram o portal depois de receber o link.</p>
               <div class="progress-row"><span>Visualizados</span><b>9 de 12</b></div><div class="progress-track"><span style="width:75%"></span></div>

@@ -8,9 +8,12 @@ const form = document.querySelector('#login-form')
 const message = document.querySelector('#auth-message')
 const publicPortal = isClientPortalPath(window.location.pathname)
 
+function releaseAppBoot() { document.body.classList.remove('app-booting') }
+
 if (publicPortal) {
   authScreen.classList.add('hidden')
   appShell.classList.add('hidden')
+  releaseAppBoot()
 }
 
 if (window.location.search) window.history.replaceState({}, document.title, window.location.pathname)
@@ -19,7 +22,7 @@ function roleLabel(role) { return { administrator: 'Administrador(a)', reception
 function timeGreeting(date = new Date()) { return date.getHours() >= 18 || date.getHours() < 6 ? 'Boa noite' : 'Bom dia' }
 globalThis.__timeGreeting = timeGreeting
 function showApp(session) {
-  if (publicPortal) return
+  if (publicPortal) { releaseAppBoot(); return }
   authScreen.classList.add('hidden'); appShell.classList.remove('hidden')
   globalThis.__sessionProfile = session.profile
   const name = session.profile.full_name || session.user.email
@@ -30,8 +33,9 @@ function showApp(session) {
   const dashboardTitle = document.querySelector('#dashboard-section .page-heading h1')
   if (dashboardTitle) dashboardTitle.textContent = `${timeGreeting()}, ${name}.`
   document.dispatchEvent(new CustomEvent('auth-ready', { detail: session.profile }))
+  releaseAppBoot()
 }
-function showLogin(error = '') { if (publicPortal) return; appShell.classList.add('hidden'); authScreen.classList.remove('hidden'); message.textContent = error }
+function showLogin(error = '') { if (publicPortal) { releaseAppBoot(); return }; appShell.classList.add('hidden'); authScreen.classList.remove('hidden'); message.textContent = error; releaseAppBoot() }
 
 if (!publicPortal) form.addEventListener('submit', async (event) => {
   event.preventDefault()
