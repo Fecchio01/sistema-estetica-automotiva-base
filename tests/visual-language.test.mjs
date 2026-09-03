@@ -160,3 +160,11 @@ test('configurações organiza conta, segurança e regras operacionais em uma ce
   assert.match(styles, /\.settings-hero\{[^}]*border-top:5px solid var\(--dashboard-forest\)/)
   assert.match(styles, /\.settings-layout\{display:grid/)
 })
+
+test('relatórios usa o mesmo painel operacional e hierarquia visual da visão geral', () => {
+  assert.match(app, /class="report-dashboard"/)
+  assert.match(app, /class="report-hero"/)
+  assert.match(app, /class="report-metrics"/)
+  assert.match(styles, /\.report-dashboard\{display:grid/)
+  assert.match(styles, /\.report-hero\{[^}]*border-top:5px solid var\(--dashboard-forest\)/)
+})
