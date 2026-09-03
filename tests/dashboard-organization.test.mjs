@@ -17,6 +17,19 @@ test('painel operacional agrupa ordens por etapa e preserva responsável', () =>
   assert.equal(model.rows[1].stageLabel, 'Em execução')
 })
 
+test('pátio não mostra ordens já entregues', () => {
+  const model = buildDashboardOrganizationModel([
+    { client: 'Jorge', vehicle: 'BMW 320i', status: 'Finalizado', tone: 'delivered', orderStatus: 'completed', createdAt: '2026-08-27T10:00:00.000Z' },
+    { client: 'Artur', vehicle: 'Honda Civic', status: 'Recebido', tone: 'received', orderStatus: 'scheduled', createdAt: '2026-08-27T11:00:00.000Z' },
+  ], [
+    { status: 'delivered' },
+    { status: 'received' },
+  ])
+
+  assert.deepEqual(model.rows.map((row) => row.client), ['Artur'])
+  assert.deepEqual(model.completedRows.map((row) => row.client), ['Jorge'])
+})
+
 test('tempo parado usa minutos e horas sem inventar uma data', () => {
   assert.equal(formatElapsedSince('2026-08-27T14:45:00.000Z', new Date('2026-08-27T15:00:00.000Z')), 'há 15 min')
   assert.equal(formatElapsedSince('2026-08-27T12:00:00.000Z', new Date('2026-08-27T15:00:00.000Z')), 'há 3h')

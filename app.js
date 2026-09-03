@@ -457,8 +457,8 @@ function addEstimateEditor() {
   if (!detail || detail.querySelector('.estimate-editor')) return;
   detail.querySelector('.detail-progress').insertAdjacentHTML('afterend', `<section class="estimate-editor"><div><p class="eyebrow">PREVISÃO DE ENTREGA</p><strong id="detail-estimate-label">A definir após avaliação</strong><small>Defina o prazo depois de avaliar o serviço.</small></div><div class="estimate-fields"><label>Data<input id="estimate-date" type="date" /></label><label>Horário<input id="estimate-time" type="time" /></label><button class="outline-button" id="save-estimate">Salvar previsão</button></div></section>`);
   detail.querySelector('.detail-actions').insertAdjacentHTML('afterbegin', '<div class="order-management-actions"><button class="primary-button hidden" id="confirm-delivery">Confirmar entrega</button><button class="outline-button hidden" id="cancel-delivery">Cancelar entrega</button><button class="outline-button danger-button" id="delete-order">Apagar ordem</button></div>');
-  detail.querySelector('#confirm-delivery').addEventListener('click', async () => { const state = serviceStates[activeServiceIndex]; const active = services[activeServiceIndex]; if (state.status !== 'ready' || !['administrator', 'reception'].includes(globalThis.__activeRole)) return; state.deliveryStatus = 'delivered'; state.deliveryAt = getCurrentEntryData().received; syncStage(); try { if (active.orderId && globalThis.__updateLiveWorkOrder) await globalThis.__updateLiveWorkOrder(active.orderId, 'completed'); showToast('Entrega confirmada e atendimento finalizado.'); } catch (error) { showToast(error.message || 'Não foi possível confirmar a entrega.'); } });
-  detail.querySelector('#cancel-delivery').addEventListener('click', () => { serviceStates[activeServiceIndex].deliveryStatus = null; stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); showToast('Entrega cancelada. O veículo voltou para retirada.'); });
+  detail.querySelector('#confirm-delivery').addEventListener('click', async () => { const state = serviceStates[activeServiceIndex]; if (state.status !== 'ready' || !['administrator', 'reception'].includes(globalThis.__activeRole)) return; state.deliveryStatus = 'delivered'; state.deliveryAt = getCurrentEntryData().received; syncStage(); try { await persistOrderTransition(activeServiceIndex, 'completed', 4); showToast('Entrega confirmada e atendimento finalizado.'); } catch (error) { showToast(error.message || 'Não foi possível confirmar a entrega.'); } });
+  detail.querySelector('#cancel-delivery').addEventListener('click', async () => { serviceStates[activeServiceIndex].deliveryStatus = null; stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); try { await persistOrderTransition(activeServiceIndex, 'ready_for_pickup', 4); showToast('Entrega cancelada. O veículo voltou para retirada.'); } catch (error) { showToast(error.message || 'Não foi possível cancelar a entrega.'); } });
   detail.querySelector('#delete-order').addEventListener('click', async () => { if (!(await globalThis.__requestConfirmation?.('order'))) return; const deleted = services[activeServiceIndex]; const deletedClient = deleted.client; try { if (deleted.orderId && globalThis.__deleteLiveWorkOrder) await globalThis.__deleteLiveWorkOrder(deleted.orderId); else removeService(activeServiceIndex); closeModal('detail-modal'); showToast(`Ordem de ${deletedClient} apagada do sistema.`); } catch (error) { showToast(error.message || 'Não foi possível apagar a ordem.'); } });
   detail.querySelector('#save-estimate').addEventListener('click', () => {
     const estimate = serviceEstimates[activeServiceIndex];
@@ -469,11 +469,16 @@ function addEstimateEditor() {
   });
 }
 addEstimateEditor();
+async function persistOrderTransition(index, status, stage, comment) {
+  const active = services[index]
+  if (active?.orderId && globalThis.__updateLiveWorkOrder) await globalThis.__updateLiveWorkOrder(active.orderId, status, { stage, comment })
+}
 function syncStage() {
   const names = stageNames;
   const active = services[activeServiceIndex];
   const state = serviceStates[activeServiceIndex];
   state.stage = stageIndex;
+  active.currentStage = stageIndex;
   if (state.deliveryStatus === 'delivered') state.status = 'delivered';
   else if (stageIndex === 0) state.status = 'received';
   else if (stageIndex === 4) state.status = 'ready';
@@ -570,13 +575,13 @@ function renderEmployeeOrder(index) {
   roleScreenContent.querySelectorAll('.employee-stage-photo').forEach((button) => button.addEventListener('click', () => { selectedPhotoStage = button.dataset.photoStage; roleScreenContent.querySelector('#employee-photo-input').click(); }));
   roleScreenContent.querySelector('#employee-photo-input').addEventListener('change', (event) => { servicePhotos[index].push(...Array.from(event.target.files).map((file) => ({ url: URL.createObjectURL(file), name: file.name, stage: selectedPhotoStage }))); refreshClientPhotos(); renderEmployeeOrder(index); showToast('Foto adicionada à etapa e ao portal do cliente.'); });
   const advance = roleScreenContent.querySelector('#employee-advance');
-  if (advance) advance.addEventListener('click', () => { activeServiceIndex = index; stageIndex = Math.min(4, state.stage + 1); syncStage(); renderEmployeeOrder(index); showToast('Etapa atualizada para toda a equipe.'); });
+  if (advance) advance.addEventListener('click', async () => { activeServiceIndex = index; stageIndex = Math.min(4, state.stage + 1); syncStage(); try { await persistOrderTransition(index, stageIndex === 4 ? 'ready_for_pickup' : 'in_progress', stageIndex); renderEmployeeOrder(index); showToast('Etapa atualizada para toda a equipe.'); } catch (error) { showToast(error.message || 'Não foi possível salvar a etapa.'); } });
   const backStage = roleScreenContent.querySelector('#employee-back-stage');
-  if (backStage) backStage.addEventListener('click', () => { activeServiceIndex = index; stageIndex = Math.max(0, state.stage - 1); state.deliveryStatus = null; syncStage(); renderEmployeeOrder(index); showToast('Etapa anterior restaurada.'); });
+  if (backStage) backStage.addEventListener('click', async () => { activeServiceIndex = index; stageIndex = Math.max(0, state.stage - 1); state.deliveryStatus = null; syncStage(); try { await persistOrderTransition(index, stageIndex === 0 ? 'scheduled' : 'in_progress', stageIndex); renderEmployeeOrder(index); showToast('Etapa anterior restaurada.'); } catch (error) { showToast(error.message || 'Não foi possível salvar a etapa.'); } });
   const delivery = roleScreenContent.querySelector('#employee-delivery');
-  if (delivery) delivery.addEventListener('click', () => { if (state.status !== 'ready') return; state.deliveryStatus = 'delivered'; state.deliveryAt = getCurrentEntryData().received; activeServiceIndex = index; stageIndex = 4; syncStage(); renderEmployeeOrder(index); showToast('Entrega registrada às ' + state.deliveryAt + '.'); });
+  if (delivery) delivery.addEventListener('click', async () => { if (state.status !== 'ready') return; state.deliveryStatus = 'delivered'; state.deliveryAt = getCurrentEntryData().received; activeServiceIndex = index; stageIndex = 4; syncStage(); try { await persistOrderTransition(index, 'completed', 4); renderEmployeeOrder(index); showToast('Entrega registrada às ' + state.deliveryAt + '.'); } catch (error) { showToast(error.message || 'Não foi possível confirmar a entrega.'); } });
   const cancelDelivery = roleScreenContent.querySelector('#employee-cancel-delivery');
-  if (cancelDelivery) cancelDelivery.addEventListener('click', () => { state.deliveryStatus = null; state.deliveryAt = ''; activeServiceIndex = index; stageIndex = state.stage; syncStage(); renderEmployeeOrder(index); showToast('Entrega cancelada. O veículo voltou para retirada.'); });
+  if (cancelDelivery) cancelDelivery.addEventListener('click', async () => { state.deliveryStatus = null; state.deliveryAt = ''; activeServiceIndex = index; stageIndex = state.stage; syncStage(); try { await persistOrderTransition(index, 'ready_for_pickup', 4); renderEmployeeOrder(index); showToast('Entrega cancelada. O veículo voltou para retirada.'); } catch (error) { showToast(error.message || 'Não foi possível cancelar a entrega.'); } });
   roleScreenContent.querySelector('#employee-save-note').addEventListener('click', (event) => { state.note = roleScreenContent.querySelector('#employee-observation').value.trim(); event.currentTarget.textContent = 'Observa&ccedil;&atilde;o salva'; event.currentTarget.classList.add('saved-action'); showToast('Observa&ccedil;&atilde;o salva para a equipe da opera&ccedil;&atilde;o.'); });
   roleScreenContent.querySelector('#employee-client-ficha').addEventListener('click', () => { const clientIndex = clients.findIndex((client) => client[0] === item.client); if (clientIndex >= 0) openClientFicha(clientIndex); else showToast('Ficha do cliente ainda n&atilde;o foi cadastrada.'); });
 }
@@ -754,13 +759,13 @@ document.querySelector('#copy-link').addEventListener('click', async () => {
   }
 });
 document.querySelector('#add-photo').addEventListener('click', () => { addClientPhotos(document.querySelector('.client-portal')); showToast('Área de fotos aberta para a equipe.'); });
-document.querySelector('#advance-stage').addEventListener('click', async () => { if (stageIndex < 4) stageIndex += 1; syncStage(); try { const active = services[activeServiceIndex]; if (active?.orderId && globalThis.__updateLiveWorkOrder) await globalThis.__updateLiveWorkOrder(active.orderId, stageIndex === 4 ? 'ready_for_pickup' : stageIndex === 0 ? 'scheduled' : 'in_progress'); showToast(stageIndex === 4 ? 'Veículo marcado como pronto e cliente notificado.' : 'Etapa atualizada e cliente notificado.'); } catch (error) { showToast(error.message || 'Não foi possível salvar a etapa.'); } });
+document.querySelector('#advance-stage').addEventListener('click', async () => { if (stageIndex < 4) stageIndex += 1; syncStage(); try { await persistOrderTransition(activeServiceIndex, stageIndex === 4 ? 'ready_for_pickup' : stageIndex === 0 ? 'scheduled' : 'in_progress', stageIndex); showToast(stageIndex === 4 ? 'Veículo marcado como pronto e cliente notificado.' : 'Etapa atualizada e cliente notificado.'); } catch (error) { showToast(error.message || 'Não foi possível salvar a etapa.'); } });
 const backStageButton = document.createElement('button');
 backStageButton.className = 'outline-button';
 backStageButton.textContent = '← Voltar etapa';
 backStageButton.title = 'Retornar o veículo para a etapa anterior.';
 document.querySelector('#advance-stage').parentElement.insertBefore(backStageButton, document.querySelector('#add-photo'));
-backStageButton.addEventListener('click', () => { if (stageIndex > 0) stageIndex -= 1; syncStage(); showToast('Veículo retornou para a etapa anterior.'); });
+backStageButton.addEventListener('click', async () => { if (stageIndex > 0) stageIndex -= 1; syncStage(); try { await persistOrderTransition(activeServiceIndex, stageIndex === 0 ? 'scheduled' : 'in_progress', stageIndex); showToast('Veículo retornou para a etapa anterior.'); } catch (error) { showToast(error.message || 'Não foi possível salvar a etapa.'); } });
 document.querySelector('#copy-link').title = 'Copiar o link exclusivo desta ordem para enviar ao cliente.';
 document.querySelector('#add-photo').title = 'Adicionar fotos do antes, durante ou depois do serviço.';
 document.querySelector('#advance-stage').title = 'Concluir a etapa atual e avisar o cliente sobre a mudança.';

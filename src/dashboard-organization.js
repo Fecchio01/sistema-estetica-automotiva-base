@@ -2,6 +2,8 @@ const stages = Object.freeze({
   received: { label: 'Aguardando avaliação', tone: 'received' },
   'in-progress': { label: 'Em execução', tone: 'in-progress' },
   ready: { label: 'Pronto para retirada', tone: 'ready' },
+  delivered: { label: 'Finalizado', tone: 'delivered' },
+  cancelled: { label: 'Cancelado', tone: 'cancelled' },
 })
 
 const checklistStages = Object.freeze([

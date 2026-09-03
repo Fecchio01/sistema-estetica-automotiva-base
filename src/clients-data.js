@@ -15,7 +15,7 @@ export async function loadClientRecords(profile, client) {
   const [clientsResult, vehiclesResult, ordersResult] = await Promise.all([
     client.from('clients').select('id, full_name, phone, created_at').eq('company_id', profile.company_id).eq('active', true).order('created_at', { ascending: false }),
     client.from('vehicles').select('id, client_id, make, model, license_plate').eq('company_id', profile.company_id),
-    client.from('work_orders').select('id, client_id, vehicle_id, status, payment_status, scheduled_at, service_description, total_amount, completed_at, created_at').eq('company_id', profile.company_id).order('created_at', { ascending: false }),
+    client.from('work_orders').select('id, client_id, vehicle_id, status, current_stage, payment_status, scheduled_at, service_description, total_amount, completed_at, created_at').eq('company_id', profile.company_id).order('created_at', { ascending: false }),
   ])
   if (clientsResult.error || vehiclesResult.error || ordersResult.error) throw new Error('Não foi possível carregar os clientes cadastrados.')
   return (clientsResult.data ?? []).map((clientRecord) => {
@@ -63,8 +63,8 @@ export async function createWorkOrder(profile, input, client) {
   const services = normalizeServiceNames(input)
   if (!profile?.company_id || !input?.clientId || !input?.vehicleId || !input?.responsibleId || !services.length) throw new Error('Preencha cliente, veículo, responsável e pelo menos um serviço.')
   const scheduledAt = Object.prototype.hasOwnProperty.call(input, 'scheduledAt') ? input.scheduledAt : null
-  const payload = { ...(input.id ? { id: input.id } : {}), company_id: profile.company_id, client_id: input.clientId, vehicle_id: input.vehicleId, responsible_id: input.responsibleId, status: input.status || 'scheduled', scheduled_at: scheduledAt, service_description: services.join(', '), total_amount: Number(input.totalAmount || 0) }
-  const fields = 'id, client_id, vehicle_id, responsible_id, status, payment_status, scheduled_at, created_at, completed_at, service_description, total_amount'
+  const payload = { ...(input.id ? { id: input.id } : {}), company_id: profile.company_id, client_id: input.clientId, vehicle_id: input.vehicleId, responsible_id: input.responsibleId, status: input.status || 'scheduled', current_stage: Number.isInteger(Number(input.currentStage)) ? Number(input.currentStage) : 0, scheduled_at: scheduledAt, service_description: services.join(', '), total_amount: Number(input.totalAmount || 0) }
+  const fields = 'id, client_id, vehicle_id, responsible_id, status, current_stage, payment_status, scheduled_at, created_at, completed_at, service_description, total_amount'
   const { data, error } = await client.from('work_orders').insert(payload).select(fields).single()
   if (error && input.id && error.code === '23505') {
     const { data: existing, error: lookupError } = await client.from('work_orders').select(fields).eq('id', input.id).maybeSingle()

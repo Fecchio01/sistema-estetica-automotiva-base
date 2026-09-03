@@ -1,5 +1,6 @@
 import { supabase } from './supabase-client.js'
 import { loadPostSaleFollowUps, syncPostSalePlans } from './post-sale.js'
+import { buildDeliveryTransition, buildStageTransition, stageForOrder } from './work-order-state.js'
 
 const statusMap = {
   scheduled: { label: 'Recebido', tone: 'received', state: 'received' },
@@ -19,12 +20,12 @@ export function buildLiveService(order, clientRecords = []) {
   const vehicle = record?.vehicles?.find((item) => item.id === order?.vehicle_id)
   const status = statusMap[order?.status] ?? statusMap.scheduled
   const createdAt = order?.created_at || new Date().toISOString()
-  return { initials: initials(record?.name), clientId: order.client_id, client: record?.name || 'Cliente', vehicle: vehicleLabel(vehicle), vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status || 'scheduled', paymentStatus: order.payment_status || 'pending', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(createdAt).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id }
+  return { initials: initials(record?.name), clientId: order.client_id, client: record?.name || 'Cliente', vehicle: vehicleLabel(vehicle), vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status || 'scheduled', currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'pending', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(createdAt).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id }
 }
 
 function publishLiveData(services, clientRecords, postSaleFollowUps = globalThis.__postSaleFollowUps || []) {
   const liveClients = clientRecords.map((client) => [client.name, client.vehicleLabel, client.latestService, client.latestStatus, client.latestTone, client.orderCount, client.createdAt])
-  const states = services.map((service) => ({ stage: service.tone === 'delivered' || service.tone === 'ready' ? 4 : service.tone === 'in-progress' ? 2 : 0, status: statusMap[service.orderStatus]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '' }))
+  const states = services.map((service) => ({ stage: service.currentStage, status: statusMap[service.orderStatus]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '' }))
   globalThis.__liveServices = services
   globalThis.__liveStates = states
   globalThis.__clientRecords = clientRecords
@@ -36,7 +37,7 @@ async function loadLiveData(profile) {
   const [clientsResult, vehiclesResult, ordersResult] = await Promise.all([
     supabase.from('clients').select('id, full_name, phone, created_at').eq('company_id', profile.company_id).eq('active', true).order('created_at', { ascending: false }),
     supabase.from('vehicles').select('id, client_id, make, model, license_plate').eq('company_id', profile.company_id),
-    supabase.from('work_orders').select('id, client_id, vehicle_id, responsible_id, status, payment_status, scheduled_at, created_at, completed_at, service_description, total_amount').eq('company_id', profile.company_id).order('created_at', { ascending: false }),
+    supabase.from('work_orders').select('id, client_id, vehicle_id, responsible_id, status, current_stage, payment_status, scheduled_at, created_at, completed_at, service_description, total_amount').eq('company_id', profile.company_id).order('created_at', { ascending: false }),
   ])
   if (clientsResult.error || vehiclesResult.error || ordersResult.error) return
   const clientsById = new Map((clientsResult.data ?? []).map((client) => [client.id, client]))
@@ -46,7 +47,7 @@ async function loadLiveData(profile) {
     const vehicle = vehiclesById.get(order.vehicle_id)
     const status = statusMap[order.status] ?? statusMap.scheduled
     const vehicleText = vehicleLabel(vehicle)
-    return { initials: initials(client?.full_name), clientId: order.client_id, client: client?.full_name || 'Cliente', vehicle: vehicleText, vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status, paymentStatus: order.payment_status || 'pending', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(order.created_at).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt: order.created_at, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id }
+    return { initials: initials(client?.full_name), clientId: order.client_id, client: client?.full_name || 'Cliente', vehicle: vehicleText, vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status, currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'pending', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(order.created_at).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt: order.created_at, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id }
   })
   const clientRecords = (clientsResult.data ?? []).map((client) => {
     const vehicle = (vehiclesResult.data ?? []).find((item) => item.client_id === client.id)
@@ -55,7 +56,7 @@ async function loadLiveData(profile) {
     return { id: client.id, name: client.full_name, phone: client.phone || '', createdAt: client.created_at, vehicles: (vehiclesResult.data ?? []).filter((item) => item.client_id === client.id), orders: clientOrders, vehicleLabel: vehicleLabel(vehicle), latestService: latest?.service || 'Sem histórico', latestStatus: latest?.status || 'Sem atendimento', latestTone: latest?.tone || 'received', orderCount: clientOrders.length }
   })
   const liveClients = clientRecords.map((client) => [client.name, client.vehicleLabel, client.latestService, client.latestStatus, client.latestTone, client.orderCount, client.createdAt])
-  const states = services.map((service) => ({ stage: service.tone === 'delivered' || service.tone === 'ready' ? 4 : service.tone === 'in-progress' ? 2 : 0, status: statusMap[ordersResult.data.find((order) => order.id === service.orderId)?.status]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '' }))
+  const states = services.map((service) => ({ stage: service.currentStage, status: statusMap[service.orderStatus]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '' }))
   try { await syncPostSalePlans(profile, services, clientRecords) } catch (error) { console.warn('Pós-venda ainda não sincronizado:', error.message) }
   let postSaleFollowUps = []
   try { postSaleFollowUps = await loadPostSaleFollowUps(profile) } catch (error) { console.warn('Pós-venda ainda não carregado:', error.message) }
@@ -71,12 +72,17 @@ globalThis.__deleteLiveWorkOrder = async (orderId) => {
   if (error) throw new Error(error.message || 'Não foi possível apagar a ordem.')
   await loadLiveData(profile)
 }
-globalThis.__updateLiveWorkOrder = async (orderId, status) => {
+globalThis.__updateLiveWorkOrder = async (orderId, status, options = {}) => {
   const profile = globalThis.__sessionProfile
   if (!profile?.company_id || !orderId) throw new Error('Ordem inválida.')
-  const payload = { status, ...(status === 'completed' ? { completed_at: new Date().toISOString() } : status === 'ready_for_pickup' ? { completed_at: null } : {}) }
-  const { error } = await supabase.from('work_orders').update(payload).eq('id', orderId).eq('company_id', profile.company_id)
+  const current = (globalThis.__liveServices || []).find((item) => item.orderId === orderId)
+  const transition = status === 'completed'
+    ? buildDeliveryTransition({ companyId: profile.company_id, orderId, changedBy: profile.id, fromStatus: current?.orderStatus, completedAt: options.completedAt || new Date().toISOString() })
+    : buildStageTransition({ companyId: profile.company_id, orderId, changedBy: profile.id, fromStatus: current?.orderStatus, fromStage: current?.currentStage, toStage: options.stage ?? stageForOrder({ status, current_stage: current?.currentStage }), comment: options.comment })
+  const { error } = await supabase.from('work_orders').update(transition.orderPatch).eq('id', orderId).eq('company_id', profile.company_id)
   if (error) throw new Error(error.message || 'Não foi possível atualizar a etapa da ordem.')
+  const { error: historyError } = await supabase.from('work_order_stage_history').insert(transition.history)
+  if (historyError) throw new Error(historyError.message || 'A etapa foi atualizada, mas o histórico não pôde ser registrado.')
   await loadLiveData(profile)
 }
 globalThis.__addLiveWorkOrder = (order) => {
