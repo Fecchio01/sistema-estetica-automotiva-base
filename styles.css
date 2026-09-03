@@ -583,6 +583,49 @@ html,body{background:#fff!important}
 .main-content .post-sale-panel .module-toolbar .muted{color:#d5e4d7}
 .main-content .post-sale-panel .status-pill{background:#e5f2e9;color:#2f3b32}
 
+/* Configurações: central prática de conta e operação, sem simular um tema novo. */
+.settings-shell{display:grid;gap:18px}
+.settings-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:28px 30px;background:#fff;border:1px solid #d7e4da;border-top:5px solid var(--dashboard-forest);border-radius:24px;box-shadow:0 16px 34px rgba(35,79,57,.07)}
+.settings-hero h2{margin:0 0 7px;font:600 26px 'Space Grotesk';letter-spacing:-.045em;color:var(--ink)}
+.settings-hero .eyebrow{color:#668071}
+.settings-role-badge{flex:none;padding:9px 12px;border-radius:999px;background:#e5f2e9;color:#2f5b43;font-size:11px;font-weight:700}
+.settings-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:18px;align-items:start}
+.settings-layout .module-panel{padding:26px 28px;border-color:#d9e6dc;box-shadow:0 14px 30px rgba(35,79,57,.055)}
+.settings-account-card{grid-row:span 2;border-top:4px solid #49644f!important}
+.settings-preferences-card{border-top:4px solid #8eae98!important}
+.settings-team-card{border-top:4px solid #d3e3d7!important}
+.settings-section-heading{display:flex;justify-content:space-between;gap:16px;margin-bottom:22px}
+.settings-section-heading .eyebrow{margin-bottom:7px;color:#668071}
+.settings-section-heading h3{margin:0 0 6px;font:600 18px 'Space Grotesk';letter-spacing:-.035em;color:var(--ink)}
+.settings-section-heading p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+.profile-settings-form,.settings-password-form{display:grid;gap:14px}
+.profile-settings-form{grid-template-columns:minmax(0,1fr) auto;align-items:end;padding-bottom:22px;border-bottom:1px solid #e4ece6}
+.settings-password-form{margin-top:22px}
+.profile-settings-form label,.settings-password-form label{display:grid;gap:7px;color:#52635a;font-size:11px;font-weight:700}
+.profile-settings-form input,.settings-password-form input{width:100%;padding:12px 13px;border:1px solid #d6e2d9;border-radius:var(--radius-control);outline:none;color:var(--ink);font:500 13px 'DM Sans';background:#fbfdfb;transition:border-color .18s,box-shadow .18s}
+.profile-settings-form input:focus,.settings-password-form input:focus{border-color:#5c886a;box-shadow:0 0 0 3px rgba(92,136,106,.13)}
+.profile-settings-form .outline-button,.settings-password-form .primary-button{min-height:43px;white-space:nowrap}
+.settings-password-form .primary-button{justify-self:start}
+.settings-password-form .auth-message{min-height:16px;margin:0;font-size:11px;color:#a24e4e}
+.settings-preferences-card form{display:grid;gap:10px}
+.settings-toggle{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 16px;border:1px solid #e0eae2;border-radius:16px;background:#fbfdfb;cursor:pointer;transition:border-color .18s,background .18s}
+.settings-toggle:hover{border-color:#b9d0bf;background:#f5faf6}
+.settings-toggle span{display:grid;gap:4px}
+.settings-toggle b{font-size:12px;color:var(--ink)}
+.settings-toggle small{font-size:10px;color:var(--muted);line-height:1.45}
+.settings-toggle input{appearance:none;width:38px;height:22px;margin:0;border-radius:999px;background:#c9d5cc;position:relative;flex:none;cursor:pointer;transition:background .18s}
+.settings-toggle input::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(35,79,57,.2);transition:transform .18s}
+.settings-toggle input:checked{background:#49644f}
+.settings-toggle input:checked::after{transform:translateX(16px)}
+.settings-save-row{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:8px;padding-top:14px;border-top:1px solid #e4ece6}
+.settings-save-row span{font-size:10px;color:var(--muted)}
+.settings-team-summary{display:grid;gap:1px;overflow:hidden;border:1px solid #e0eae2;border-radius:16px;background:#e0eae2}
+.settings-team-summary span{display:flex;justify-content:space-between;gap:16px;padding:13px 15px;background:#fbfdfb;color:#52635a;font-size:11px}
+.settings-team-summary b{color:var(--ink);font-size:11px;text-align:right}
+.settings-team-card .outline-button{margin-top:16px;width:100%}
+@media(max-width:850px){.settings-layout{grid-template-columns:1fr}.settings-account-card{grid-row:auto}.settings-hero{align-items:flex-start;flex-direction:column}.profile-settings-form{grid-template-columns:1fr}.profile-settings-form .outline-button{justify-self:start}.settings-team-card{order:3}}
+@media(max-width:520px){.settings-hero,.settings-layout .module-panel{padding:22px 19px}.settings-hero h2{font-size:23px}.settings-save-row{align-items:flex-start;flex-direction:column}.settings-team-summary span{align-items:flex-start;flex-direction:column;gap:4px}.settings-team-summary b{text-align:left}}
+
 /* Visão geral: leitura financeira compacta inspirada em receita diária e ranking da Cera. */
 .main-content .dashboard-live-overview .dashboard-financial-panel{grid-column:1;padding:30px!important;border:1px solid #d9e3db!important;border-top:5px solid var(--dashboard-forest)!important;border-radius:24px;background:#fff!important;box-shadow:0 16px 34px rgba(37,77,57,.07)!important}
 .dashboard-financial-total{display:grid;gap:3px;min-width:124px;padding:10px 13px;border-radius:14px;background:#edf5ee;color:var(--dashboard-forest);text-align:right}

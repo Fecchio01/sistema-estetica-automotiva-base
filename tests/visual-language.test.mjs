@@ -152,3 +152,11 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(styles, /\.main-content \.agenda-toolbar,\.main-content \.agenda-form-panel\{background:#fff\}/)
   assert.match(styles, /\.main-content \.agenda-live-grid \.calendar-day\{background:#fff\}/)
 })
+
+test('configurações organiza conta, segurança e regras operacionais em uma central própria', () => {
+  assert.match(app, /class="settings-shell"/)
+  assert.match(app, /id="settings-password-form"/)
+  assert.match(app, /id="settings-operational-form"/)
+  assert.match(styles, /\.settings-hero\{[^}]*border-top:5px solid var\(--dashboard-forest\)/)
+  assert.match(styles, /\.settings-layout\{display:grid/)
+})
