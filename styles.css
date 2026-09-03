@@ -473,11 +473,6 @@ body{background:radial-gradient(circle at 92% 0%,#f0f7f2 0,#f5f8f5 28%,var(--can
 .main-content .dashboard-live-overview .dashboard-attention-item:last-child{border-bottom:0!important}
 .main-content .dashboard-live-overview .dashboard-attention-item:hover{background:transparent!important;box-shadow:none!important;transform:none!important}
 
-/* Radar de pendências: leitura imediata antes dos detalhes acionáveis. */
-.main-content .dashboard-live-overview .dashboard-attention-radar{margin:22px 0 4px;padding:15px 16px;border:1px solid #e1e8e2;border-radius:16px;background:#f8faf8}
-.dashboard-attention-radar-track{display:flex;height:12px;overflow:hidden;border-radius:999px;background:#e6ece7}.dashboard-attention-radar-segment{min-width:0}.dashboard-attention-radar-segment.unassigned{background:#b98340}.dashboard-attention-radar-segment.stale{background:#617569}.dashboard-attention-radar-segment.pickups{background:#388668}.dashboard-attention-radar-segment.photos{background:#8fc19a}.dashboard-attention-radar-segment.post-sale{background:#d6ab66}
-.dashboard-attention-radar-legend{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px}.dashboard-attention-radar-legend span{display:flex;align-items:center;gap:5px;min-width:0;color:#637068;font-size:9px}.dashboard-attention-radar-legend i{width:7px;height:7px;flex:none;border-radius:50%;background:#617569}.dashboard-attention-radar-legend i.unassigned{background:#b98340}.dashboard-attention-radar-legend i.pickups{background:#388668}.dashboard-attention-radar-legend i.photos{background:#8fc19a}.dashboard-attention-radar-legend i.post-sale{background:#d6ab66}.dashboard-attention-radar-legend b{margin-left:auto;color:var(--dashboard-forest);font:700 10px 'Space Grotesk'}
-@media(max-width:650px){.dashboard-attention-radar-legend{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 @media(max-width:850px){
   .main-content .dashboard-live-overview .dashboard-paddock-panel,.main-content .dashboard-live-overview .dashboard-stage-chart-panel,.main-content .dashboard-live-overview .dashboard-operation-summary-panel,.main-content .dashboard-live-overview .dashboard-attention-panel{padding:24px 20px!important}
