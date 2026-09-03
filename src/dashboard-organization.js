@@ -55,9 +55,17 @@ export function buildDashboardOrganizationModel(services = [], states = [], prof
 }
 
 export function buildDashboardPaddockMarkup(model) {
-  const rows = model.rows.map((row) => `<button class="dashboard-paddock-row" data-dashboard-order="${row.orderIndex}"><span class="dashboard-paddock-status ${row.stageTone}"></span><div class="dashboard-paddock-main"><b>${escapeHtml(row.client)}</b><small>${escapeHtml(row.vehicle)}</small></div><div class="dashboard-paddock-stage"><b>${escapeHtml(row.stageLabel)}</b><small>${escapeHtml(row.service)}</small></div><div class="dashboard-paddock-responsible"><b>${escapeHtml(row.responsible)}</b><small>Responsável</small></div><div class="dashboard-paddock-elapsed"><b>${escapeHtml(row.elapsed)}</b><small>na operação</small></div><span class="dashboard-arrow">Abrir</span></button>`).join('') || '<p class="dashboard-empty">Nenhum veículo em operação neste momento.</p>'
+  const rows = model.rows.map((row) => `<button class="dashboard-paddock-row ${row.stageTone}" data-dashboard-order="${row.orderIndex}"><span class="dashboard-paddock-status ${row.stageTone}"></span><div class="dashboard-paddock-main"><b>${escapeHtml(row.client)}</b><small>${escapeHtml(row.vehicle)}</small></div><div class="dashboard-paddock-stage"><b>${escapeHtml(row.stageLabel)}</b><small>${escapeHtml(row.service)}</small></div><div class="dashboard-paddock-responsible"><b>${escapeHtml(row.responsible)}</b><small>Responsável</small></div><div class="dashboard-paddock-elapsed"><b>${escapeHtml(row.elapsed)}</b><small>na operação</small></div><span class="dashboard-arrow">Abrir</span></button>`).join('') || '<p class="dashboard-empty">Nenhum veículo em operação neste momento.</p>'
   const vehicleLabel = model.rows.length === 1 ? 'veículo' : 'veículos'
-  return `<section class="dashboard-panel dashboard-paddock-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">PÁTIO AO VIVO</p><h2>Onde estão os veículos</h2></div><span class="dashboard-paddock-total" aria-label="${model.rows.length} ${vehicleLabel} no pátio"><b>${model.rows.length}</b><small>${vehicleLabel} no pátio</small></span></div><p class="muted">Acompanhe cada veículo, etapa, responsável e tempo desde a entrada.</p><div class="dashboard-paddock-list">${rows}</div></section>`
+  const entries = [
+    ['received', 'Avaliação', model.stageCounts?.received || 0],
+    ['in-progress', 'Em execução', model.stageCounts?.inProgress || 0],
+    ['ready', 'Retirada', model.stageCounts?.ready || 0],
+  ]
+  const total = entries.reduce((sum, [, , count]) => sum + count, 0)
+  const segments = entries.map(([tone, label, count]) => `<span class="dashboard-paddock-distribution-segment ${tone}" style="width:${total ? Math.round((count / total) * 100) : 0}%" aria-label="${label}: ${count}"></span>`).join('')
+  const legend = entries.map(([tone, label, count]) => `<span><i class="dashboard-stage-dot ${tone}"></i><b>${label}</b><strong>${count}</strong></span>`).join('')
+  return `<section class="dashboard-panel dashboard-paddock-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">PÁTIO AO VIVO</p><h2>Onde estão os veículos</h2></div><span class="dashboard-paddock-total" aria-label="${model.rows.length} ${vehicleLabel} no pátio"><b>${model.rows.length}</b><small>${vehicleLabel} no pátio</small></span></div><p class="muted">Acompanhe cada veículo, etapa, responsável e tempo desde a entrada.</p><div class="dashboard-paddock-distribution" role="img" aria-label="Distribuição atual do pátio por etapa"><div class="dashboard-paddock-distribution-visual">${segments}</div><div class="dashboard-paddock-distribution-legend">${legend}</div></div><div class="dashboard-paddock-list">${rows}</div></section>`
 }
 
 export function buildDashboardStageChartMarkup(model, now = new Date()) {
@@ -68,11 +76,51 @@ export function buildDashboardStageChartMarkup(model, now = new Date()) {
   ]
   const maxCount = Math.max(1, ...entries.map(([, , count]) => count))
   const total = entries.reduce((sum, [, , count]) => sum + count, 0)
-  const rows = entries.map(([tone, label, count]) => {
+  const stages = entries.map(([tone, label, count]) => ({
+    tone,
+    label,
+    count,
+    width: total ? Math.round((count / total) * 100) : 0,
+  }))
+  const segments = stages.map(({ tone, label, count, width }) => `<span class="dashboard-flow-segment ${tone}" style="width:${width}%" aria-label="${label}: ${count}">${count ? `<b>${count}</b>` : ''}</span>`).join('')
+  const rows = stages.map(({ tone, label, count }) => {
     const width = Math.round((count / maxCount) * 100)
     return `<div class="dashboard-chart-row"><div class="dashboard-chart-label"><span><i class="dashboard-stage-dot ${tone}"></i>${label}</span><b>${count}</b></div><div class="dashboard-chart-track"><span class="dashboard-chart-bar ${tone}" style="width:${width}%"></span></div></div>`
   }).join('')
-  return `<article class="dashboard-panel dashboard-stage-chart-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">FLUXO DA OPERAÇÃO</p><h2>Fluxo mensal</h2></div><span class="dashboard-chart-total"><b>${total}</b><small>ordens criadas neste mês</small></span></div><p class="muted">Distribuição das ordens para acompanhar o fluxo da estética no mês.</p><div class="dashboard-chart-list">${rows}</div></article>`
+  return `<article class="dashboard-panel dashboard-stage-chart-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">FLUXO DA OPERAÇÃO</p><h2>Fluxo mensal</h2></div><span class="dashboard-chart-total"><b>${total}</b><small>ordens criadas neste mês</small></span></div><p class="muted">Distribuição das ordens para acompanhar o fluxo da estética no mês.</p><div class="dashboard-flow-visual" role="img" aria-label="${total} ordens distribuídas por etapa">${segments}</div><div class="dashboard-chart-list">${rows}</div></article>`
+}
+
+export function buildDashboardFinancialMarkup(model, now = new Date()) {
+  const end = new Date(now)
+  end.setUTCHours(23, 59, 59, 999)
+  const start = new Date(end)
+  start.setUTCDate(start.getUTCDate() - 6)
+  start.setUTCHours(0, 0, 0, 0)
+  const rows = [...(model.rows || []), ...(model.completedRows || [])]
+  const daily = new Map()
+  for (let offset = 0; offset < 7; offset += 1) {
+    const day = new Date(start)
+    day.setUTCDate(start.getUTCDate() + offset)
+    daily.set(day.toISOString().slice(0, 10), 0)
+  }
+  const serviceTotals = new Map()
+  rows.forEach((row) => {
+    const amount = Math.max(0, Number(row.amount || 0))
+    const date = new Date(row.createdAt || row.scheduledAt || 0)
+    if (amount && !Number.isNaN(date.getTime())) {
+      const key = date.toISOString().slice(0, 10)
+      if (daily.has(key)) daily.set(key, daily.get(key) + amount)
+    }
+    if (amount) serviceTotals.set(row.service || 'Serviço não informado', (serviceTotals.get(row.service || 'Serviço não informado') || 0) + amount)
+  })
+  const trend = [...daily.entries()].map(([key, amount]) => ({ label: `${key.slice(8, 10)}/${key.slice(5, 7)}`, amount }))
+  const total = trend.reduce((sum, item) => sum + item.amount, 0)
+  const maxTrend = Math.max(1, ...trend.map((item) => item.amount))
+  const bars = trend.map((item) => `<div class="dashboard-financial-column"><span style="height:${Math.max(item.amount ? 10 : 3, Math.round((item.amount / maxTrend) * 100))}%" title="R$ ${item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}"></span><small>${item.label}</small></div>`).join('')
+  const topServices = [...serviceTotals.entries()].sort((left, right) => right[1] - left[1]).slice(0, 3)
+  const maxService = Math.max(1, ...topServices.map(([, amount]) => amount))
+  const serviceMarkup = topServices.map(([service, amount]) => `<div class="dashboard-financial-service"><div><b>${escapeHtml(service)}</b><small>R$ ${amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</small></div><i><span style="width:${Math.round((amount / maxService) * 100)}%"></span></i></div>`).join('') || '<p class="dashboard-summary-empty">Nenhum serviço com valor registrado.</p>'
+  return `<section class="dashboard-panel dashboard-financial-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">RESULTADO EM TEMPO REAL</p><h2>Financeiro da operação</h2></div><span class="dashboard-financial-total"><b>R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</b><small>últimos 7 dias</small></span></div><p class="muted">Entradas registradas nas ordens e os serviços que mais movimentaram o período.</p><div class="dashboard-financial-grid"><div><div class="dashboard-financial-heading"><b>Evolução diária</b><small>faturamento por dia</small></div><div class="dashboard-financial-chart" role="img" aria-label="Faturamento dos últimos 7 dias">${bars}</div></div><div><div class="dashboard-financial-heading"><b>Serviços que mais faturam</b><small>por valor registrado</small></div><div class="dashboard-financial-services">${serviceMarkup}</div></div></div></section>`
 }
 
 export function buildDashboardAttentionMarkup(model) {
@@ -139,5 +187,5 @@ export function buildDashboardOperationSummaryMarkup(model, now = new Date()) {
   return `<section class="dashboard-panel dashboard-operation-summary-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">LEITURA DO NEGÓCIO · SEMANAL</p><h2>Panorama da operação</h2><span class="dashboard-summary-period">${periodLabel}</span></div><span class="dashboard-count">${activeRows.length}</span></div><p class="muted">Uma leitura da semana atual para entender a carga da equipe e o ritmo dos serviços.</p><div class="dashboard-operation-summary-grid dashboard-summary-layout-open"><div class="dashboard-summary-insights"><article class="dashboard-summary-section dashboard-summary-chart-card"><div class="dashboard-summary-heading"><div><b>Carga por responsável</b><small>ordens ativas na semana</small></div><span>${unassigned} sem responsável</span></div><div class="dashboard-summary-bar-chart" role="list" aria-label="Carga por responsável">${workloadMarkup}</div></article><article class="dashboard-summary-section dashboard-summary-chart-card"><div class="dashboard-summary-heading"><div><b>Serviços mais solicitados</b><small>ordens ativas na semana</small></div><span>ranking</span></div><div class="dashboard-summary-bar-chart" role="list" aria-label="Serviços mais solicitados">${servicesMarkup}</div></article></div><div class="dashboard-summary-metrics"><article class="dashboard-summary-metric dashboard-summary-metric-card"><small>Tempo médio em aberto</small><strong>${averageLabel}</strong><span>das ordens da semana</span></article><article class="dashboard-summary-metric dashboard-summary-metric-card"><small>Ordens concluídas na semana</small><strong>${completedThisWeek}</strong><span>finalizadas no período</span></article></div></div></section>`
 }
 
-globalThis.__dashboardOrganization = { buildDashboardAttentionMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup }
+globalThis.__dashboardOrganization = { buildDashboardAttentionMarkup, buildDashboardFinancialMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup }
 import { summarizePendingFollowUps } from './post-sale-rules.js'

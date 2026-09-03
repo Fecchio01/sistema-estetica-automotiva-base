@@ -154,6 +154,19 @@ function vehicleVisual(vehicle) {
 let activeServiceIndex = 0;
 const list = document.querySelector('#service-list');
 list.innerHTML = services.map((item, index) => `<button class="service-row" data-service-index="${index}"><div class="service-main"><b>${item.client}</b><small>${item.vehicle} · ${item.service} · ${item.time}</small></div><span class="status-pill ${item.tone}">${item.status}</span></button>`).join('');
+function refreshDashboardTodaySummary() {
+  const summary = document.querySelector('#dashboard-today-summary');
+  if (!summary) return;
+  const counts = getServiceCounts();
+  const entries = [
+    ['received', 'Entradas', counts.received],
+    ['in-progress', 'Em execução', counts.active + counts.waiting],
+    ['ready', 'Retiradas', counts.ready],
+  ];
+  const total = entries.reduce((sum, [, , count]) => sum + count, 0);
+  summary.innerHTML = `<div class="dashboard-today-summary-visual" role="img" aria-label="${total} atendimentos distribuídos por status"><div class="dashboard-today-summary-track">${entries.map(([tone, label, count]) => `<span class="${tone}" style="width:${total ? Math.round((count / total) * 100) : 0}%" aria-label="${label}: ${count}"></span>`).join('')}</div><div class="dashboard-today-summary-legend">${entries.map(([tone, label, count]) => `<span><i class="dashboard-stage-dot ${tone}"></i><b>${label}</b><strong>${count}</strong></span>`).join('')}</div></div>`;
+}
+refreshDashboardTodaySummary();
 function refreshServiceList() {
   list.innerHTML = services.map((item, index) => `<button class="service-row" data-service-index="${index}"><div class="service-main"><b>${item.client}</b><small>${item.vehicle} · ${item.service} · ${item.time}</small></div><span class="status-pill ${item.tone}">${item.status}</span></button>`).join('');
   list.querySelectorAll('.service-row').forEach((row) => {
@@ -163,6 +176,7 @@ function refreshServiceList() {
     row.querySelector('.service-main').appendChild(stage);
     row.addEventListener('click', () => { activeServiceIndex = Number(row.dataset.serviceIndex); stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); openModal('detail-modal'); });
   });
+  refreshDashboardTodaySummary();
 }
 document.querySelector('#client-table').innerHTML = clients.map((item) => `<tr><td><b>${item[0]}</b><small>Cliente desde 2025</small></td><td>${item[1]}</td><td>${item[2]}</td><td><span class="status-pill ${item[4]}">${item[3]}</span></td><td><button class="text-button">Abrir →</button></td></tr>`).join('');
 
@@ -238,7 +252,7 @@ function renderClients() {
   records.forEach((record) => record.addEventListener('click', () => openClientFicha(Number(record.dataset.clientIndex))));
   section.querySelector('#client-new-record').addEventListener('click', () => openModal('new-client-modal'));
 }
-function openServicePriceModal() {
+function openServicePriceModal(service = null) {
   let modal = document.querySelector('#service-price-modal');
   if (!modal) {
     document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop hidden" id="service-price-modal"><div class="modal"><button class="close-button" data-close="service-price-modal">×</button><p class="eyebrow">CATÁLOGO DA EMPRESA</p><h2>Novo serviço</h2><p class="muted">Cadastre um serviço para que a equipe possa selecioná-lo nos atendimentos.</p><form id="service-price-form"><label>Nome do serviço<input name="name" required placeholder="Ex.: Lavagem técnica" /></label><label>Descrição<input name="description" required placeholder="Ex.: Limpeza externa e proteção rápida" /></label><label>Preço<input name="price" required placeholder="Ex.: 180" /></label><div class="form-actions"><button type="button" class="outline-button" data-close="service-price-modal">Cancelar</button><button class="primary-button">Salvar serviço</button></div></form></div></div>`);
@@ -248,15 +262,30 @@ function openServicePriceModal() {
       event.preventDefault();
       const data = new FormData(event.currentTarget);
       const price = Number(String(data.get('price') || '').replace(',', '.')) || 0;
-      const newService = { id: `custom-${Date.now()}`, name: data.get('name'), description: data.get('description'), price };
-      serviceCatalogExtras.push(newService);
-      globalThis.__serviceCatalog = [...getCatalog(), newService].filter((item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index);
+      const changes = { name: data.get('name'), description: data.get('description'), price };
+      const editingId = event.currentTarget.dataset.serviceId;
+      if (editingId) {
+        if (globalThis.__updateServiceInCatalog) globalThis.__updateServiceInCatalog(editingId, changes);
+        else globalThis.__serviceCatalog = getCatalog().map((item) => item.id === editingId ? { ...item, ...changes } : item);
+      } else {
+        const newService = { id: `custom-${Date.now()}`, ...changes };
+        serviceCatalogExtras.push(newService);
+        globalThis.__serviceCatalog = [...getCatalog(), newService].filter((item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index);
+      }
       closeModal('service-price-modal');
       showSection('servicos');
-      showToast('Serviço adicionado ao catálogo.');
+      showToast(editingId ? 'Serviço atualizado no catálogo.' : 'Serviço adicionado ao catálogo.');
       event.currentTarget.reset();
     });
   }
+  const form = modal.querySelector('#service-price-form');
+  form.dataset.serviceId = service?.id || '';
+  modal.querySelector('h2').textContent = service ? 'Editar serviço' : 'Novo serviço';
+  modal.querySelector('.muted').textContent = service ? 'Atualize o nome, a descrição ou o preço deste serviço.' : 'Cadastre um serviço para que a equipe possa selecioná-lo nos atendimentos.';
+  form.elements.name.value = service?.name || '';
+  form.elements.description.value = service?.description || '';
+  form.elements.price.value = service?.price ?? '';
+  form.querySelector('.primary-button').textContent = service ? 'Salvar alterações' : 'Salvar serviço';
   openModal('service-price-modal');
 }
 function renderModule(section, navigationToken = currentNavigationToken) {
@@ -290,7 +319,7 @@ function renderModule(section, navigationToken = currentNavigationToken) {
   } else if (section === 'servicos') {
     content.innerHTML = `<div class="module-grid"><div class="module-panel"><div class="module-toolbar"><h2>Serviços oferecidos</h2><button class="outline-button" id="new-price">+ Novo serviço</button></div><div id="service-catalog-list"></div></div><div class="module-panel"><h2>Como o catálogo é usado</h2><p class="muted">A equipe seleciona os serviços na criação do orçamento. Os mesmos dados aparecem para o cliente antes da aprovação.</p><div class="mini-notice"><span class="status-dot green"></span><div><b>Catálogo ativo</b><small>Preços podem ser alterados sem mudar o histórico de ordens.</small></div></div></div></div>`;
     const catalogList = content.querySelector('#service-catalog-list');
-    const renderCatalog = () => { catalogList.innerHTML = getCatalog().map((item) => `<div class="service-price" data-service-catalog-id="${item.id}"><div><b>${item.name}</b><small>${item.description}</small></div><div class="service-price-actions"><span>R$ ${Number(item.price).toLocaleString('pt-BR')}</span><button type="button" class="text-button danger-button" data-service-delete="${item.id}">Apagar</button></div></div>`).join('') || '<p class="dashboard-empty">Nenhum serviço cadastrado.</p>'; catalogList.querySelectorAll('[data-service-delete]').forEach((button) => button.addEventListener('click', async () => { if (!(await globalThis.__requestConfirmation?.('service'))) return; globalThis.__removeServiceFromCatalog?.(button.dataset.serviceDelete); if (!globalThis.__removeServiceFromCatalog) { const index = serviceCatalogExtras.findIndex((item) => item.id === button.dataset.serviceDelete); if (index >= 0) serviceCatalogExtras.splice(index, 1); } renderCatalog(); showToast('Serviço removido do catálogo.'); })); };
+    const renderCatalog = () => { catalogList.innerHTML = getCatalog().map((item) => `<div class="service-price" data-service-catalog-id="${item.id}"><div><b>${item.name}</b><small>${item.description}</small></div><div class="service-price-actions"><span>R$ ${Number(item.price).toLocaleString('pt-BR')}</span><button type="button" class="text-button danger-button" data-service-delete="${item.id}">Apagar</button></div></div>`).join('') || '<p class="dashboard-empty">Nenhum serviço cadastrado.</p>'; catalogList.querySelectorAll('.service-price').forEach((row) => row.addEventListener('click', (event) => { if (event.target.closest('[data-service-delete]')) return; openServicePriceModal(getCatalog().find((item) => item.id === row.dataset.serviceCatalogId)); })); catalogList.querySelectorAll('[data-service-delete]').forEach((button) => button.addEventListener('click', async () => { if (!(await globalThis.__requestConfirmation?.('service'))) return; globalThis.__removeServiceFromCatalog?.(button.dataset.serviceDelete); if (!globalThis.__removeServiceFromCatalog) { const index = serviceCatalogExtras.findIndex((item) => item.id === button.dataset.serviceDelete); if (index >= 0) serviceCatalogExtras.splice(index, 1); } renderCatalog(); showToast('Serviço removido do catálogo.'); })); };
     renderCatalog();
   } else if (section === 'conversas') {
     content.innerHTML = `<div class="module-grid"><div class="module-panel conversation-panel"><div class="module-toolbar"><h2>Conversas recentes</h2><span class="status-pill in-progress">${getServiceCounts().total} ordens com link</span></div>${services.map((item, index) => `<button class="data-line conversation-row" data-service-index="${index}"><div><b>${item.client}</b><small>${item.vehicle} · ${item.status}</small></div><span class="text-button">Abrir ordem</span></button>`).join('') || '<p class="dashboard-empty">Nenhuma conversa vinculada ainda.</p>'}</div><div class="module-panel"><h2>Fila de retorno</h2><p class="muted">Use o status da ordem para priorizar quem precisa de resposta.</p><div class="data-line"><div><b>${getServiceCounts().active}</b><small>Em atendimento</small></div><span class="status-pill in-progress">Acompanhar</span></div><div class="data-line"><div><b>${getServiceCounts().ready}</b><small>Prontos para retirada</small></div><span class="status-pill ready">Avisar</span></div></div></div>`;
@@ -311,13 +340,19 @@ function renderModule(section, navigationToken = currentNavigationToken) {
     const period = globalThis.__billingPeriod || 'month';
     const billingOrders = globalThis.__filterBillingOrders ? globalThis.__filterBillingOrders(allBillingOrders, period) : allBillingOrders;
     const summary = globalThis.__summarizeBilling ? globalThis.__summarizeBilling(billingOrders) : { orderCount: 0, received: 0, outstanding: 0, averageTicket: 0, byService: [], paymentLabels: {} };
+    const totalTracked = summary.received + summary.outstanding;
+    const receivedPercent = totalTracked ? Math.round((summary.received / totalTracked) * 100) : 0;
     const money = (value) => `R$ ${Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     const maxServiceAmount = Math.max(1, ...(summary.byService || []).map((item) => item.amount));
     const serviceBars = (summary.byService || []).map((item) => `<div class="billing-bar-row"><div><b>${item.service}</b><small>${item.orders} ${item.orders === 1 ? 'ordem' : 'ordens'}</small></div><strong>${money(item.amount)}</strong><div class="billing-bar-track"><span style="width:${Math.round((item.amount / maxServiceAmount) * 100)}%"></span></div></div>`).join('') || '<p class="dashboard-empty">Nenhuma ordem financeira registrada.</p>';
+    const revenueTrend = globalThis.__buildRevenueTrend ? globalThis.__buildRevenueTrend(billingOrders) : [];
+    const maxTrendAmount = Math.max(1, ...revenueTrend.map((item) => item.amount));
+    const trendBars = revenueTrend.map((item) => `<div class="billing-trend-column"><span style="height:${Math.max(8, Math.round((item.amount / maxTrendAmount) * 100))}%" title="${money(item.amount)}"></span><small>${item.label}</small></div>`).join('') || '<p class="dashboard-empty">Os lançamentos do período aparecerão aqui.</p>';
     const paymentBreakdown = Object.entries(summary.paymentLabels || {}).map(([label, count]) => `<div class="billing-status-row"><span>${label}</span><b>${count}</b></div>`).join('') || '<p class="dashboard-empty">Sem pagamentos registrados.</p>';
     const orderRows = billingOrders.map((item) => `<div class="data-line"><div><b>${item.client}</b><small>${item.service} · ${item.status} · ${item.paymentStatus === 'paid' ? 'Recebido' : 'Em aberto'}</small></div><span>${money(item.amount)}</span></div>`).join('') || '<p class="dashboard-empty">Nenhuma ordem registrada.</p>';
     const periodLabel = { week: 'Esta semana', month: 'Este m&ecirc;s', year: 'Este ano' }[period] || 'Este m&ecirc;s';
-    content.innerHTML = `<div class="billing-dashboard"><div class="billing-period-toolbar"><div><span class="eyebrow">PER&Iacute;ODO DE AN&Aacute;LISE</span><strong>${periodLabel}</strong><small>Atualizado automaticamente conforme a opera&ccedil;&atilde;o muda.</small></div><div class="billing-period-tabs">${[['week', 'Semana'], ['month', 'M&ecirc;s'], ['year', 'Ano']].map(([value, label]) => `<button type="button" class="${period === value ? 'active' : ''}" data-billing-period="${value}">${label}</button>`).join('')}</div></div><div class="billing-summary billing-summary-live"><div><span>Recebido</span><b>${money(summary.received)}</b><small>pagamentos marcados como recebidos</small></div><div><span>Em aberto</span><b>${money(summary.outstanding)}</b><small>ordens pendentes ou parciais</small></div><div><span>Ticket m&eacute;dio</span><b>${money(summary.averageTicket)}</b><small>valor m&eacute;dio por ordem</small></div><div><span>Ordens no per&iacute;odo</span><b>${summary.orderCount}</b><small>registros atuais da opera&ccedil;&atilde;o</small></div></div><div class="billing-chart-grid"><section class="module-panel"><div class="module-toolbar"><div><h2>Receita por servi&ccedil;o</h2><small>Compara&ccedil;&atilde;o pelo valor total das ordens.</small></div><span class="status-pill in-progress">Dados reais</span></div><div class="billing-bars">${serviceBars}</div></section><section class="module-panel"><div class="module-toolbar"><div><h2>Status dos pagamentos</h2><small>Distribui&ccedil;&atilde;o atual das ordens.</small></div><span class="status-pill ready">Ao vivo</span></div><div class="billing-status-list">${paymentBreakdown}</div></section></div><section class="module-panel"><div class="module-toolbar"><div><h2>Ordens financeiras</h2><small>Valores sincronizados com os registros atuais da opera&ccedil;&atilde;o.</small></div><span class="counter">${summary.orderCount}</span></div>${orderRows}</section></div>`;
+    content.innerHTML = `<div class="billing-dashboard"><div class="billing-period-toolbar"><div><span class="eyebrow">PER&Iacute;ODO DE AN&Aacute;LISE</span><strong>${periodLabel}</strong><small>Atualizado automaticamente conforme a opera&ccedil;&atilde;o muda.</small></div><div class="billing-period-tabs">${[['week', 'Semana'], ['month', 'M&ecirc;s'], ['year', 'Ano']].map(([value, label]) => `<button type="button" class="${period === value ? 'active' : ''}" data-billing-period="${value}">${label}</button>`).join('')}</div></div><section class="billing-collection-card"><div><span>Fluxo de recebimento</span><strong>${money(summary.received)}</strong><small>${receivedPercent}% do valor registrado j&aacute; foi recebido.</small></div><div class="billing-ring" style="--billing-progress:${receivedPercent}%"><b>${receivedPercent}%</b><small>recebido</small></div></section><div class="billing-summary billing-summary-live"><div><span>Recebido</span><b>${money(summary.received)}</b><small>pagamentos marcados como recebidos</small></div><div><span>Em aberto</span><b>${money(summary.outstanding)}</b><small>ordens aguardando pagamento ou com saldo parcial</small></div><div><span>Ticket m&eacute;dio</span><b>${money(summary.averageTicket)}</b><small>valor m&eacute;dio por ordem</small></div><div><span>Ordens no per&iacute;odo</span><b>${summary.orderCount}</b><small>registros atuais da opera&ccedil;&atilde;o</small></div></div><div class="billing-chart-grid"><section class="module-panel"><div class="module-toolbar"><div><h2>Receita por servi&ccedil;o</h2><small>Compara&ccedil;&atilde;o pelo valor total das ordens.</small></div><span class="status-pill in-progress">Dados reais</span></div><div class="billing-bars">${serviceBars}</div></section><section class="module-panel"><div class="module-toolbar"><div><h2>Status dos pagamentos</h2><small>Distribui&ccedil;&atilde;o atual das ordens.</small></div><span class="status-pill ready">Ao vivo</span></div><div class="billing-status-list">${paymentBreakdown}</div></section></div><section class="module-panel"><div class="module-toolbar"><div><h2>Ordens financeiras</h2><small>Valores sincronizados com os registros atuais da opera&ccedil;&atilde;o.</small></div><span class="counter">${summary.orderCount}</span></div>${orderRows}</section></div>`;
+    content.querySelector('.billing-chart-grid section:nth-child(2)')?.replaceWith(Object.assign(document.createElement('section'), { className: 'module-panel billing-trend-panel', innerHTML: `<div class="module-toolbar"><div><h2>Ritmo de faturamento</h2><small>Entradas registradas por dia no per&iacute;odo.</small></div><span class="status-pill ready">Ao vivo</span></div><div class="billing-trend-chart">${trendBars}</div>` }));
     content.querySelectorAll('[data-billing-period]').forEach((button) => button.addEventListener('click', () => { globalThis.__billingPeriod = button.dataset.billingPeriod; renderModule('faturamento'); }));
   } else if (section === 'configuracoes') {
     content.innerHTML = `<div class="module-grid"><div class="module-panel"><div class="module-toolbar"><h2>Prefer&ecirc;ncias da opera&ccedil;&atilde;o</h2><button class="outline-button" id="save-settings">Salvar altera&ccedil;&otilde;es</button></div><label class="settings-toggle"><span><b>Avisar cliente ao mudar etapa</b><small>Mostra a atualiza&ccedil;&atilde;o no portal e prepara o envio pelo WhatsApp.</small></span><input type="checkbox" checked /></label><label class="settings-toggle"><span><b>Exigir respons&aacute;vel na ordem</b><small>Evita atendimentos sem algu&eacute;m definido na equipe.</small></span><input type="checkbox" checked /></label><label class="settings-toggle"><span><b>Solicitar fotos na finaliza&ccedil;&atilde;o</b><small>Ajuda a manter o hist&oacute;rico visual do ve&iacute;culo.</small></span><input type="checkbox" checked /></label></div><div class="module-panel"><h2>Perfis de acesso</h2><div class="data-line"><div><b>Administradora</b><small>Todos os dados e configura&ccedil;&otilde;es</small></div><span class="status-pill in-progress">Completo</span></div><div class="data-line"><div><b>Recep&ccedil;&atilde;o</b><small>Clientes, agenda, ordens e entregas</small></div><span class="status-pill waiting">Restrito</span></div><div class="data-line"><div><b>Execu&ccedil;&atilde;o</b><small>Etapas, fotos e observa&ccedil;&otilde;es</small></div><span class="status-pill ready">Operacional</span></div></div></div>`;
@@ -788,6 +823,7 @@ function renderDashboardOrganization() {
     dashboard.appendChild(workspace);
   }
   const counts = getServiceCounts();
+  refreshDashboardTodaySummary();
   const tasks = [];
   serviceStates.forEach((state, index) => {
     const item = services[index];
@@ -801,6 +837,7 @@ function renderDashboardOrganization() {
   const dashboardOrganization = globalThis.__dashboardOrganization;
   const dashboardOrganizationModel = dashboardOrganization ? dashboardOrganization.buildDashboardOrganizationModel(services, serviceStates, globalThis.__teamProfiles || [], new Date(), servicePhotos, globalThis.__postSaleFollowUps || []) : null;
   const paddockMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardPaddockMarkup(dashboardOrganizationModel) : '';
+  const financialMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardFinancialMarkup(dashboardOrganizationModel) : '';
   const stageChartMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardStageChartMarkup(dashboardOrganizationModel) : '';
   const attentionMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardAttentionMarkup(dashboardOrganizationModel) : '';
   const operationSummaryMarkup = dashboardOrganizationModel ? dashboardOrganization.buildDashboardOperationSummaryMarkup(dashboardOrganizationModel) : '';
@@ -817,6 +854,7 @@ function renderDashboardOrganization() {
     workspace.querySelector('.dashboard-work-grid > article:first-child')?.replaceWith(summaryContainer.firstElementChild);
   }
   if (paddockMarkup) workspace.insertAdjacentHTML('afterbegin', paddockMarkup);
+  if (financialMarkup) workspace.insertAdjacentHTML('beforeend', financialMarkup);
   if (attentionMarkup) workspace.insertAdjacentHTML('beforeend', attentionMarkup);
   workspace.querySelectorAll('[data-dashboard-order]').forEach((button) => button.addEventListener('click', () => openDashboardOrder(Number(button.dataset.dashboardOrder))));
   workspace.querySelectorAll('[data-dashboard-modal]').forEach((button) => button.addEventListener('click', () => openModal(button.dataset.dashboardModal)));

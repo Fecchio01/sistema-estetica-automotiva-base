@@ -25,6 +25,7 @@ test('cria atendimento com todos os serviços selecionados', async () => {
   const insert = client.calls.find((call) => call[0] === 'work_orders' && call[1] === 'insert')
   assert.equal(insert[2].service_description, 'Polimento técnico, Proteção cerâmica')
   assert.equal(insert[2].status, 'scheduled')
+  assert.equal(insert[2].payment_status, 'paid')
   assert.equal(insert[2].scheduled_at, null)
 })
 

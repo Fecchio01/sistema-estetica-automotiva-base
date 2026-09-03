@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { filterBillingOrders, getBillingPeriodRange, summarizeBilling } from '../src/billing.js'
+import { buildRevenueTrend, filterBillingOrders, getBillingPeriodRange, summarizeBilling } from '../src/billing.js'
 
 test('resume faturamento usando valor e pagamento reais das ordens', () => {
   const summary = summarizeBilling([
@@ -32,4 +32,19 @@ test('calcula períodos semanal, mensal e anual', () => {
     { createdAt: '2026-08-01T10:00:00', amount: 20 },
     { createdAt: '2026-01-02T10:00:00', amount: 30 },
   ], 'month', now).length, 2)
+})
+
+test('considera paga uma ordem registrada no fluxo com pagamento antecipado', () => {
+  assert.equal(summarizeBilling([{ amount: 280, service: 'Detalhamento interno' }]).received, 280)
+})
+
+test('agrupa faturamento em tendência diária para o gráfico financeiro', () => {
+  assert.deepEqual(buildRevenueTrend([
+    { createdAt: '2026-09-01T10:00:00', amount: 280 },
+    { createdAt: '2026-09-01T16:00:00', amount: 690 },
+    { createdAt: '2026-09-02T10:00:00', amount: 420 },
+  ]), [
+    { label: '01/09', amount: 970 },
+    { label: '02/09', amount: 420 },
+  ])
 })

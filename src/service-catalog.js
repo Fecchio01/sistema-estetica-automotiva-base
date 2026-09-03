@@ -8,3 +8,12 @@ export const defaultServiceCatalog = [
 export function removeServiceFromCatalog(catalog, serviceId) {
   return catalog.filter((service) => service.id !== serviceId)
 }
+
+export function updateServiceInCatalog(catalog, serviceId, changes) {
+  return catalog.map((service) => service.id === serviceId ? { ...service, ...changes, id: service.id } : service)
+}
+
+export function totalForCatalogServices(catalog = [], serviceNames = []) {
+  const prices = new Map(catalog.map((service) => [String(service.name || '').trim(), Number(service.price) || 0]))
+  return serviceNames.reduce((total, serviceName) => total + (prices.get(String(serviceName || '').trim()) || 0), 0)
+}

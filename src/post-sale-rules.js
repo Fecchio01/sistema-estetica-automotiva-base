@@ -13,6 +13,11 @@ export const defaultMessageTemplates = Object.freeze([
   { followUpType: 'return', name: 'Lembrete de retorno', message: 'Olá, {{cliente}}! Já faz um tempo desde o cuidado do {{veiculo}}. Quer deixar um próximo retorno pré-agendado?' },
 ])
 
+export function sortMessageTemplates(templates = []) {
+  const order = { check_in: 0, care_tip: 1, review: 2, return: 3 }
+  return [...templates].sort((left, right) => (order[left.follow_up_type] ?? 99) - (order[right.follow_up_type] ?? 99) || String(left.name || '').localeCompare(String(right.name || ''), 'pt-BR'))
+}
+
 const isoPlusDays = (value, days) => new Date(new Date(value).getTime() + days * DAY).toISOString()
 
 export function renderMessageTemplate(template, variables = {}) {

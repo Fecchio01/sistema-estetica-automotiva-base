@@ -1,6 +1,7 @@
 import { supabase } from './supabase-client.js'
 import { ensureDefaultMessageTemplates, loadPostSaleFollowUps, syncPostSalePlans } from './post-sale.js'
 import { buildDeliveryTransition, buildStageTransition, stageForOrder } from './work-order-state.js'
+import { findMissingOrderAmounts, findOrdersAwaitingPaymentMigration } from './order-pricing.js'
 
 const statusMap = {
   scheduled: { label: 'Recebido', tone: 'received', state: 'received' },
@@ -20,7 +21,7 @@ export function buildLiveService(order, clientRecords = []) {
   const vehicle = record?.vehicles?.find((item) => item.id === order?.vehicle_id)
   const status = statusMap[order?.status] ?? statusMap.scheduled
   const createdAt = order?.created_at || new Date().toISOString()
-  return { initials: initials(record?.name), clientId: order.client_id, client: record?.name || 'Cliente', vehicle: vehicleLabel(vehicle), vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status || 'scheduled', currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'pending', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(createdAt).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id }
+  return { initials: initials(record?.name), clientId: order.client_id, client: record?.name || 'Cliente', vehicle: vehicleLabel(vehicle), vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status || 'scheduled', currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'paid', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(createdAt).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id }
 }
 
 function publishLiveData(services, clientRecords, postSaleFollowUps = globalThis.__postSaleFollowUps || []) {
@@ -40,6 +41,16 @@ async function loadLiveData(profile) {
     supabase.from('work_orders').select('id, client_id, vehicle_id, responsible_id, status, current_stage, payment_status, scheduled_at, created_at, completed_at, service_description, total_amount').eq('company_id', profile.company_id).order('created_at', { ascending: false }),
   ])
   if (clientsResult.error || vehiclesResult.error || ordersResult.error) return
+  const missingAmounts = findMissingOrderAmounts(ordersResult.data ?? [], globalThis.__serviceCatalog || [])
+  if (missingAmounts.length) {
+    await Promise.all(missingAmounts.map(({ id, totalAmount }) => supabase.from('work_orders').update({ total_amount: totalAmount }).eq('id', id).eq('company_id', profile.company_id)))
+    ;(ordersResult.data ?? []).forEach((order) => { const match = missingAmounts.find((item) => item.id === order.id); if (match) order.total_amount = match.totalAmount })
+  }
+  const awaitingPaymentMigration = findOrdersAwaitingPaymentMigration(ordersResult.data ?? [])
+  if (awaitingPaymentMigration.length) {
+    await Promise.all(awaitingPaymentMigration.map((id) => supabase.from('work_orders').update({ payment_status: 'paid' }).eq('id', id).eq('company_id', profile.company_id)))
+    ;(ordersResult.data ?? []).forEach((order) => { if (awaitingPaymentMigration.includes(order.id)) order.payment_status = 'paid' })
+  }
   const clientsById = new Map((clientsResult.data ?? []).map((client) => [client.id, client]))
   const vehiclesById = new Map((vehiclesResult.data ?? []).map((vehicle) => [vehicle.id, vehicle]))
   const services = (ordersResult.data ?? []).map((order) => {
@@ -47,7 +58,7 @@ async function loadLiveData(profile) {
     const vehicle = vehiclesById.get(order.vehicle_id)
     const status = statusMap[order.status] ?? statusMap.scheduled
     const vehicleText = vehicleLabel(vehicle)
-    return { initials: initials(client?.full_name), clientId: order.client_id, client: client?.full_name || 'Cliente', vehicle: vehicleText, vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status, currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'pending', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(order.created_at).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt: order.created_at, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id }
+    return { initials: initials(client?.full_name), clientId: order.client_id, client: client?.full_name || 'Cliente', vehicle: vehicleText, vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status, currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'paid', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(order.created_at).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt: order.created_at, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id }
   })
   const clientRecords = (clientsResult.data ?? []).map((client) => {
     const vehicle = (vehiclesResult.data ?? []).find((item) => item.client_id === client.id)

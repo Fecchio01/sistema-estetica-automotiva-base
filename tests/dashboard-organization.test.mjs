@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildDashboardAttentionMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
+import { buildDashboardAttentionMarkup, buildDashboardFinancialMarkup, buildDashboardOperationSummaryMarkup, buildDashboardOrganizationModel, buildDashboardPaddockMarkup, buildDashboardStageChartMarkup, buildDashboardTodayTimelineMarkup, formatElapsedSince } from '../src/dashboard-organization.js'
 
 test('painel operacional agrupa ordens por etapa e preserva responsável', () => {
   const model = buildDashboardOrganizationModel([
@@ -41,6 +41,32 @@ test('pátio usa um contador autoexplicativo em vez de um zero isolado', () => {
 
   assert.match(markup, /0 veículos no pátio/)
   assert.match(markup, /dashboard-paddock-total/)
+})
+
+test('visão geral mostra faturamento recente e ranking de serviços com dados reais', () => {
+  const markup = buildDashboardFinancialMarkup({ rows: [
+    { service: 'Detalhamento interno', amount: 280, createdAt: '2026-09-02T10:00:00.000Z' },
+    { service: 'Polimento técnico', amount: 690, createdAt: '2026-09-03T10:00:00.000Z' },
+  ] }, new Date('2026-09-03T12:00:00.000Z'))
+
+  assert.match(markup, /Financeiro da operação/)
+  assert.match(markup, /R\$ 970,00/)
+  assert.match(markup, /dashboard-financial-chart/)
+  assert.match(markup, /Detalhamento interno/)
+  assert.match(markup, /Polimento técnico/)
+})
+
+test('pátio resume visualmente a distribuição real dos veículos por etapa', () => {
+  const markup = buildDashboardPaddockMarkup({
+    rows: [{ orderIndex: 0, client: 'Artur', vehicle: 'Honda Civic', stageTone: 'received', stageLabel: 'Aguardando avaliação', responsible: 'Pedro Lima', service: 'Detalhamento', elapsed: 'há 1h' }],
+    stageCounts: { received: 1, inProgress: 2, ready: 1 },
+  })
+
+  assert.match(markup, /dashboard-paddock-distribution/)
+  assert.match(markup, /dashboard-paddock-distribution-segment received/)
+  assert.match(markup, /dashboard-paddock-distribution-segment in-progress/)
+  assert.match(markup, /dashboard-paddock-distribution-segment ready/)
+  assert.match(markup, /Em execução.*2/)
 })
 
 test('gráfico de etapas mostra distribuição proporcional das ordens', () => {
@@ -140,6 +166,17 @@ test('gráfico informa que sua leitura é mensal', () => {
 
   assert.match(markup, /Fluxo mensal/)
   assert.match(markup, /ordens criadas neste mês/)
+})
+
+test('fluxo mensal apresenta uma leitura visual segmentada das etapas', () => {
+  const markup = buildDashboardStageChartMarkup({
+    stageCounts: { received: 1, inProgress: 2, ready: 1 },
+  })
+
+  assert.match(markup, /dashboard-flow-visual/)
+  assert.match(markup, /dashboard-flow-segment received/)
+  assert.match(markup, /dashboard-flow-segment in-progress/)
+  assert.match(markup, /dashboard-flow-segment ready/)
 })
 
 test('panorama semanal organiza cargas e serviços em gráficos independentes', () => {

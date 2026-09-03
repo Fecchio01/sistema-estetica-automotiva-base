@@ -1,5 +1,6 @@
 import { archiveClient, createClient, createVehicle, createWorkOrder, loadClientRecords } from './clients-data.js'
 import { supabase } from './supabase-client.js'
+import { totalForCatalogServices } from './service-catalog.js'
 
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]))
 const roleLabel = (role) => ({ administrator: 'Administrador(a)', reception: 'Recepção', employee: 'Funcionário' }[role] || role)
@@ -88,7 +89,7 @@ document.addEventListener('submit', async (event) => {
   const requestId = form.dataset.requestId || crypto.randomUUID()
   form.dataset.requestId = requestId
   const button = form.querySelector('button[type="submit"]'); const message = form.querySelector('#service-message'); button.disabled = true; message.textContent = ''
-  try { const createdOrder = await createWorkOrder(profile(), { id: requestId, clientId: values.clientId, vehicleId: values.vehicleId, responsibleId: values.responsibleId, services, status: 'scheduled', scheduledAt: null }); globalThis.__lastServiceSubmission = { fingerprint, createdAt: Date.now() }; globalThis.__addLiveWorkOrder?.(createdOrder); document.querySelector('#service-modal').classList.add('hidden'); form.reset(); button.disabled = false; document.dispatchEvent(new CustomEvent('live-data-refresh-requested')); announce('Atendimento recebido e sincronizando com a operação.') } catch (error) { message.textContent = error.message; button.disabled = false } finally { form.dataset.submitting = 'false'; globalThis.__serviceSubmissionInFlight = false }
+  try { const totalAmount = totalForCatalogServices(globalThis.__serviceCatalog || [], services); const createdOrder = await createWorkOrder(profile(), { id: requestId, clientId: values.clientId, vehicleId: values.vehicleId, responsibleId: values.responsibleId, services, totalAmount, status: 'scheduled', scheduledAt: null }); globalThis.__lastServiceSubmission = { fingerprint, createdAt: Date.now() }; globalThis.__addLiveWorkOrder?.(createdOrder); document.querySelector('#service-modal').classList.add('hidden'); form.reset(); button.disabled = false; document.dispatchEvent(new CustomEvent('live-data-refresh-requested')); announce('Atendimento recebido e sincronizando com a operação.') } catch (error) { message.textContent = error.message; button.disabled = false } finally { form.dataset.submitting = 'false'; globalThis.__serviceSubmissionInFlight = false }
 }, true)
 
 document.addEventListener('live-data-ready', (event) => { if (event.detail.clientRecords) { globalThis.__clientRecords = event.detail.clientRecords; if (document.querySelector('#clients-section:not(.hidden)')) renderLiveClients(); refreshServiceOptions() } })

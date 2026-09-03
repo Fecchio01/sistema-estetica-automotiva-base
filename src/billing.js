@@ -3,7 +3,7 @@ const paymentLabel = (status) => ({ paid: 'Recebido', partial: 'Parcial', pendin
 export function summarizeBilling(orders = []) {
   const normalized = orders.map((order) => ({
     amount: Math.max(0, Number(order.amount || 0)),
-    paymentStatus: order.paymentStatus || 'pending',
+    paymentStatus: order.paymentStatus || 'paid',
     service: order.service || 'Serviço não informado',
   }))
   const received = normalized.filter((order) => order.paymentStatus === 'paid').reduce((total, order) => total + order.amount, 0)
@@ -57,5 +57,17 @@ export function filterBillingOrders(orders = [], period = 'month', now = new Dat
   })
 }
 
+export function buildRevenueTrend(orders = []) {
+  const days = new Map()
+  orders.forEach((order) => {
+    const date = new Date(order.createdAt || order.scheduledAt || 0)
+    if (Number.isNaN(date.getTime())) return
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    days.set(key, (days.get(key) || 0) + Math.max(0, Number(order.amount || 0)))
+  })
+  return [...days.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([key, amount]) => ({ label: `${key.slice(8, 10)}/${key.slice(5, 7)}`, amount }))
+}
+
 globalThis.__summarizeBilling = summarizeBilling
 globalThis.__filterBillingOrders = filterBillingOrders
+globalThis.__buildRevenueTrend = buildRevenueTrend

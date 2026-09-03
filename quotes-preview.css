@@ -1,12 +1,12 @@
 .quotes-preview-shell { display: grid; gap: 24px; }
 .quotes-preview-intro, .quote-preview-toolbar, .quote-preview-card-top, .quote-preview-total { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.quotes-preview-intro { padding: 26px 28px; border: 1px solid #d9e7df; border-radius: 22px; background: linear-gradient(135deg, #f7fbf8, #edf7f1); }
+.quotes-preview-intro { padding: 26px 28px; border: 1px solid #cee0d1; border-radius: 22px; background: #fff; }
 .quotes-preview-intro h2, .quote-preview-toolbar h3, .quote-preview-card h3 { margin: 4px 0; color: #173b30; }
 .quotes-preview-intro p:not(.eyebrow), .quote-preview-toolbar p, .quote-preview-card p { margin: 5px 0 0; color: #72857e; }
 .quote-preview-badge, .quote-status { padding: 8px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .quote-preview-badge { color: #216d54; background: #dcefe5; }
 .quote-preview-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.quote-preview-metrics > div { padding: 20px; border: 1px solid #e1ebe5; border-radius: 18px; background: #fff; }
+.quote-preview-metrics > div { padding: 20px; border: 1px solid #cee0d1; border-radius: 18px; background: #edf5ee; }
 .quote-preview-metrics span, .quote-preview-metrics small { display: block; color: #788b83; }
 .quote-preview-metrics strong { display: block; margin: 8px 0 2px; color: #173b30; font-size: 25px; }
 .quote-preview-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }

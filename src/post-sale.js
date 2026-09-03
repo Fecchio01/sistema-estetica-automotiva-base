@@ -1,5 +1,5 @@
 import { supabase } from './supabase-client.js'
-import { buildFollowUpEvent, buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp, defaultMessageTemplates } from './post-sale-rules.js'
+import { buildFollowUpEvent, buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp, defaultMessageTemplates, sortMessageTemplates } from './post-sale-rules.js'
 export { buildFollowUpEvent, buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp, defaultMessageTemplates }
 
 const templateCacheIsFresh = (profile, client) => client === supabase && globalThis.__postSaleTemplatesCompanyId === profile?.company_id && Number(globalThis.__postSaleTemplatesLoadedAt || 0) > Date.now() - 30000
@@ -18,7 +18,7 @@ export async function loadPostSaleTemplates(profile, client = supabase) {
   if (templateCacheIsFresh(profile, client)) return globalThis.__postSaleTemplates
   const { data, error } = await client.from('post_sale_message_templates').select('id, follow_up_type, name, message, active, created_at, updated_at').eq('company_id', profile.company_id).eq('active', true).order('follow_up_type').order('name')
   if (error) throw new Error(error.message || 'Não foi possível carregar os modelos de mensagem.')
-  const templates = data || []
+  const templates = sortMessageTemplates(data || [])
   if (client === supabase) {
     globalThis.__postSaleTemplates = templates
     globalThis.__postSaleTemplatesCompanyId = profile.company_id

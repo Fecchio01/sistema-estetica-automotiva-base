@@ -4,8 +4,76 @@ import { readFile } from 'node:fs/promises'
 
 const styles = await readFile(new URL('../styles.css', import.meta.url), 'utf8')
 const quoteStyles = await readFile(new URL('../quotes-preview.css', import.meta.url), 'utf8')
+const whatsappStyles = await readFile(new URL('../whatsapp-inbox.css', import.meta.url), 'utf8')
 const app = await readFile(new URL('../app.js', import.meta.url), 'utf8')
 const clientUi = await readFile(new URL('../src/client-live-ui.js', import.meta.url), 'utf8')
+
+test('módulos usam superfícies verdes consistentes sem cores concorrentes', () => {
+  assert.match(styles, /--module-soft:#edf5ee/)
+  assert.match(styles, /\.module-panel,\.client-directory,\.attendance-list\{[\s\S]*border-radius:18px/)
+  assert.match(styles, /\.attendance-summary>div,\.client-summary>div\{[\s\S]*background:var\(--module-soft\)/)
+})
+
+test('orçamentos, gestão e conversas seguem a mesma família visual', () => {
+  assert.match(quoteStyles, /\.quote-preview-metrics > div\s*\{[\s\S]*background:\s*#edf5ee/)
+  assert.doesNotMatch(quoteStyles, /\.quotes-preview-intro\{[^}]*linear-gradient/)
+  assert.match(styles, /\.billing-summary>div\{[\s\S]*background:var\(--module-soft\)/)
+  assert.match(whatsappStyles, /\.whatsapp-inbox\{[\s\S]*border-radius:18px/)
+})
+
+test('faturamento destaca o fluxo financeiro com card escuro e gráfico de recebimento', () => {
+  assert.match(app, /billing-collection-card/)
+  assert.match(app, /billing-ring/)
+  assert.match(styles, /\.billing-collection-card\{[^}]*background:#2f3b32/)
+  assert.match(styles, /\.billing-ring\{[^}]*conic-gradient/)
+})
+
+test('atendimentos usa a composição de painel da visão geral', () => {
+  assert.match(styles, /\.attendances-shell\{display:grid;gap:22px/)
+  assert.match(styles, /\.attendances-shell \.attendance-summary>div\{[^}]*background:#edf5ee/)
+  assert.match(styles, /\.attendances-shell \.attendance-toolbar\{[\s\S]*border-radius:20px/)
+  assert.match(styles, /\.attendances-shell \.attendance-list-heading\{[^}]*background:#edf5ee/)
+})
+
+test('agenda elimina o bege dos horários e usa a paleta verde do painel', () => {
+  assert.match(styles, /\.main-content \.agenda-live-grid \.calendar-event-card\{[^}]*background:#edf5ee/)
+  assert.match(styles, /\.main-content \.agenda-live-grid \.calendar-slot\{[^}]*background:#f8fcf9/)
+})
+
+test('agenda mantém separadores cinza neutro e não corta o dia ao passar o mouse', () => {
+  assert.match(styles, /\.main-content \.agenda-live-grid\{[^}]*background:#e5e7e7[^}]*overflow:visible/)
+  assert.match(styles, /\.main-content \.agenda-live-grid \.calendar-day:hover\{[^}]*transform:none/)
+})
+
+test('clientes e veículos substitui o bege pelos painéis verdes da visão geral', () => {
+  assert.match(styles, /\.main-content \.client-summary>div\{[^}]*background:#edf5ee/)
+  assert.match(styles, /\.main-content \.client-directory-heading\{[^}]*background:#edf5ee/)
+  assert.match(styles, /\.main-content \.client-record:hover\{[^}]*background:#f8fcf9/)
+})
+
+test('catálogo de serviços usa verde-claro e ação de apagar textual', () => {
+  assert.match(styles, /\.main-content \.service-price\{[^}]*background:#edf5ee/)
+  assert.match(styles, /\.main-content \[data-service-delete\]:hover\{[^}]*background:transparent[^}]*color:#d32016!important/)
+})
+
+test('pós-venda mantém toda a área de acompanhamento em branco', () => {
+  assert.match(styles, /\.main-content \.post-sale-metric\.today\{[^}]*background:#edf5ee/)
+  const finalPostSalePanelRule = styles.lastIndexOf('.main-content .post-sale-panel{')
+  assert.match(styles.slice(finalPostSalePanelRule), /^\.main-content \.post-sale-panel\{[^}]*background:#fff/)
+  const finalClientCardRule = styles.lastIndexOf('.main-content .post-sale-client-card{')
+  assert.match(styles.slice(finalClientCardRule), /^\.main-content \.post-sale-client-card\{[^}]*background:#fff/)
+  assert.match(styles, /\.main-content \.post-sale-template-preview\{[^}]*background:#edf5ee/)
+})
+
+test('ação de apagar cliente tem coluna própria afastada da borda', () => {
+  assert.match(styles, /\.main-content \.client-directory-heading,\.main-content \.client-record\{[^}]*grid-template-columns:2fr 1\.4fr 1fr 1\.3fr 92px/)
+  assert.match(styles, /\.main-content \.client-record\{[^}]*padding-right:42px/)
+})
+
+test('ação de apagar cliente responde ao hover com vermelho mais forte', () => {
+  assert.match(styles, /\.main-content \.client-record \[data-client-delete\]\{[^}]*border:0[^}]*background:transparent[^}]*color:#b54d45!important/)
+  assert.match(styles, /\.main-content \.client-record \[data-client-delete\]:hover\{[^}]*background:transparent[^}]*color:#d32016!important/)
+})
 
 test('linguagem visual compartilhada evita controles quadrados e campos nativos quebrados', () => {
   assert.match(styles, /--radius-control:14px/)

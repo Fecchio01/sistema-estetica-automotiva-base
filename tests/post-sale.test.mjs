@@ -1,6 +1,16 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch, buildFollowUpMessagePatch, renderMessageTemplate, buildMessageTemplatePreview, buildFollowUpEvent, buildAutomationControlState, buildFollowUpHistorySummary, getDueAutomaticFollowUps } from '../src/post-sale-rules.js'
+import { buildPostSalePlan, classifyFollowUp, groupFollowUps, summarizePendingFollowUps, buildFollowUpStatusPatch, buildFollowUpMessagePatch, renderMessageTemplate, buildMessageTemplatePreview, buildFollowUpEvent, buildAutomationControlState, buildFollowUpHistorySummary, getDueAutomaticFollowUps, sortMessageTemplates } from '../src/post-sale-rules.js'
+
+test('ordena modelos pela jornada do pós-venda', () => {
+  const templates = [
+    { follow_up_type: 'return', name: 'Lembrete de retorno' },
+    { follow_up_type: 'care_tip', name: 'Dica de cuidado' },
+    { follow_up_type: 'review', name: 'Avaliação' },
+    { follow_up_type: 'check_in', name: 'Check-in' },
+  ]
+  assert.deepEqual(sortMessageTemplates(templates).map((template) => template.follow_up_type), ['check_in', 'care_tip', 'review', 'return'])
+})
 
 test('renderiza variáveis no modelo de mensagem', () => {
   assert.equal(renderMessageTemplate('Olá, {{cliente}}! Seu {{veiculo}} está pronto.', { cliente: 'João', veiculo: 'BMW 320i' }), 'Olá, João! Seu BMW 320i está pronto.')
