@@ -1,17 +1,34 @@
 import { buildAutomationControlState, buildFollowUpHistorySummary, buildMessageTemplatePreview, classifyFollowUp, groupFollowUps, renderMessageTemplate } from './post-sale-rules.js'
+import { loadPostSaleData } from './post-sale-loading.js'
 
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]))
 const typeLabel = { check_in: 'Check-in', care_tip: 'Dica de cuidado', review: 'Avaliação', return: 'Lembrete de retorno' }
 const statusLabel = { today: 'Hoje', overdue: 'Atrasado', upcoming: 'Próximo', done: 'Concluído' }
 const eventLabel = { message_edited: 'Mensagem editada', scheduled: 'Automação programada', automation_disabled: 'Automação desativada', sent: 'Mensagem enviada', send_failed: 'Falha no envio', undone: 'Envio desfeito' }
 const profile = () => globalThis.__sessionProfile
+let cachedPostSaleData = null
+let cachedPostSaleCompanyId = null
 
 async function render(root) {
-  root.innerHTML = '<div class="post-sale-loading">Carregando acompanhamentos…</div>'
+  const currentProfile = profile()
+  const warmedData = currentProfile?.company_id === globalThis.__postSaleTemplatesCompanyId && Array.isArray(globalThis.__postSaleFollowUps) && Array.isArray(globalThis.__postSaleTemplates)
+    ? { items: globalThis.__postSaleFollowUps, templates: globalThis.__postSaleTemplates, events: [] }
+    : null
+  const initialData = cachedPostSaleData && cachedPostSaleCompanyId === currentProfile?.company_id ? cachedPostSaleData : warmedData
+  if (initialData) renderPostSaleContent(root, initialData)
+  else root.innerHTML = '<div class="post-sale-loading">Carregando acompanhamentos…</div>'
   try {
-    const items = await globalThis.__postSale.loadPostSaleFollowUps(profile())
-    const templates = await globalThis.__postSale.ensureDefaultMessageTemplates(profile())
-    const events = await globalThis.__postSale.loadPostSaleFollowUpEvents(profile(), items.map((item) => item.id))
+    const data = await loadPostSaleData(currentProfile, globalThis.__postSale)
+    cachedPostSaleData = data
+    cachedPostSaleCompanyId = currentProfile?.company_id || null
+    globalThis.__postSaleFollowUps = data.items
+    globalThis.__postSaleTemplates = data.templates
+    globalThis.__postSaleTemplatesCompanyId = cachedPostSaleCompanyId
+    renderPostSaleContent(root, data)
+  } catch (error) { root.innerHTML = `<div class="post-sale-empty"><b>Não foi possível carregar o pós-venda</b><span>${escapeHtml(error.message)}</span></div>` }
+}
+
+function renderPostSaleContent(root, { items, templates, events }) {
     const eventsByFollowUp = new Map(items.map((item) => [item.id, events.filter((event) => event.follow_up_id === item.id)]))
     const now = new Date()
     const pending = items.filter((item) => item.status === 'pending')
@@ -41,7 +58,6 @@ async function render(root) {
     root.querySelectorAll('[data-post-sale-edit]').forEach((button) => button.addEventListener('click', (event) => { event.stopPropagation(); const editor = root.querySelector(`[data-post-sale-editor="${button.dataset.postSaleEdit}"]`); const save = document.createElement('button'); save.type = 'button'; save.className = 'primary-button'; save.dataset.postSaleSave = button.dataset.postSaleEdit; save.textContent = 'Salvar mensagem'; button.replaceWith(save); editor?.classList.remove('hidden'); editor?.focus(); save.addEventListener('click', async (saveEvent) => { saveEvent.stopPropagation(); save.disabled = true; try { await globalThis.__postSale.updateFollowUp(profile(), save.dataset.postSaleSave, 'pending', undefined, editor.value); const current = items.find((item) => item.id === save.dataset.postSaleSave); if (current) current.message = editor.value.trim(); globalThis.__postSaleFollowUps = items; document.dispatchEvent(new CustomEvent('post-sale-data-ready')); globalThis.showToast?.('Mensagem salva.'); await render(root) } catch (error) { save.disabled = false; globalThis.showToast?.(error.message) } }) }))
     root.querySelectorAll('[data-post-sale-send]').forEach((button) => button.addEventListener('click', async (event) => { event.stopPropagation(); const item = items.find((entry) => entry.id === button.dataset.postSaleSend); const number = item?.clients?.phone; if (!number) { globalThis.showToast?.('Este cliente não possui WhatsApp cadastrado.'); return } if (!(await globalThis.__requestConfirmation?.('post-sale-send'))) return; button.disabled = true; try { const connection = await fetch('/api/whatsapp/connection'); const connectionData = await connection.json(); if (!connection.ok || !['open', 'connected'].includes(String(connectionData.state).toLowerCase())) throw new Error('O WhatsApp da empresa não está conectado.'); const response = await fetch('/api/whatsapp/send', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ number, text: item.message }) }); const data = await response.json(); if (!response.ok) throw new Error(data.message || 'Não foi possível enviar a mensagem.'); await globalThis.__postSale.updateFollowUp(profile(), button.dataset.postSaleSend, 'sent', undefined, item.message); updateLocalFollowUp(button.dataset.postSaleSend, 'sent'); globalThis.showToast?.('Mensagem enviada pelo WhatsApp.'); await render(root) } catch (error) { await globalThis.__postSale.recordFollowUpEvent?.(profile(), { followUpId: button.dataset.postSaleSend, eventType: 'send_failed', channel: 'whatsapp', message: item?.message, errorMessage: error.message }).catch(() => {}); button.disabled = false; globalThis.showToast?.(error.message) } }))
     root.querySelectorAll('[data-post-sale-undo]').forEach((button) => button.addEventListener('click', async (event) => { event.stopPropagation(); if (!(await globalThis.__requestConfirmation?.('post-sale'))) return; button.disabled = true; try { await globalThis.__postSale.updateFollowUp(profile(), button.dataset.postSaleUndo, 'pending'); updateLocalFollowUp(button.dataset.postSaleUndo, 'pending'); globalThis.showToast?.('Envio cancelado. O acompanhamento voltou para pendente.'); await render(root) } catch (error) { button.disabled = false; globalThis.showToast?.(error.message) } }))
-  } catch (error) { root.innerHTML = `<div class="post-sale-empty"><b>Não foi possível carregar o pós-venda</b><span>${escapeHtml(error.message)}</span></div>` }
 }
 
 globalThis.__renderPostSale = (root) => render(root)

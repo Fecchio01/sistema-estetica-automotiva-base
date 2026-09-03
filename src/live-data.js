@@ -1,5 +1,5 @@
 import { supabase } from './supabase-client.js'
-import { loadPostSaleFollowUps, syncPostSalePlans } from './post-sale.js'
+import { ensureDefaultMessageTemplates, loadPostSaleFollowUps, syncPostSalePlans } from './post-sale.js'
 import { buildDeliveryTransition, buildStageTransition, stageForOrder } from './work-order-state.js'
 
 const statusMap = {
@@ -57,6 +57,7 @@ async function loadLiveData(profile) {
   })
   const liveClients = clientRecords.map((client) => [client.name, client.vehicleLabel, client.latestService, client.latestStatus, client.latestTone, client.orderCount, client.createdAt])
   const states = services.map((service) => ({ stage: service.currentStage, status: statusMap[service.orderStatus]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '' }))
+  ensureDefaultMessageTemplates(profile).catch((error) => console.warn('Modelos de pós-venda ainda não carregados:', error.message))
   try { await syncPostSalePlans(profile, services, clientRecords) } catch (error) { console.warn('Pós-venda ainda não sincronizado:', error.message) }
   let postSaleFollowUps = []
   try { postSaleFollowUps = await loadPostSaleFollowUps(profile) } catch (error) { console.warn('Pós-venda ainda não carregado:', error.message) }

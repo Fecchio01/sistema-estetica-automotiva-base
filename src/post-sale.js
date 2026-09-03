@@ -2,8 +2,11 @@ import { supabase } from './supabase-client.js'
 import { buildFollowUpEvent, buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp, defaultMessageTemplates } from './post-sale-rules.js'
 export { buildFollowUpEvent, buildPostSalePlan, buildFollowUpMessagePatch, buildFollowUpStatusPatch, classifyFollowUp, defaultMessageTemplates }
 
+const templateCacheIsFresh = (profile, client) => client === supabase && globalThis.__postSaleTemplatesCompanyId === profile?.company_id && Number(globalThis.__postSaleTemplatesLoadedAt || 0) > Date.now() - 30000
+
 export async function ensureDefaultMessageTemplates(profile, client = supabase) {
   if (!profile?.company_id) return []
+  if (templateCacheIsFresh(profile, client)) return globalThis.__postSaleTemplates
   const payload = defaultMessageTemplates.map((template) => ({ company_id: profile.company_id, follow_up_type: template.followUpType, name: template.name, message: template.message, created_by: profile.id }))
   const { error } = await client.from('post_sale_message_templates').upsert(payload, { onConflict: 'company_id,follow_up_type,name', ignoreDuplicates: true })
   if (error) throw new Error(error.message || 'Não foi possível preparar os modelos de mensagem.')
@@ -12,9 +15,16 @@ export async function ensureDefaultMessageTemplates(profile, client = supabase) 
 
 export async function loadPostSaleTemplates(profile, client = supabase) {
   if (!profile?.company_id) return []
+  if (templateCacheIsFresh(profile, client)) return globalThis.__postSaleTemplates
   const { data, error } = await client.from('post_sale_message_templates').select('id, follow_up_type, name, message, active, created_at, updated_at').eq('company_id', profile.company_id).eq('active', true).order('follow_up_type').order('name')
   if (error) throw new Error(error.message || 'Não foi possível carregar os modelos de mensagem.')
-  return data || []
+  const templates = data || []
+  if (client === supabase) {
+    globalThis.__postSaleTemplates = templates
+    globalThis.__postSaleTemplatesCompanyId = profile.company_id
+    globalThis.__postSaleTemplatesLoadedAt = Date.now()
+  }
+  return templates
 }
 
 export async function saveMessageTemplate(profile, template, client = supabase) {
@@ -23,6 +33,7 @@ export async function saveMessageTemplate(profile, template, client = supabase) 
   const query = template.id ? client.from('post_sale_message_templates').update(payload).eq('id', template.id).eq('company_id', profile.company_id) : client.from('post_sale_message_templates').insert(payload)
   const { error } = await query
   if (error) throw new Error(error.message || 'Não foi possível salvar o modelo de mensagem.')
+  if (client === supabase) globalThis.__postSaleTemplatesLoadedAt = 0
 }
 
 export async function setFollowUpAutomation(profile, id, options = {}, client = supabase) {
