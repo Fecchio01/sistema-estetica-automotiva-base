@@ -92,6 +92,9 @@ test('painel de atenção reúne alertas diferentes do gráfico e do pátio', ()
   assert.match(markup, /Veículos parados há mais tempo/)
   assert.match(markup, /Próximas retiradas/)
   assert.match(markup, /Artur/)
+  assert.match(markup, /dashboard-attention-radar/)
+  assert.match(markup, /Sem responsável.*1/)
+  assert.match(markup, /Parados.*1/)
 })
 
 test('atenção operacional agrupa pendências de fotos por atendimento', () => {
