@@ -1,4 +1,5 @@
 .superpowers/sdd/
+.worktrees/
 node_modules/
 .env.local
 docker/evolution/.env
