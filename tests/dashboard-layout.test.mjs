@@ -29,3 +29,7 @@ test('entrada da aplicação bloqueia o flash da tela de login durante a sessão
   assert.match(indexHtml, /body\.app-booting #auth-screen,body\.app-booting #app-shell\{display:none\}/)
   assert.match(authBootstrap, /document\.body\.classList\.remove\('app-booting'\)/)
 })
+
+test('troca de seção não reaplica animação que causa flash no painel', () => {
+  assert.match(styles, /\.main-content \.page-section:not\(\.hidden\)\{animation:none!important\}/)
+})
