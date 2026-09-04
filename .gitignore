@@ -3,3 +3,5 @@
 node_modules/
 .env.local
 docker/evolution/.env
+.vercel
+.env*
