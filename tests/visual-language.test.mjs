@@ -38,6 +38,8 @@ test('atendimentos usa a composição de painel da visão geral', () => {
 })
 
 test('atendimentos mostra o nome do responsável escolhido na ordem', () => {
+  assert.match(app, /function openServiceByIndex\(rawIndex\)/)
+  assert.match(app, /stageIndex = serviceStates\[index\]\?\.stage \?\? 0/)
   assert.match(app, /function responsibleLabel\(item, index\)/)
   assert.match(app, /person\.id === responsible \|\| person\.full_name === responsible/)
   assert.match(app, /<span>\$\{responsibleLabel\(item, index\)\}<\/span>/)

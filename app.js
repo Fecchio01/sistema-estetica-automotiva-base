@@ -412,7 +412,7 @@ function renderModule(section, navigationToken = currentNavigationToken) {
     });
     refreshWhatsAppStatus();
   }
-  content.querySelectorAll('[data-service-index]').forEach((item) => item.addEventListener('click', () => { activeServiceIndex = Number(item.dataset.serviceIndex); stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); openModal('detail-modal'); }));
+  content.querySelectorAll('[data-service-index]').forEach((item) => item.addEventListener('click', () => openServiceByIndex(item.dataset.serviceIndex)));
   if (section === 'servicos') {
     const catalogPanel = content.querySelector('.service-price')?.parentElement;
     const newPrice = content.querySelector('#new-price');
@@ -423,6 +423,14 @@ function renderModule(section, navigationToken = currentNavigationToken) {
 document.querySelectorAll('[data-section]').forEach((item) => item.addEventListener('click', () => { showSection(item.dataset.section); document.querySelector('#sidebar')?.classList.remove('mobile-open'); document.querySelector('#mobile-nav-toggle')?.setAttribute('aria-expanded', 'false'); }));
 document.querySelector('#mobile-nav-toggle')?.addEventListener('click', () => { const sidebar = document.querySelector('#sidebar'); const button = document.querySelector('#mobile-nav-toggle'); const isOpen = sidebar?.classList.toggle('mobile-open'); button?.setAttribute('aria-expanded', String(Boolean(isOpen))); });
 document.querySelector('#mobile-nav-backdrop')?.addEventListener('click', () => { document.querySelector('#sidebar')?.classList.remove('mobile-open'); document.querySelector('#mobile-nav-toggle')?.setAttribute('aria-expanded', 'false'); });
+function openServiceByIndex(rawIndex) {
+  const index = Number(rawIndex);
+  if (!Number.isInteger(index) || !services[index]) return;
+  activeServiceIndex = index;
+  stageIndex = serviceStates[index]?.stage ?? 0;
+  syncStage();
+  openModal('detail-modal');
+}
 const openModal = (id) => { document.querySelector(`#${id}`).classList.remove('hidden'); if (id === 'service-modal') globalThis.__prepareServiceSubmission?.(); };
 const closeModal = (id) => { const modal = document.querySelector(`#${id}`); if (modal) { modal.classList.add('hidden'); if (id === 'detail-modal') modal.classList.remove('employee-overlay'); } };
 document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop hidden" id="new-client-modal"><div class="modal"><button class="close-button" data-close="new-client-modal">×</button><p class="eyebrow">BASE DE CLIENTES</p><h2>Cadastrar cliente</h2><p class="muted">Esse cadastro poderá ser reutilizado em novos atendimentos.</p><form id="new-client-form"><label>Nome completo<input name="name" required placeholder="Ex.: Rafael Nogueira" /></label><label>WhatsApp<input name="phone" required placeholder="(19) 99999-0000" /></label><label>Veículo e placa<input name="vehicle" required placeholder="Ex.: Honda Civic · RGT-4B21" /></label><div class="form-actions"><button type="button" class="outline-button" data-close="new-client-modal">Cancelar</button><button type="submit" class="primary-button">Salvar cliente</button></div></form></div></div>`);
