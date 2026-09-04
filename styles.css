@@ -697,6 +697,66 @@ html,body{background:#fff!important}
 @media(max-width:950px){.billing-summary-live{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:520px){.billing-summary-live{grid-template-columns:1fr}.billing-trend-chart{gap:6px}.billing-trend-column{min-width:18px}.billing-trend-column small{font-size:8px}}
 @media(max-width:520px){.billing-collection-card{align-items:flex-start;padding:22px}.billing-ring{width:76px;height:76px;flex:none}}
+
+/* Mobile: a navegação continua acessível e cada módulo cabe sem rolagem lateral. */
+@media(max-width:700px){
+  html,body{width:100%;min-width:0;overflow-x:hidden}
+  .app-shell{width:100%;min-width:0}
+  .main-content{width:100%;min-width:0;overflow:hidden}
+  .topbar.topbar-integrated,.topbar.topbar-integrated.topbar-collapsed{display:flex!important;height:60px!important;min-height:60px;padding:0 14px;background:#f5f8f5!important;border-bottom:1px solid #dfe9e1!important;position:relative}
+  .mobile-brand{display:flex;min-width:0;gap:8px}
+  .mobile-brand b{font-size:13px;white-space:nowrap}
+  .mobile-nav-toggle{display:grid;place-items:center;min-width:44px;min-height:38px;padding:0 9px;border:1px solid #c8d9cc;border-radius:12px;background:#fff;color:#315340;font:700 10px 'DM Sans';cursor:pointer}
+  .mobile-nav-toggle:active{transform:translateY(1px)}
+  .topbar-actions{gap:8px;margin-left:auto}
+  .topbar-actions .outline-button{display:none}
+  .topbar-actions .icon-button{font-size:20px;padding:7px}
+  .topbar-actions>.avatar{width:30px;height:30px}
+  .sidebar{display:none;position:fixed;inset:0 auto 0 0;width:min(82vw,290px);z-index:20;padding:24px 16px 18px;box-shadow:12px 0 30px rgba(24,34,31,.18)}
+  .sidebar.mobile-open{display:flex}
+  .sidebar .main-nav{margin-top:28px;overflow:auto}
+  .sidebar .nav-item{min-height:44px}
+  .page-section{width:100%;padding:24px 14px 44px;overflow:hidden}
+  .page-heading{gap:16px;margin-bottom:24px}
+  .page-heading h1{font-size:25px;line-height:1.08}
+  .page-heading .primary-button{width:100%;min-height:44px}
+  .muted{font-size:12px}
+  .metric-grid,.attendance-summary,.client-summary{grid-template-columns:1fr!important;gap:10px;border:0!important}
+  .metric-block,.attendance-summary>div,.client-summary>div{min-width:0!important;padding:17px 18px!important;border:1px solid var(--line)!important;border-radius:18px}
+  .metric-block strong{font-size:25px}
+  .content-grid,.dashboard-overview-primary-grid,.dashboard-work-grid,.report-content-grid{grid-template-columns:1fr!important;gap:14px}
+  .panel,.module-panel,.table-panel{min-width:0;padding:20px 16px}
+  .panel-heading,.module-toolbar,.table-toolbar,.attendance-toolbar{align-items:flex-start;flex-direction:column;gap:13px}
+  .table-toolbar input,.module-toolbar input,.attendance-tools input{width:100%;min-height:44px}
+  .table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:620px}
+  .attendance-tools{width:100%;flex-direction:column}
+  .attendance-tools .primary-button,.directory-toolbar .primary-button{min-height:44px;width:100%}
+  .attendance-list{border-radius:18px}
+  .attendance-item,.client-record{grid-template-columns:minmax(0,1fr) auto!important;width:100%;min-width:0;padding:17px 14px!important;gap:10px}
+  .attendance-item>div,.client-record>div{min-width:0}
+  .attendance-client small,.attendance-service,.attendance-time small,.client-record small{overflow-wrap:anywhere}
+  .service-row{grid-template-columns:1fr auto!important;min-width:0;gap:10px;padding:16px 0}
+  .service-row .car-icon,.service-row .vehicle-mark{display:none}
+  .calendar-grid,.agenda-live-grid{grid-template-columns:1fr!important}
+  .calendar-day{min-height:0!important;padding:16px}
+  .agenda-navigation{width:100%;justify-content:stretch}
+  .agenda-navigation button{flex:1;min-height:42px}
+  .agenda-form-row,.estimate-fields{grid-template-columns:1fr!important}
+  .detail-actions{display:grid;grid-template-columns:1fr;width:100%}
+  .detail-actions button{width:100%;min-height:44px}
+  .post-sale-summary,.settings-layout,.report-metrics{grid-template-columns:1fr!important}
+  .post-sale-followup,.post-sale-client-summary{min-width:0}
+  .post-sale-step small,.post-sale-followup small{white-space:normal;overflow-wrap:anywhere}
+  .dashboard-metric-bento{grid-template-columns:1fr!important;grid-template-areas:"hero" "card2" "card3" "card4";gap:12px}
+  .dashboard-metric-bento .metric-block:first-child{min-height:150px}
+  .dashboard-financial-grid,.dashboard-summary-insights,.dashboard-summary-metrics{grid-template-columns:1fr!important}
+  .ficha-grid{grid-template-columns:1fr!important}
+  .modal-backdrop{padding:12px}
+  .modal,.client-portal{width:100%;max-height:calc(100dvh - 24px);overflow:auto;padding:23px 18px;border-radius:20px}
+  .form-actions{display:grid;grid-template-columns:1fr;width:100%}
+  .form-actions button{width:100%;min-height:44px}
+}
 .main-content .post-sale-list{gap:12px;margin-top:20px}
 .main-content .post-sale-client-card{background:#fff;border-color:rgba(255,255,255,.2);box-shadow:none}
 .main-content .post-sale-client-summary:hover{background:#f8fcf9}

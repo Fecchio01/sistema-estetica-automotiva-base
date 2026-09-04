@@ -168,3 +168,10 @@ test('relatórios usa o mesmo painel operacional e hierarquia visual da visão g
   assert.match(styles, /\.report-dashboard\{display:grid/)
   assert.match(styles, /\.report-hero\{[^}]*border-top:5px solid var\(--dashboard-forest\)/)
 })
+
+test('layout mobile preserva navegação, leitura e toque sem criar overflow horizontal', () => {
+  assert.match(styles, /@media\(max-width:700px\)[\s\S]*?\.mobile-nav-toggle\{display:grid/)
+  assert.match(styles, /@media\(max-width:700px\)[\s\S]*?\.page-section\{width:100%;padding:24px 14px 44px;overflow:hidden/)
+  assert.match(styles, /@media\(max-width:700px\)[\s\S]*?\.topbar-actions\{gap:8px/)
+  assert.match(styles, /@media\(max-width:700px\)[\s\S]*?\.attendance-tools \.primary-button,\.directory-toolbar \.primary-button\{min-height:44px/)
+})
