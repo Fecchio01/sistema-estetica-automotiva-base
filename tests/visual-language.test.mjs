@@ -183,3 +183,8 @@ test('menu mobile tem camada própria de fechamento e sobrescreve o estado colap
   assert.match(styles, /\.main-content>\.topbar\.topbar-integrated\.topbar-collapsed\{display:flex!important;height:60px!important/)
   assert.match(styles, /\.mobile-nav-backdrop\.visible\{display:block/)
 })
+
+test('a inicialização libera a tela mesmo se um módulo externo falhar', () => {
+  assert.match(index, /setTimeout\(\(\) => document\.body\.classList\.remove\('app-booting'\), 2500\)/)
+  assert.match(index, /window\.addEventListener\('unhandledrejection'/)
+})
