@@ -431,6 +431,15 @@ function openServiceByIndex(rawIndex) {
   syncStage();
   openModal('detail-modal');
 }
+document.addEventListener('click', (event) => {
+  const target = event.target.closest?.('[data-service-index], [data-dashboard-order]');
+  if (!target || target.closest('#detail-modal')) return;
+  const index = target.dataset.serviceIndex ?? target.dataset.dashboardOrder;
+  if (index == null) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  openServiceByIndex(index);
+}, true);
 const openModal = (id) => { document.querySelector(`#${id}`).classList.remove('hidden'); if (id === 'service-modal') globalThis.__prepareServiceSubmission?.(); };
 const closeModal = (id) => { const modal = document.querySelector(`#${id}`); if (modal) { modal.classList.add('hidden'); if (id === 'detail-modal') modal.classList.remove('employee-overlay'); } };
 document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop hidden" id="new-client-modal"><div class="modal"><button class="close-button" data-close="new-client-modal">×</button><p class="eyebrow">BASE DE CLIENTES</p><h2>Cadastrar cliente</h2><p class="muted">Esse cadastro poderá ser reutilizado em novos atendimentos.</p><form id="new-client-form"><label>Nome completo<input name="name" required placeholder="Ex.: Rafael Nogueira" /></label><label>WhatsApp<input name="phone" required placeholder="(19) 99999-0000" /></label><label>Veículo e placa<input name="vehicle" required placeholder="Ex.: Honda Civic · RGT-4B21" /></label><div class="form-actions"><button type="button" class="outline-button" data-close="new-client-modal">Cancelar</button><button type="submit" class="primary-button">Salvar cliente</button></div></form></div></div>`);
