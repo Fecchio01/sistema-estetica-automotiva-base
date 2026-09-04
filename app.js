@@ -379,30 +379,6 @@ function renderModule(section, navigationToken = currentNavigationToken) {
     content.querySelectorAll('.attendance-item').forEach((row) => { const detailCell = row.children[1]; const statusCell = document.createElement('div'); statusCell.className = 'attendance-status'; statusCell.appendChild(detailCell.querySelector('.status-pill')); row.insertBefore(statusCell, detailCell); detailCell.className = 'attendance-stage-cell'; const stage = document.createElement('small'); stage.className = 'attendance-stage'; stage.textContent = stageNames[serviceStates[Number(row.dataset.serviceIndex)].stage]; row.querySelector('.attendance-service').before(stage); });
     const filterButtons = content.querySelectorAll('.filter-tab');
     const attendanceItems = content.querySelectorAll('.attendance-item');
-    const attendanceList = content.querySelector('.attendance-list');
-    const openAttendanceItem = (event) => {
-      const row = event.target.closest?.('.attendance-item[data-service-index]');
-      if (!row) return;
-      const index = Number(row.dataset.serviceIndex);
-      if (!Number.isInteger(index) || !services[index] || !serviceStates[index]) return;
-      activeServiceIndex = index;
-      stageIndex = serviceStates[index].stage;
-      syncStage();
-      openModal('detail-modal');
-    };
-    attendanceList.addEventListener('pointerup', (event) => {
-      if (event.button !== 0) return;
-      const row = event.target.closest?.('.attendance-item[data-service-index]');
-      if (!row) return;
-      row.dataset.pointerOpened = 'true';
-      openAttendanceItem(event);
-    });
-    attendanceList.addEventListener('click', (event) => {
-      const row = event.target.closest?.('.attendance-item[data-service-index]');
-      if (!row) return;
-      if (row.dataset.pointerOpened === 'true') { delete row.dataset.pointerOpened; return; }
-      openAttendanceItem(event);
-    });
     filterButtons.forEach((filter) => filter.addEventListener('click', () => { filterButtons.forEach((button) => button.classList.remove('active')); filter.classList.add('active'); attendanceItems.forEach((item) => { item.classList.toggle('filtered-out', filter.dataset.filter !== 'todos' && item.dataset.status !== filter.dataset.filter); }); }));
     content.querySelector('#attendance-search').addEventListener('input', (event) => { const query = event.target.value.toLowerCase(); attendanceItems.forEach((item) => item.classList.toggle('filtered-out', !item.textContent.toLowerCase().includes(query))); });
     content.querySelector('#attendance-new').addEventListener('click', () => openModal('service-modal'));
@@ -436,7 +412,7 @@ function renderModule(section, navigationToken = currentNavigationToken) {
     });
     refreshWhatsAppStatus();
   }
-  content.querySelectorAll('[data-service-index]:not(.attendance-item)').forEach((item) => item.addEventListener('click', () => { activeServiceIndex = Number(item.dataset.serviceIndex); stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); openModal('detail-modal'); }));
+  content.querySelectorAll('[data-service-index]').forEach((item) => item.addEventListener('click', () => { activeServiceIndex = Number(item.dataset.serviceIndex); stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); openModal('detail-modal'); }));
   if (section === 'servicos') {
     const catalogPanel = content.querySelector('.service-price')?.parentElement;
     const newPrice = content.querySelector('#new-price');
