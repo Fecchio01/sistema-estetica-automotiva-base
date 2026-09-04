@@ -185,6 +185,7 @@ test('menu mobile tem camada própria de fechamento e sobrescreve o estado colap
 })
 
 test('a inicialização libera a tela mesmo se um módulo externo falhar', () => {
-  assert.match(index, /setTimeout\(\(\) => document\.body\.classList\.remove\('app-booting'\), 2500\)/)
+  assert.match(index, /const recoverBoot = \(\) =>/)
+  assert.match(index, /document\.querySelector\('#dashboard-section'\)\?\.classList\.remove\('hidden'\)/)
   assert.match(index, /window\.addEventListener\('unhandledrejection'/)
 })
