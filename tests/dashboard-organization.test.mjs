@@ -124,6 +124,19 @@ test('atenção operacional mostra follow-ups pendentes agrupados por cliente', 
   assert.match(markup, /data-dashboard-section="pos-venda"/)
 })
 
+test('atenção operacional explica os alertas automáticos sem disparar uma ação externa', () => {
+  const model = buildDashboardOrganizationModel([
+    { client: 'Jorge', vehicle: 'BMW', orderStatus: 'scheduled', scheduledAt: '2026-09-05T10:00:00.000Z', createdAt: '2026-09-04T10:00:00.000Z', responsibleId: '', checklistPhotos: [{ stage: 'received' }, { stage: 'assessment' }, { stage: 'execution' }, { stage: 'inspection' }, { stage: 'delivery' }] },
+  ], [{ status: 'received', responsible: '' }], [], new Date('2026-09-04T12:00:00.000Z'))
+
+  const markup = buildDashboardAttentionMarkup(model)
+
+  assert.match(markup, /Alertas automáticos/)
+  assert.match(markup, /Agenda nas próximas 24h/)
+  assert.match(markup, /Jorge/)
+  assert.doesNotMatch(markup, /Enviar pelo WhatsApp/)
+})
+
 test('linha do tempo mostra somente a movimentação do dia', () => {
   const markup = buildDashboardTodayTimelineMarkup({ rows: [
     { client: 'Artur', vehicle: 'Honda Civic', stageTone: 'received', createdAt: '2026-08-28T09:00:00.000Z', elapsed: 'há 1h' },

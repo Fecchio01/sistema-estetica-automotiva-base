@@ -1,3 +1,5 @@
+import { buildOperationalAutomationModel } from './operational-automation.js'
+
 const stages = Object.freeze({
   received: { label: 'Aguardando avaliação', tone: 'received' },
   'in-progress': { label: 'Em execução', tone: 'in-progress' },
@@ -46,6 +48,7 @@ export function buildDashboardOrganizationModel(services = [], states = [], prof
     rows,
     completedRows: allRows.filter((row) => row.stageTone === 'delivered'),
     postSaleFollowUps,
+    automation: buildOperationalAutomationModel({ services: allRows, profiles, postSaleFollowUps }, now),
     stageCounts: {
       received: rows.filter((row) => row.stageTone === 'received').length,
       inProgress: rows.filter((row) => row.stageTone === 'in-progress').length,
@@ -129,11 +132,28 @@ export function buildDashboardAttentionMarkup(model) {
   const pickups = model.rows.filter((row) => row.stageTone === 'ready')
   const photoPending = model.rows.map((row) => ({ row, missing: checklistStages.filter(({ id }) => !(row.checklistPhotos || []).some((photo) => photo?.stage === id)).length })).filter(({ missing }) => missing > 0)
   const postSalePending = summarizePendingFollowUps(model.postSaleFollowUps || [])
+  const automaticAlerts = model.automation?.alerts || []
+  const automaticLabel = {
+    appointment_soon: 'Agenda nas próximas 24h',
+    unassigned: 'Sem responsável',
+    stale: 'Operação parada há mais de 3h',
+    pickup_waiting: 'Retirada aguardando há mais de 24h',
+    photos_missing: 'Fotos faltando',
+    post_sale_due: 'Pós-venda vencido',
+  }
+  const suggestedName = model.automation?.workload?.[0]?.name || ''
+  const suggestionMarkup = suggestedName ? `<p class="dashboard-attention-empty">Próximo atendimento: <b>${escapeHtml(suggestedName)}</b> tem a menor carga.</p>` : ''
+  const automaticList = automaticAlerts.length ? automaticAlerts.slice(0, 4).map((alert) => {
+    const orderIndex = model.rows.find((row) => row.orderId === alert.orderId)?.orderIndex
+    const target = Number.isInteger(orderIndex) ? ` data-dashboard-order="${orderIndex}"` : alert.type === 'post_sale_due' ? ' data-dashboard-section="pos-venda"' : ''
+    const detail = alert.type === 'photos_missing' ? `${alert.count} ${alert.count === 1 ? 'foto faltando' : 'fotos faltando'}` : automaticLabel[alert.type] || 'Ação em acompanhamento'
+    return `<button class="dashboard-attention-item"${target}><span><b>${escapeHtml(alert.client)}</b><small>${escapeHtml(detail)}</small></span><strong>Ver</strong></button>`
+  }).join('') + suggestionMarkup : `<p class="dashboard-attention-empty">Nenhum alerta automático agora.</p>${suggestionMarkup}`
   const list = (items, empty) => items.length ? items.slice(0, 3).map((row) => `<button class="dashboard-attention-item" data-dashboard-order="${row.orderIndex}"><span><b>${escapeHtml(row.client)}</b><small>${escapeHtml(row.vehicle)}</small></span><strong>${escapeHtml(row.elapsed)}</strong></button>`).join('') : `<p class="dashboard-attention-empty">${empty}</p>`
   const photoList = photoPending.length ? photoPending.slice(0, 3).map(({ row, missing }) => `<button class="dashboard-attention-item" data-dashboard-order="${row.orderIndex}"><span><b>${escapeHtml(row.client)}</b><small>${escapeHtml(row.vehicle)} · Pendência de fotos</small></span><strong>${missing} ${missing === 1 ? 'foto' : 'fotos'}</strong></button>`).join('') : '<p class="dashboard-attention-empty">Todas as etapas têm foto.</p>'
   const postSaleList = postSalePending.length ? postSalePending.slice(0, 3).map((group) => { const item = group.items[0]; const client = item.clients?.full_name || 'Cliente'; const vehicle = [item.vehicles?.make, item.vehicles?.model, item.vehicles?.license_plate].filter(Boolean).join(' · ') || 'Veículo não informado'; return `<button class="dashboard-attention-item" data-dashboard-section="pos-venda"><span><b>${escapeHtml(client)}</b><small>${escapeHtml(vehicle)} · Follow-ups pendentes</small></span><strong>${group.pendingCount} ${group.pendingCount === 1 ? 'mensagem' : 'mensagens'}</strong></button>` }).join('') : '<p class="dashboard-attention-empty">Nenhum envio pendente.</p>'
   const attentionCount = unassigned.length + stale.length + pickups.length + photoPending.length + postSalePending.length
-  return `<section class="dashboard-panel dashboard-attention-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">ACOMPANHAMENTO</p><h2>Atenção operacional</h2></div><span class="dashboard-count">${attentionCount}</span></div><p class="muted">Pontos que merecem uma olhada rápida durante o dia.</p><div class="dashboard-attention-grid"><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Sem responsável</b><span>${unassigned.length}</span></div><div class="dashboard-attention-list">${list(unassigned, 'Todas as ordens têm responsável.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Veículos parados há mais tempo</b><span>${stale.length}</span></div><div class="dashboard-attention-list">${list(stale, 'Nenhum veículo acima de 3h.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Próximas retiradas</b><span>${pickups.length}</span></div><div class="dashboard-attention-list">${list(pickups, 'Nenhuma retirada pendente.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Pendência de fotos</b><span>${photoPending.length}</span></div><div class="dashboard-attention-list">${photoList}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Mensagens de pós-venda</b><span>${postSalePending.length}</span></div><div class="dashboard-attention-list">${postSaleList}</div></div></div></section>`
+  return `<section class="dashboard-panel dashboard-attention-panel"><div class="dashboard-panel-heading"><div><p class="eyebrow">ACOMPANHAMENTO</p><h2>Atenção operacional</h2></div><span class="dashboard-count">${attentionCount}</span></div><p class="muted">Pontos que merecem uma olhada rápida durante o dia.</p><div class="dashboard-attention-grid"><div class="dashboard-attention-block dashboard-automation-block"><div class="dashboard-attention-heading"><b>Alertas automáticos</b><span>${automaticAlerts.length}</span></div><div class="dashboard-attention-list">${automaticList}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Sem responsável</b><span>${unassigned.length}</span></div><div class="dashboard-attention-list">${list(unassigned, 'Todas as ordens têm responsável.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Veículos parados há mais tempo</b><span>${stale.length}</span></div><div class="dashboard-attention-list">${list(stale, 'Nenhum veículo acima de 3h.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Próximas retiradas</b><span>${pickups.length}</span></div><div class="dashboard-attention-list">${list(pickups, 'Nenhuma retirada pendente.')}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Pendência de fotos</b><span>${photoPending.length}</span></div><div class="dashboard-attention-list">${photoList}</div></div><div class="dashboard-attention-block"><div class="dashboard-attention-heading"><b>Mensagens de pós-venda</b><span>${postSalePending.length}</span></div><div class="dashboard-attention-list">${postSaleList}</div></div></div></section>`
 }
 
 export function buildDashboardTodayTimelineMarkup(model, now = new Date()) {
