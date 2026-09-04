@@ -394,7 +394,7 @@ createServer(async (request, response) => {
     if (!filePath.startsWith(normalize(root))) throw new Error('forbidden')
     const fileStat = await stat(filePath)
     if (!fileStat.isFile()) throw new Error('not found')
-    response.writeHead(200, { 'Content-Type': types[extname(filePath)] ?? 'application/octet-stream' })
+    response.writeHead(200, { 'Content-Type': types[extname(filePath)] ?? 'application/octet-stream', 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' })
     response.end(await readFile(filePath))
   } catch { response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); response.end('not found') }
 }).listen(Number(process.env.PORT || 4174), () => { console.log(`Atelier OS local server: http://127.0.0.1:${Number(process.env.PORT || 4174)}/`); startPostSaleAutomation() })
