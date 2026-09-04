@@ -6,6 +6,7 @@ const styles = await readFile(new URL('../styles.css', import.meta.url), 'utf8')
 const quoteStyles = await readFile(new URL('../quotes-preview.css', import.meta.url), 'utf8')
 const whatsappStyles = await readFile(new URL('../whatsapp-inbox.css', import.meta.url), 'utf8')
 const app = await readFile(new URL('../app.js', import.meta.url), 'utf8')
+const index = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 const clientUi = await readFile(new URL('../src/client-live-ui.js', import.meta.url), 'utf8')
 
 test('módulos usam superfícies verdes consistentes sem cores concorrentes', () => {
@@ -174,4 +175,11 @@ test('layout mobile preserva navegação, leitura e toque sem criar overflow hor
   assert.match(styles, /@media\(max-width:700px\)[\s\S]*?\.page-section\{width:100%;padding:24px 14px 44px;overflow:hidden/)
   assert.match(styles, /@media\(max-width:700px\)[\s\S]*?\.topbar-actions\{gap:8px/)
   assert.match(styles, /@media\(max-width:700px\)[\s\S]*?\.attendance-tools \.primary-button,\.directory-toolbar \.primary-button\{min-height:44px/)
+})
+
+test('menu mobile tem camada própria de fechamento e sobrescreve o estado colapsado do topo', () => {
+  assert.match(index, /id="mobile-nav-backdrop"/)
+  assert.match(app, /mobile-nav-backdrop.*addEventListener\('click'/)
+  assert.match(styles, /\.main-content>\.topbar\.topbar-integrated\.topbar-collapsed\{display:flex!important;height:60px!important/)
+  assert.match(styles, /\.mobile-nav-backdrop\.visible\{display:block/)
 })
