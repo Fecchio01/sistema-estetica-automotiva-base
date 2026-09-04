@@ -197,7 +197,7 @@ function canViewCurrentSection(section) {
   return globalThis.__canViewSection(role, section);
 }
 function responsibleLabel(item, index) {
-  const responsible = serviceStates[index]?.responsible || item?.responsibleId;
+  const responsible = serviceStates[index]?.responsibleName || item?.responsibleName || serviceStates[index]?.responsible || item?.responsibleId;
   const profile = (globalThis.__teamProfiles || []).find((person) => person.id === responsible || person.full_name === responsible);
   return profile?.full_name || responsible || 'Não atribuído';
 }

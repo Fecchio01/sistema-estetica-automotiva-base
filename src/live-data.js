@@ -16,17 +16,18 @@ const initials = (name) => String(name || 'Cliente').split(/\s+/).map((part) => 
 const vehicleLabel = (vehicle) => [vehicle?.make, vehicle?.model, vehicle?.license_plate].filter(Boolean).join(' · ') || 'Veículo não informado'
 let realtimeChannel
 
-export function buildLiveService(order, clientRecords = []) {
+export function buildLiveService(order, clientRecords = [], teamProfiles = globalThis.__teamProfiles || []) {
   const record = clientRecords.find((item) => item.id === order?.client_id)
   const vehicle = record?.vehicles?.find((item) => item.id === order?.vehicle_id)
+  const responsibleProfile = teamProfiles.find((item) => item.id === order?.responsible_id || item.full_name === order?.responsible_id)
   const status = statusMap[order?.status] ?? statusMap.scheduled
   const createdAt = order?.created_at || new Date().toISOString()
-  return { initials: initials(record?.name), clientId: order.client_id, client: record?.name || 'Cliente', vehicle: vehicleLabel(vehicle), vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status || 'scheduled', currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'paid', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(createdAt).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id }
+  return { initials: initials(record?.name), clientId: order.client_id, client: record?.name || 'Cliente', vehicle: vehicleLabel(vehicle), vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status || 'scheduled', currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'paid', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(createdAt).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id, responsibleName: responsibleProfile?.full_name || '' }
 }
 
 function publishLiveData(services, clientRecords, postSaleFollowUps = globalThis.__postSaleFollowUps || []) {
   const liveClients = clientRecords.map((client) => [client.name, client.vehicleLabel, client.latestService, client.latestStatus, client.latestTone, client.orderCount, client.createdAt])
-  const states = services.map((service) => ({ stage: service.currentStage, status: statusMap[service.orderStatus]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '' }))
+  const states = services.map((service) => ({ stage: service.currentStage, status: statusMap[service.orderStatus]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '', responsibleName: service.responsibleName || '' }))
   globalThis.__liveServices = services
   globalThis.__liveStates = states
   globalThis.__clientRecords = clientRecords
@@ -35,12 +36,15 @@ function publishLiveData(services, clientRecords, postSaleFollowUps = globalThis
 
 async function loadLiveData(profile) {
   if (!profile?.company_id) return
-  const [clientsResult, vehiclesResult, ordersResult] = await Promise.all([
+  const [clientsResult, vehiclesResult, ordersResult, peopleResult] = await Promise.all([
     supabase.from('clients').select('id, full_name, phone, created_at').eq('company_id', profile.company_id).eq('active', true).order('created_at', { ascending: false }),
     supabase.from('vehicles').select('id, client_id, make, model, license_plate').eq('company_id', profile.company_id),
     supabase.from('work_orders').select('id, client_id, vehicle_id, responsible_id, status, current_stage, payment_status, scheduled_at, created_at, completed_at, service_description, total_amount').eq('company_id', profile.company_id).order('created_at', { ascending: false }),
+    supabase.from('profiles').select('id, full_name, role').eq('company_id', profile.company_id).eq('active', true).order('full_name'),
   ])
   if (clientsResult.error || vehiclesResult.error || ordersResult.error) return
+  const teamProfiles = peopleResult?.data || []
+  globalThis.__teamProfiles = teamProfiles
   const missingAmounts = findMissingOrderAmounts(ordersResult.data ?? [], globalThis.__serviceCatalog || [])
   if (missingAmounts.length) {
     await Promise.all(missingAmounts.map(({ id, totalAmount }) => supabase.from('work_orders').update({ total_amount: totalAmount }).eq('id', id).eq('company_id', profile.company_id)))
@@ -58,7 +62,8 @@ async function loadLiveData(profile) {
     const vehicle = vehiclesById.get(order.vehicle_id)
     const status = statusMap[order.status] ?? statusMap.scheduled
     const vehicleText = vehicleLabel(vehicle)
-    return { initials: initials(client?.full_name), clientId: order.client_id, client: client?.full_name || 'Cliente', vehicle: vehicleText, vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status, currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'paid', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(order.created_at).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt: order.created_at, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id }
+    const responsibleProfile = teamProfiles.find((item) => item.id === order.responsible_id || item.full_name === order.responsible_id)
+    return { initials: initials(client?.full_name), clientId: order.client_id, client: client?.full_name || 'Cliente', vehicle: vehicleText, vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status, currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'paid', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(order.created_at).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt: order.created_at, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id, responsibleName: responsibleProfile?.full_name || '' }
   })
   const clientRecords = (clientsResult.data ?? []).map((client) => {
     const vehicle = (vehiclesResult.data ?? []).find((item) => item.client_id === client.id)
@@ -67,7 +72,7 @@ async function loadLiveData(profile) {
     return { id: client.id, name: client.full_name, phone: client.phone || '', createdAt: client.created_at, vehicles: (vehiclesResult.data ?? []).filter((item) => item.client_id === client.id), orders: clientOrders, vehicleLabel: vehicleLabel(vehicle), latestService: latest?.service || 'Sem histórico', latestStatus: latest?.status || 'Sem atendimento', latestTone: latest?.tone || 'received', orderCount: clientOrders.length }
   })
   const liveClients = clientRecords.map((client) => [client.name, client.vehicleLabel, client.latestService, client.latestStatus, client.latestTone, client.orderCount, client.createdAt])
-  const states = services.map((service) => ({ stage: service.currentStage, status: statusMap[service.orderStatus]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '' }))
+  const states = services.map((service) => ({ stage: service.currentStage, status: statusMap[service.orderStatus]?.state || 'received', deliveryStatus: service.orderStatus === 'completed' ? 'delivered' : null, responsible: service.responsibleId || '', responsibleName: service.responsibleName || '' }))
   ensureDefaultMessageTemplates(profile).catch((error) => console.warn('Modelos de pós-venda ainda não carregados:', error.message))
   try { await syncPostSalePlans(profile, services, clientRecords) } catch (error) { console.warn('Pós-venda ainda não sincronizado:', error.message) }
   let postSaleFollowUps = []
@@ -101,7 +106,7 @@ globalThis.__addLiveWorkOrder = (order) => {
   if (!order?.id) return
   const currentServices = Array.isArray(globalThis.__liveServices) ? globalThis.__liveServices : []
   const records = Array.isArray(globalThis.__clientRecords) ? globalThis.__clientRecords : []
-  const service = buildLiveService(order, records)
+  const service = buildLiveService(order, records, globalThis.__teamProfiles || [])
   const services = [service, ...currentServices.filter((item) => item.orderId !== service.orderId)]
   const clientRecords = records.map((record) => record.id === order.client_id ? { ...record, orders: [service, ...(record.orders || []).filter((item) => item.orderId !== service.orderId)], orderCount: (record.orderCount || 0) + (record.orders?.some((item) => item.orderId === service.orderId) ? 0 : 1), latestService: service.service, latestStatus: service.status, latestTone: service.tone } : record)
   publishLiveData(services, clientRecords)

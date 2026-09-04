@@ -8,6 +8,7 @@ const whatsappStyles = await readFile(new URL('../whatsapp-inbox.css', import.me
 const app = await readFile(new URL('../app.js', import.meta.url), 'utf8')
 const index = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 const clientUi = await readFile(new URL('../src/client-live-ui.js', import.meta.url), 'utf8')
+const liveData = await readFile(new URL('../src/live-data.js', import.meta.url), 'utf8')
 
 test('módulos usam superfícies verdes consistentes sem cores concorrentes', () => {
   assert.match(styles, /--module-soft:#edf5ee/)
@@ -42,6 +43,9 @@ test('atendimentos mostra o nome do responsável escolhido na ordem', () => {
   assert.match(app, /<span>\$\{responsibleLabel\(item, index\)\}<\/span>/)
   assert.match(app, /responsible\.textContent = responsibleLabel\(services\[index\], index\)/)
   assert.doesNotMatch(app, /<span>Equipe Atelier<\/span>/)
+  assert.match(liveData, /supabase\.from\('profiles'\)\.select\('id, full_name, role'\)/)
+  assert.match(liveData, /const responsibleProfile = teamProfiles\.find/)
+  assert.match(liveData, /responsibleName: responsibleProfile\?\.full_name \|\| ''/)
 })
 
 test('agenda elimina o bege dos horários e usa a paleta verde do painel', () => {
