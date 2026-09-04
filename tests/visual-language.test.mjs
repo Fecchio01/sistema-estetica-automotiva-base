@@ -180,6 +180,7 @@ test('layout mobile preserva navegação, leitura e toque sem criar overflow hor
 test('menu mobile tem camada própria de fechamento e sobrescreve o estado colapsado do topo', () => {
   assert.match(index, /id="mobile-nav-backdrop"/)
   assert.match(app, /mobile-nav-backdrop.*addEventListener\('click'/)
+  assert.match(styles, /\.mobile-nav-backdrop\{display:none\}/)
   assert.match(styles, /\.main-content>\.topbar\.topbar-integrated\.topbar-collapsed\{display:flex!important;height:60px!important/)
   assert.match(styles, /\.mobile-nav-backdrop\.visible\{display:block/)
 })

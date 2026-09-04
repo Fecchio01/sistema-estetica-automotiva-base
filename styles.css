@@ -698,6 +698,9 @@ html,body{background:#fff!important}
 @media(max-width:520px){.billing-summary-live{grid-template-columns:1fr}.billing-trend-chart{gap:6px}.billing-trend-column{min-width:18px}.billing-trend-column small{font-size:8px}}
 @media(max-width:520px){.billing-collection-card{align-items:flex-start;padding:22px}.billing-ring{width:76px;height:76px;flex:none}}
 
+/* O backdrop só participa do layout quando o menu mobile está aberto. */
+.mobile-nav-backdrop{display:none}
+
 /* Mobile: a navegação continua acessível e cada módulo cabe sem rolagem lateral. */
 @media(max-width:700px){
   html,body{width:100%;min-width:0;overflow-x:hidden}
