@@ -38,6 +38,8 @@ test('atendimentos usa a composição de painel da visão geral', () => {
 })
 
 test('atendimentos mostra o nome do responsável escolhido na ordem', () => {
+  assert.match(app, /newAttendanceButton\.addEventListener\('pointerup'/)
+  assert.match(app, /button\[id\^="new-"\]:not\(#new-price\):not\(#attendance-new\)/)
   assert.match(app, /function responsibleLabel\(item, index\)/)
   assert.match(app, /person\.id === responsible \|\| person\.full_name === responsible/)
   assert.match(app, /<span>\$\{responsibleLabel\(item, index\)\}<\/span>/)

@@ -381,7 +381,16 @@ function renderModule(section, navigationToken = currentNavigationToken) {
     const attendanceItems = content.querySelectorAll('.attendance-item');
     filterButtons.forEach((filter) => filter.addEventListener('click', () => { filterButtons.forEach((button) => button.classList.remove('active')); filter.classList.add('active'); attendanceItems.forEach((item) => { item.classList.toggle('filtered-out', filter.dataset.filter !== 'todos' && item.dataset.status !== filter.dataset.filter); }); }));
     content.querySelector('#attendance-search').addEventListener('input', (event) => { const query = event.target.value.toLowerCase(); attendanceItems.forEach((item) => item.classList.toggle('filtered-out', !item.textContent.toLowerCase().includes(query))); });
-    content.querySelector('#attendance-new').addEventListener('click', () => openModal('service-modal'));
+    const newAttendanceButton = content.querySelector('#attendance-new');
+    const openNewAttendance = () => openModal('service-modal');
+    newAttendanceButton.addEventListener('pointerup', (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      openNewAttendance();
+    });
+    newAttendanceButton.addEventListener('click', (event) => {
+      if (event.detail === 0) openNewAttendance();
+    });
   } else {
     content.innerHTML = `<div class="module-grid"><div class="module-panel"><div class="module-toolbar"><h2>Ordens de serviço</h2><input placeholder="Buscar cliente ou placa" /></div>${services.map((item, index) => `<button class="data-line" data-service-index="${index}"><div><b>${item.client} · ${item.vehicle}</b><small>${item.service} · ${item.time}</small></div><span class="status-pill ${item.tone}">${item.status}</span></button>`).join('')}</div><div class="module-panel"><h2>Resumo da operação</h2><div class="data-line"><div><b>${getServiceCounts().active}</b><small>Em atendimento</small></div><span class="status-pill in-progress">Hoje</span></div><div class="data-line"><div><b>${getServiceCounts().ready}</b><small>Prontos para retirada</small></div><span class="status-pill ready">Avisar</span></div></div></div>`;
   }
@@ -418,7 +427,7 @@ function renderModule(section, navigationToken = currentNavigationToken) {
     const newPrice = content.querySelector('#new-price');
     if (newPrice) newPrice.addEventListener('click', openServicePriceModal);
   }
-  content.querySelectorAll('button[id^="new-"]:not(#new-price)').forEach((item) => item.addEventListener('click', () => showToast('Formulário pronto para cadastrar este registro.')));
+  content.querySelectorAll('button[id^="new-"]:not(#new-price):not(#attendance-new)').forEach((item) => item.addEventListener('click', () => showToast('Formulário pronto para cadastrar este registro.')));
 }
 document.querySelectorAll('[data-section]').forEach((item) => item.addEventListener('click', () => { showSection(item.dataset.section); document.querySelector('#sidebar')?.classList.remove('mobile-open'); document.querySelector('#mobile-nav-toggle')?.setAttribute('aria-expanded', 'false'); }));
 document.querySelector('#mobile-nav-toggle')?.addEventListener('click', () => { const sidebar = document.querySelector('#sidebar'); const button = document.querySelector('#mobile-nav-toggle'); const isOpen = sidebar?.classList.toggle('mobile-open'); button?.setAttribute('aria-expanded', String(Boolean(isOpen))); });
