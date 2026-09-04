@@ -33,6 +33,7 @@ function showApp(session) {
   const dashboardTitle = document.querySelector('#dashboard-section .page-heading h1')
   if (dashboardTitle) dashboardTitle.textContent = `${timeGreeting()}, ${name}.`
   document.dispatchEvent(new CustomEvent('auth-ready', { detail: session.profile }))
+  globalThis.__showSection?.('visao-geral')
   releaseAppBoot()
 }
 function showLogin(error = '') { if (publicPortal) { releaseAppBoot(); return }; appShell.classList.add('hidden'); authScreen.classList.remove('hidden'); message.textContent = error; releaseAppBoot() }
