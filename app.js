@@ -426,6 +426,8 @@ document.querySelector('#mobile-nav-backdrop')?.addEventListener('click', () => 
 function openServiceByIndex(rawIndex) {
   const index = Number(rawIndex);
   if (!Number.isInteger(index) || !services[index]) return;
+  const detailModal = document.querySelector('#detail-modal');
+  if (detailModal && !detailModal.classList.contains('hidden') && activeServiceIndex === index) return;
   activeServiceIndex = index;
   stageIndex = serviceStates[index]?.stage ?? 0;
   syncStage();
