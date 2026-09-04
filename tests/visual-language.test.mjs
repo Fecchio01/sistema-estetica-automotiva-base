@@ -36,6 +36,14 @@ test('atendimentos usa a composição de painel da visão geral', () => {
   assert.match(styles, /\.attendances-shell \.attendance-list-heading\{[^}]*background:#edf5ee/)
 })
 
+test('atendimentos mostra o nome do responsável escolhido na ordem', () => {
+  assert.match(app, /function responsibleLabel\(item, index\)/)
+  assert.match(app, /person\.id === responsible \|\| person\.full_name === responsible/)
+  assert.match(app, /<span>\$\{responsibleLabel\(item, index\)\}<\/span>/)
+  assert.match(app, /responsible\.textContent = responsibleLabel\(services\[index\], index\)/)
+  assert.doesNotMatch(app, /<span>Equipe Atelier<\/span>/)
+})
+
 test('agenda elimina o bege dos horários e usa a paleta verde do painel', () => {
   assert.match(styles, /\.main-content \.agenda-live-grid \.calendar-event-card\{[^}]*background:#edf5ee/)
   assert.match(styles, /\.main-content \.agenda-live-grid \.calendar-slot\{[^}]*background:#f8fcf9/)
