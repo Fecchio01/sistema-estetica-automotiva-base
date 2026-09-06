@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildOperationalAutomationModel } from '../src/operational-automation.js'
+import { buildOperationalAutomationModel, chooseSuggestedResponsible } from '../src/operational-automation.js'
 
 const now = new Date('2026-09-04T15:00:00.000Z')
 
@@ -63,4 +63,20 @@ test('sugere o funcionário ativo com menor carga e preserva a ordem alfabética
     { profileId: 'employee-2', name: 'Bruna', activeOrders: 1 },
     { profileId: 'employee-1', name: 'Zeca', activeOrders: 2 },
   ])
+})
+
+test('só sugere um responsável disponível e nunca substitui uma escolha explícita', () => {
+  const profiles = [{ id: 'employee-1' }, { id: 'employee-2' }]
+
+  assert.equal(chooseSuggestedResponsible('', 'employee-2', profiles), 'employee-2')
+  assert.equal(chooseSuggestedResponsible('employee-1', 'employee-2', profiles), 'employee-1')
+  assert.equal(chooseSuggestedResponsible('', 'missing', profiles), '')
+})
+
+test('não cria alerta de fotos quando o carregamento não fornece o checklist', () => {
+  const result = buildOperationalAutomationModel({
+    services: [{ orderId: 'order-1', orderStatus: 'in_progress', responsibleId: 'employee-1' }],
+  }, now)
+
+  assert.equal(result.alerts.some((alert) => alert.type === 'photos_missing'), false)
 })

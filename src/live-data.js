@@ -2,6 +2,7 @@ import { supabase } from './supabase-client.js'
 import { ensureDefaultMessageTemplates, loadPostSaleFollowUps, syncPostSalePlans } from './post-sale.js'
 import { buildDeliveryTransition, buildStageTransition, stageForOrder } from './work-order-state.js'
 import { findMissingOrderAmounts, findOrdersAwaitingPaymentMigration } from './order-pricing.js'
+import { buildOperationalAutomationModel } from './operational-automation.js'
 
 const statusMap = {
   scheduled: { label: 'Recebido', tone: 'received', state: 'received' },
@@ -31,7 +32,9 @@ function publishLiveData(services, clientRecords, postSaleFollowUps = globalThis
   globalThis.__liveServices = services
   globalThis.__liveStates = states
   globalThis.__clientRecords = clientRecords
-  document.dispatchEvent(new CustomEvent('live-data-ready', { detail: { services, clients: liveClients, clientRecords, states, postSaleFollowUps } }))
+  const automation = buildOperationalAutomationModel({ services, profiles: globalThis.__teamProfiles || [], postSaleFollowUps })
+  globalThis.__operationalAutomation = automation
+  document.dispatchEvent(new CustomEvent('live-data-ready', { detail: { services, clients: liveClients, clientRecords, states, postSaleFollowUps, automation } }))
 }
 
 async function loadLiveData(profile) {

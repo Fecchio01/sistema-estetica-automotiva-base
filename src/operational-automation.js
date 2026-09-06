@@ -27,6 +27,12 @@ export function buildWorkloadSuggestion(services = [], profiles = []) {
   return { suggestedResponsibleId: team[0]?.profileId || null, workload: team }
 }
 
+export function chooseSuggestedResponsible(selectedId, suggestedId, availableProfiles = []) {
+  const availableIds = new Set((Array.isArray(availableProfiles) ? availableProfiles : []).map((profile) => profile?.id).filter(Boolean))
+  if (selectedId && availableIds.has(selectedId)) return selectedId
+  return suggestedId && availableIds.has(suggestedId) ? suggestedId : ''
+}
+
 export function buildOperationalAutomationModel(input = {}, now = new Date()) {
   const services = Array.isArray(input.services) ? input.services : []
   const followUps = Array.isArray(input.postSaleFollowUps) ? input.postSaleFollowUps : []
@@ -46,8 +52,10 @@ export function buildOperationalAutomationModel(input = {}, now = new Date()) {
     if (createdAt && status !== 'ready_for_pickup' && Math.floor((current.getTime() - createdAt.getTime()) / 60000) >= STALE_MINUTES) alerts.push({ ...base, type: 'stale', openedAt: createdAt.toISOString() })
     if (status === 'ready_for_pickup' && createdAt && current.getTime() - createdAt.getTime() >= DAY) alerts.push({ ...base, type: 'pickup_waiting', readySince: createdAt.toISOString() })
 
-    const missing = missingChecklistStages(service.checklistPhotos)
-    if (missing.length) alerts.push({ ...base, type: 'photos_missing', count: missing.length, stages: missing })
+    if (Array.isArray(service.checklistPhotos)) {
+      const missing = missingChecklistStages(service.checklistPhotos)
+      if (missing.length) alerts.push({ ...base, type: 'photos_missing', count: missing.length, stages: missing })
+    }
   })
 
   followUps.forEach((followUp) => {

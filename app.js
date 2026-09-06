@@ -764,7 +764,7 @@ document.addEventListener('role-screen-request', (event) => showRoleScreen(event
 document.addEventListener('section-request', (event) => showSection(event.detail));
 document.addEventListener('live-data-ready', () => { if (globalThis.__activeRole === 'employee' && !roleScreen.classList.contains('hidden')) { const currentPortal = roleScreenContent.querySelector('.employee-portal'); if (currentPortal) { renderEmployeeJobs(currentPortal); bindEmployeeOrderActions(currentPortal); } } });
 document.querySelector('#return-admin').addEventListener('click', () => { roleScreen.classList.add('hidden'); roleScreenContent.innerHTML = ''; });
-document.querySelector('#new-service').addEventListener('click', (event) => { event.preventDefault(); openModal('service-modal'); globalThis.__refreshServiceOptions?.(); });
+document.querySelector('#new-service').addEventListener('click', (event) => { event.preventDefault(); globalThis.__prepareServiceSubmission?.(); openModal('service-modal'); globalThis.__refreshServiceOptions?.(); });
 document.querySelector('#employee-preview').addEventListener('click', () => showRoleScreen('employee'));
 document.querySelector('#client-preview').addEventListener('click', () => showRoleScreen('client'));
 document.querySelector('#open-client-link').addEventListener('click', () => showRoleScreen('client'));
