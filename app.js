@@ -839,19 +839,6 @@ document.addEventListener('click', (event) => {
   event.preventDefault();
   openServiceByIndex(row.dataset.serviceIndex);
 });
-document.addEventListener('pointerup', (event) => {
-  if (event.button !== 0) return;
-  const row = event.target.closest?.('.attendance-item[data-service-index]');
-  if (!row) return;
-  event.preventDefault();
-  openServiceByIndex(row.dataset.serviceIndex);
-});
-document.addEventListener('pointerdown', (event) => {
-  if (event.button !== 0) return;
-  const row = event.target.closest?.('.attendance-item[data-service-index]');
-  if (!row) return;
-  openServiceByIndex(row.dataset.serviceIndex);
-});
 function renderDashboardOrganization() {
   const dashboard = document.querySelector('#dashboard-section');
   if (!dashboard) return;
@@ -912,6 +899,7 @@ function showToast(message) { const toast = document.querySelector('#toast'); to
 document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.addEventListener('click', (event) => { if (event.target === backdrop) backdrop.classList.add('hidden'); }));
 document.addEventListener('live-data-ready', (event) => {
   const { services: liveServices, clients: liveClients, states, postSaleFollowUps } = event.detail;
+  const attendancesChanged = JSON.stringify(services) !== JSON.stringify(liveServices) || JSON.stringify(serviceStates) !== JSON.stringify(states);
   if (postSaleFollowUps) globalThis.__postSaleFollowUps = postSaleFollowUps;
   services.splice(0, services.length, ...liveServices);
   clients.splice(0, clients.length, ...liveClients);
@@ -924,7 +912,7 @@ document.addEventListener('live-data-ready', (event) => {
   renderDashboardOrganization();
   if (document.querySelector('#clients-section:not(.hidden)')) renderClients();
   const genericAction = document.querySelector('#generic-action');
-  if (document.querySelector('#generic-section:not(.hidden)') && genericAction?.dataset.module === 'atendimentos') renderModule('atendimentos');
+  if (attendancesChanged && document.querySelector('#generic-section:not(.hidden)') && genericAction?.dataset.module === 'atendimentos') renderModule('atendimentos');
   if (document.querySelector('#generic-section:not(.hidden)') && ['faturamento', 'relatorios'].includes(genericAction?.dataset.module)) renderModule(genericAction.dataset.module);
   if (globalThis.__activeRole === 'employee') showRoleScreen('employee');
 });
