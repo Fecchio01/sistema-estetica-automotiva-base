@@ -44,6 +44,7 @@ test('atendimentos mostra o nome do responsável escolhido na ordem', () => {
   assert.match(app, /person\.id === responsible \|\| person\.full_name === responsible/)
   assert.match(app, /<span>\$\{responsibleLabel\(item, index\)\}<\/span>/)
   assert.match(app, /responsible\.textContent = responsibleLabel\(services\[index\], index\)/)
+  assert.match(app, /Respons&aacute;vel: \$\{responsibleLabel\(item, index\)\}/)
   assert.doesNotMatch(app, /<span>Equipe Atelier<\/span>/)
   assert.match(liveData, /supabase\.from\('profiles'\)\.select\('id, full_name, role'\)/)
   assert.match(liveData, /const responsibleProfile = teamProfiles\.find/)
