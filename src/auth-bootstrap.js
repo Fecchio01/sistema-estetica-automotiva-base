@@ -34,7 +34,6 @@ function showApp(session) {
   if (dashboardTitle) dashboardTitle.textContent = `${timeGreeting()}, ${name}.`
   document.dispatchEvent(new CustomEvent('auth-ready', { detail: session.profile }))
   globalThis.__showSection?.('visao-geral')
-  releaseAppBoot()
 }
 function showLogin(error = '') { if (publicPortal) { releaseAppBoot(); return }; appShell.classList.add('hidden'); authScreen.classList.remove('hidden'); message.textContent = error; releaseAppBoot() }
 
@@ -48,6 +47,7 @@ if (!publicPortal) form.addEventListener('submit', async (event) => {
 })
 if (!publicPortal) document.querySelector('#logout-button').addEventListener('click', async () => { await signOut(); showLogin('Você saiu do sistema.') })
 supabase.auth.onAuthStateChange((_event, session) => { if (!session) showLogin() })
+document.addEventListener('live-data-ready', releaseAppBoot)
 if (!publicPortal) {
   try { const session = await loadSession(); if (session) showApp(session); else showLogin() }
   catch { showLogin('Não foi possível validar sua sessão.') }

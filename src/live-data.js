@@ -45,7 +45,11 @@ async function loadLiveData(profile) {
     supabase.from('work_orders').select('id, client_id, vehicle_id, responsible_id, status, current_stage, payment_status, scheduled_at, created_at, completed_at, service_description, total_amount').eq('company_id', profile.company_id).order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, role').eq('company_id', profile.company_id).eq('active', true).order('full_name'),
   ])
-  if (clientsResult.error || vehiclesResult.error || ordersResult.error) return
+  if (clientsResult.error || vehiclesResult.error || ordersResult.error) {
+    console.warn('Dados operacionais ainda não carregados.', clientsResult.error || vehiclesResult.error || ordersResult.error)
+    publishLiveData([], [], [])
+    return
+  }
   const teamProfiles = peopleResult?.data || []
   globalThis.__teamProfiles = teamProfiles
   const missingAmounts = findMissingOrderAmounts(ordersResult.data ?? [], globalThis.__serviceCatalog || [])
