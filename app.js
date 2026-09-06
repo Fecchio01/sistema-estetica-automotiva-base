@@ -839,6 +839,19 @@ document.addEventListener('click', (event) => {
   event.preventDefault();
   openServiceByIndex(row.dataset.serviceIndex);
 });
+document.addEventListener('pointerup', (event) => {
+  if (event.button !== 0) return;
+  const row = event.target.closest?.('.attendance-item[data-service-index]');
+  if (!row) return;
+  event.preventDefault();
+  openServiceByIndex(row.dataset.serviceIndex);
+});
+document.addEventListener('pointerdown', (event) => {
+  if (event.button !== 0) return;
+  const row = event.target.closest?.('.attendance-item[data-service-index]');
+  if (!row) return;
+  openServiceByIndex(row.dataset.serviceIndex);
+});
 function renderDashboardOrganization() {
   const dashboard = document.querySelector('#dashboard-section');
   if (!dashboard) return;

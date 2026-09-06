@@ -53,6 +53,8 @@ test('atendimentos mostra o nome do responsável escolhido na ordem', () => {
 })
 
 test('cartões de atendimento mantêm a abertura da ordem depois de atualizações ao vivo', () => {
+  assert.match(app, /document\.addEventListener\('pointerdown'/)
+  assert.match(app, /document\.addEventListener\('pointerup'/)
   assert.match(app, /function openServiceByIndex\(index\)/)
   assert.match(app, /document\.addEventListener\('click', \(event\) => \{\s*const row = event\.target\.closest\?\.\('\.attendance-item\[data-service-index\]'\)/)
   assert.match(app, /\[data-service-index\]:not\(\.attendance-item\)/)
