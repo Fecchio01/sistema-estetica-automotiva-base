@@ -421,7 +421,7 @@ function renderModule(section, navigationToken = currentNavigationToken) {
     });
     refreshWhatsAppStatus();
   }
-  content.querySelectorAll('[data-service-index]').forEach((item) => item.addEventListener('click', () => { activeServiceIndex = Number(item.dataset.serviceIndex); stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); openModal('detail-modal'); }));
+  content.querySelectorAll('[data-service-index]:not(.attendance-item)').forEach((item) => item.addEventListener('click', () => openServiceByIndex(item.dataset.serviceIndex)));
   if (section === 'servicos') {
     const catalogPanel = content.querySelector('.service-price')?.parentElement;
     const newPrice = content.querySelector('#new-price');
@@ -823,12 +823,22 @@ document.querySelector('#add-photo').title = 'Adicionar fotos do antes, durante 
 document.querySelector('#advance-stage').title = 'Concluir a etapa atual e avisar o cliente sobre a mudança.';
 document.querySelectorAll('.employee-action:not([data-service-index])').forEach((button) => button.addEventListener('click', () => showToast(`${button.dataset.action}: ação registrada no sistema.`)));
 function openDashboardOrder(index) {
-  if (!services[index] || !serviceStates[index]) return;
-  activeServiceIndex = index;
-  stageIndex = serviceStates[index].stage;
+  openServiceByIndex(index);
+}
+function openServiceByIndex(index) {
+  const serviceIndex = Number(index);
+  if (!Number.isInteger(serviceIndex) || !services[serviceIndex] || !serviceStates[serviceIndex]) return;
+  activeServiceIndex = serviceIndex;
+  stageIndex = serviceStates[serviceIndex].stage;
   syncStage();
   openModal('detail-modal');
 }
+document.addEventListener('click', (event) => {
+  const row = event.target.closest?.('.attendance-item[data-service-index]');
+  if (!row) return;
+  event.preventDefault();
+  openServiceByIndex(row.dataset.serviceIndex);
+});
 function renderDashboardOrganization() {
   const dashboard = document.querySelector('#dashboard-section');
   if (!dashboard) return;
