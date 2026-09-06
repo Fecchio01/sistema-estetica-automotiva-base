@@ -535,6 +535,9 @@ html,body{background:#fff!important}
 .attendances-shell .attendance-summary b{color:var(--ink)}
 .attendances-shell .attendance-list-heading{background:#edf5ee;color:#547061}
 
+/* Os indicadores do topo são informativos: não devem se mover ao passar o mouse. */
+.attendances-shell .attendance-summary>div,.attendances-shell .attendance-summary>div:hover{transform:none;transition:none;box-shadow:0 10px 24px rgba(35,79,57,.06);background:#edf5ee}
+
 /* Agenda: horários e reservas deixam o bege e usam os verdes do sistema. */
 .main-content .agenda-live-grid .calendar-event-card{background:#edf5ee;border-color:#cee0d1}
 .main-content .agenda-live-grid .calendar-slot{background:#f8fcf9;border-color:#d7e6db}
