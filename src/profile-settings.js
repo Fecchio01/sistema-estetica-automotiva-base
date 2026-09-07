@@ -1,5 +1,6 @@
 import { supabase } from './supabase-client.js'
 import { normalizeOperationalPreferences, validatePasswordChange } from './settings.js'
+import { mountAutomationSettings } from './automation-settings-ui.js'
 
 const preferencesKey = 'atelier-operational-preferences'
 const notify = (message) => { const toast = document.querySelector('#toast'); if (toast) { toast.textContent = message; toast.classList.remove('hidden'); toast.classList.add('show'); setTimeout(() => toast.classList.add('hidden'), 3200) } }
@@ -14,6 +15,7 @@ function mountSettings() {
   const profileForm = content.querySelector('#settings-profile-form')
   if (!profileForm || profileForm.dataset.bound === 'true') return
   profileForm.dataset.bound = 'true'
+  mountAutomationSettings(content)
   const passwordForm = content.querySelector('#settings-password-form')
   const operationalForm = content.querySelector('#settings-operational-form')
   const profile = globalThis.__sessionProfile || {}

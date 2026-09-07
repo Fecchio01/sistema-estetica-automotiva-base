@@ -267,6 +267,12 @@ async function handleWhatsApp(request, response, pathname) {
       return sendJson(response, 502, { configured: true, state: 'error', message: error.message })
     }
   }
+  if (request.method === 'GET' && pathname === '/api/automations/status') {
+    const whatsappConfigured = Boolean(config.baseUrl && config.apiKey && config.instance)
+    const databaseConfigured = Boolean(postSaleAutomationClient)
+    const companyConfigured = Boolean(String(process.env.EVOLUTION_COMPANY_ID || '').trim())
+    return sendJson(response, 200, { configured: whatsappConfigured && databaseConfigured && companyConfigured, whatsappConfigured, databaseConfigured, companyConfigured })
+  }
   if (request.method === 'GET' && pathname === '/api/whatsapp/media') {
     try {
       const url = new URL(request.url, 'http://127.0.0.1')
@@ -386,7 +392,7 @@ async function handleWhatsApp(request, response, pathname) {
 createServer(async (request, response) => {
   try {
     const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname)
-    if (pathname.startsWith('/api/whatsapp/')) {
+    if (pathname.startsWith('/api/whatsapp/') || pathname === '/api/automations/status') {
       const handled = await handleWhatsApp(request, response, pathname)
       if (handled === false) sendJson(response, 404, { message: 'WhatsApp endpoint não encontrado.' })
       return

@@ -28,44 +28,50 @@ async function recordAutomaticEvent(client, companyId, followUpId, eventType, me
   if (error) throw new Error(error.message || 'Não foi possível registrar o envio automático.')
 }
 
-async function updateFollowUp(client, companyId, id, patch) {
-  const { error } = await client.from('post_sale_followups').update(patch).eq('id', id).eq('company_id', companyId)
+async function updateFollowUp(client, companyId, id, patch, table = 'post_sale_followups') {
+  const { error } = await client.from(table).update(patch).eq('id', id).eq('company_id', companyId)
   if (error) throw new Error(error.message || 'Não foi possível atualizar o follow-up automático.')
 }
 
-export async function processDueAutomaticFollowUps({ client, config, companyId, now = new Date(), fetchImpl = fetch } = {}) {
+export async function processDueAutomaticFollowUps({ client, config, companyId, now = new Date(), fetchImpl = fetch, queueTable = 'post_sale_followups' } = {}) {
   if (!client || !config?.baseUrl || !config.apiKey || !config.instance || !companyId) return { status: 'disabled', sent: 0, failed: 0, skipped: 0 }
+  if (!['post_sale_followups', 'order_notifications'].includes(queueTable)) throw new Error('Fila inválida.')
+  const update = (id, patch) => updateFollowUp(client, companyId, id, patch, queueTable)
+  const record = (id, type, message, error) => queueTable === 'post_sale_followups' ? recordAutomaticEvent(client, companyId, id, type, message, error) : Promise.resolve()
   const nowIso = new Date(now).toISOString()
   const connection = await evolutionRequest(config, `/instance/connectionState/${encodeURIComponent(config.instance)}`, {}, fetchImpl)
   if (!['open', 'connected'].includes(findEvolutionConnectionState(connection))) return { status: 'waiting', sent: 0, failed: 0, skipped: 0 }
-  const { data: candidates, error } = await client.from('post_sale_followups').select('id, message, attempt_count, clients(phone)').eq('company_id', companyId).eq('status', 'pending').eq('auto_send', true).lte('due_at', nowIso).or(`auto_send_lock_until.is.null,auto_send_lock_until.lt.${nowIso}`)
+  const { data: candidates, error } = await client.from(queueTable).select('id, message, attempt_count, clients(phone)').eq('company_id', companyId).eq('status', 'pending').eq('auto_send', true).lte('due_at', nowIso).or(`auto_send_lock_until.is.null,auto_send_lock_until.lt.${nowIso}`)
   if (error) throw new Error(error.message || 'Não foi possível carregar a fila automática.')
   const result = { status: 'processed', sent: 0, failed: 0, skipped: 0 }
   for (const candidate of candidates || []) {
-    const claim = buildAutomaticClaimPatch(now)
-    const { data: claimed, error: claimError } = await client.from('post_sale_followups').update(claim).eq('id', candidate.id).eq('company_id', companyId).eq('status', 'pending').eq('auto_send', true).or(`auto_send_lock_until.is.null,auto_send_lock_until.lt.${nowIso}`).select('id, message, clients(phone)')
+    // Disarm while sending: a crashed process cannot resend an ambiguous delivery.
+    const claim = { ...buildAutomaticClaimPatch(now, candidate.attempt_count), auto_send: false }
+    const { data: claimed, error: claimError } = await client.from(queueTable).update(claim).eq('id', candidate.id).eq('company_id', companyId).eq('status', 'pending').eq('auto_send', true).lte('due_at', nowIso).or(`auto_send_lock_until.is.null,auto_send_lock_until.lt.${nowIso}`).select('id, message, clients(phone)')
     if (claimError) throw new Error(claimError.message || 'Não foi possível reservar o follow-up automático.')
     const item = claimed?.[0]
     if (!item) { result.skipped += 1; continue }
     const phone = item.clients?.phone
     if (!phone) {
       const failure = 'Este cliente não possui WhatsApp cadastrado.'
-      await updateFollowUp(client, companyId, item.id, buildAutomaticFailurePatch(failure))
-      await recordAutomaticEvent(client, companyId, item.id, 'send_failed', item.message, failure)
+      await update(item.id, buildAutomaticFailurePatch(failure))
+      await record(item.id, 'send_failed', item.message, failure)
       result.failed += 1
       continue
     }
     try {
       await sendEvolutionText(config, phone, item.message, fetchImpl)
-      await updateFollowUp(client, companyId, item.id, buildAutomaticSuccessPatch(new Date(now).toISOString()))
-      await recordAutomaticEvent(client, companyId, item.id, 'sent', item.message)
-      result.sent += 1
     } catch (sendError) {
-      const failure = buildAutomaticFailurePatch(sendError)
-      await updateFollowUp(client, companyId, item.id, failure)
-      await recordAutomaticEvent(client, companyId, item.id, 'send_failed', item.message, failure.last_error)
+      const failure = buildAutomaticFailurePatch(`Envio pausado para conferência: ${sendError.message || sendError}`)
+      await update(item.id, failure)
+      await record(item.id, 'send_failed', item.message, failure.last_error)
       result.failed += 1
+      continue
     }
+    // An audit/storage failure after delivery must never requeue the message.
+    await update(item.id, buildAutomaticSuccessPatch(new Date(now).toISOString()))
+    await record(item.id, 'sent', item.message)
+    result.sent += 1
   }
   return result
 }
@@ -73,5 +79,13 @@ export async function processDueAutomaticFollowUps({ client, config, companyId, 
 export async function runPostSaleAutomation(env = process.env, dependencies = {}) {
   const client = dependencies.client || createServerSupabaseClient(env)
   const config = dependencies.config || buildEvolutionConfig(env)
-  return processDueAutomaticFollowUps({ client, config, companyId: String(env.EVOLUTION_COMPANY_ID || '').trim(), fetchImpl: dependencies.fetchImpl || fetch })
+  const companyId = String(env.EVOLUTION_COMPANY_ID || '').trim()
+  if (!client || !companyId || !config.baseUrl || !config.apiKey || !config.instance) return { status: 'disabled', sent: 0, failed: 0, skipped: 0 }
+  const { data: settings, error } = await client.from('company_automation_settings').select('post_sale_enabled').eq('company_id', companyId).maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!settings?.post_sale_enabled) return { status: 'paused', sent: 0, failed: 0, skipped: 0 }
+  const args = { client, config, companyId, fetchImpl: dependencies.fetchImpl || fetch }
+  const notices = await processDueAutomaticFollowUps({ ...args, queueTable: 'order_notifications' })
+  const followUps = await processDueAutomaticFollowUps(args)
+  return { status: followUps.status, sent: notices.sent + followUps.sent, failed: notices.failed + followUps.failed, skipped: notices.skipped + followUps.skipped }
 }
