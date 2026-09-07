@@ -54,8 +54,8 @@ test('atendimentos mostra o nome do responsável escolhido na ordem', () => {
 
 test('cartões de atendimento mantêm a abertura da ordem depois de atualizações ao vivo', () => {
   assert.match(app, /document\.addEventListener\('pointerdown', \(event\) => \{\s*if \(event\.button !== 0 \|\| !event\.isPrimary\) return/)
-  assert.match(app, /const attendancesChanged = JSON\.stringify\(services\) !== JSON\.stringify\(liveServices\)/)
-  assert.match(app, /if \(attendancesChanged && document\.querySelector\('#generic-section:not\(\.hidden\)'\)/)
+  assert.doesNotMatch(app, /live-data-ready'[\s\S]{0,1600}renderModule\('atendimentos'\)/)
+  assert.doesNotMatch(app, /team-data-ready'[\s\S]{0,220}renderModule\('atendimentos'\)/)
   assert.match(app, /function openServiceByIndex\(index\)/)
   assert.match(app, /document\.addEventListener\('click', \(event\) => \{\s*const row = event\.target\.closest\?\.\('\.attendance-item\[data-service-index\]'\)/)
   assert.match(app, /\[data-service-index\]:not\(\.attendance-item\)/)
@@ -148,6 +148,8 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.match(styles, /\.main-content \.dashboard-summary-metric:hover\{[^}]*transform:translateY\(-3px\)/)
   assert.doesNotMatch(styles, /\.dashboard-timeline-item:hover,.dashboard-attention-item:hover[^}]*translateX\(/)
   assert.match(styles, /\.attendance-summary>div\{transition:transform \.22s cubic-bezier\(\.16,1,\.3,1\),box-shadow \.22s cubic-bezier\(\.16,1,\.3,1\)/)
+  assert.match(styles, /\.attendances-shell \.attendance-summary>div::before\{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none/)
+  assert.match(styles, /\.attendances-shell \.attendance-summary>div:hover::before\{transform:translateY\(-3px\)/)
   assert.match(styles, /\.dashboard-paddock-row\{transition:box-shadow \.22s cubic-bezier\(\.16,1,\.3,1\),background \.22s ease/)
   assert.match(styles, /\.dashboard-summary-service\{transition:transform \.22s cubic-bezier\(\.16,1,\.3,1\),box-shadow \.22s cubic-bezier\(\.16,1,\.3,1\)/)
   assert.match(styles, /\.service-price\{margin:7px 0;padding:16px 18px;border:1px solid var\(--line\);border-radius:18px/)

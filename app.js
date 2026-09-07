@@ -897,15 +897,12 @@ function renderDashboardOrganization() {
 syncStage();
 document.addEventListener('team-data-ready', () => {
   renderDashboardOrganization();
-  const genericAction = document.querySelector('#generic-action');
-  if (document.querySelector('#generic-section:not(.hidden)') && genericAction?.dataset.module === 'atendimentos') renderModule('atendimentos');
 });
 document.addEventListener('post-sale-data-ready', renderDashboardOrganization);
 function showToast(message) { const toast = document.querySelector('#toast'); toast.textContent = message; toast.classList.remove('hidden'); toast.classList.add('show'); setTimeout(() => toast.classList.add('hidden'), 3200); }
 document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.addEventListener('click', (event) => { if (event.target === backdrop) backdrop.classList.add('hidden'); }));
 document.addEventListener('live-data-ready', (event) => {
   const { services: liveServices, clients: liveClients, states, postSaleFollowUps } = event.detail;
-  const attendancesChanged = JSON.stringify(services) !== JSON.stringify(liveServices) || JSON.stringify(serviceStates) !== JSON.stringify(states);
   if (postSaleFollowUps) globalThis.__postSaleFollowUps = postSaleFollowUps;
   services.splice(0, services.length, ...liveServices);
   clients.splice(0, clients.length, ...liveClients);
@@ -918,7 +915,6 @@ document.addEventListener('live-data-ready', (event) => {
   renderDashboardOrganization();
   if (document.querySelector('#clients-section:not(.hidden)')) renderClients();
   const genericAction = document.querySelector('#generic-action');
-  if (attendancesChanged && document.querySelector('#generic-section:not(.hidden)') && genericAction?.dataset.module === 'atendimentos') renderModule('atendimentos');
   if (document.querySelector('#generic-section:not(.hidden)') && ['faturamento', 'relatorios'].includes(genericAction?.dataset.module)) renderModule(genericAction.dataset.module);
   if (globalThis.__activeRole === 'employee') showRoleScreen('employee');
 });

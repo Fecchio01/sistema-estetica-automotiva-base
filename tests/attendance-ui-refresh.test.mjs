@@ -16,7 +16,8 @@ test('permite criar atendimentos consecutivos e atualiza a lista sem recarregar'
   assert.match(ui, /globalThis\.__lastServiceSubmission/)
   assert.match(ui, /Date\.now\(\) - previous\.createdAt < 10000/)
   assert.match(ui, /form\.dataset\.submitting = 'false'/)
-  assert.match(app, /dataset\.module === 'atendimentos'\) renderModule\('atendimentos'\)/)
+  assert.match(app, /const attendanceValues = document\.querySelectorAll\('\.attendance-summary b'\)/)
+  assert.doesNotMatch(app, /live-data-ready'[\s\S]{0,1600}renderModule\('atendimentos'\)/)
 })
 
 test('mantém o histórico da ficha do cliente dentro do modal', async () => {
