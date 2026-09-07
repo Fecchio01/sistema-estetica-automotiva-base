@@ -53,6 +53,7 @@ test('atendimentos mostra o nome do responsável escolhido na ordem', () => {
 })
 
 test('cartões de atendimento mantêm a abertura da ordem depois de atualizações ao vivo', () => {
+  assert.match(app, /document\.addEventListener\('pointerdown', \(event\) => \{\s*if \(event\.button !== 0 \|\| !event\.isPrimary\) return/)
   assert.match(app, /const attendancesChanged = JSON\.stringify\(services\) !== JSON\.stringify\(liveServices\)/)
   assert.match(app, /if \(attendancesChanged && document\.querySelector\('#generic-section:not\(\.hidden\)'\)/)
   assert.match(app, /function openServiceByIndex\(index\)/)
@@ -146,7 +147,7 @@ test('linguagem visual compartilhada evita controles quadrados e campos nativos 
   assert.doesNotMatch(styles, /\.dashboard-stage-card:hover\{[^}]*transform:translateY\(/)
   assert.match(styles, /\.main-content \.dashboard-summary-metric:hover\{[^}]*transform:translateY\(-3px\)/)
   assert.doesNotMatch(styles, /\.dashboard-timeline-item:hover,.dashboard-attention-item:hover[^}]*translateX\(/)
-  assert.match(styles, /\.attendances-shell \.attendance-summary>div,\.attendances-shell \.attendance-summary>div:hover\{transform:none;transition:none/)
+  assert.match(styles, /\.attendance-summary>div\{transition:transform \.22s cubic-bezier\(\.16,1,\.3,1\),box-shadow \.22s cubic-bezier\(\.16,1,\.3,1\)/)
   assert.match(styles, /\.dashboard-paddock-row\{transition:box-shadow \.22s cubic-bezier\(\.16,1,\.3,1\),background \.22s ease/)
   assert.match(styles, /\.dashboard-summary-service\{transition:transform \.22s cubic-bezier\(\.16,1,\.3,1\),box-shadow \.22s cubic-bezier\(\.16,1,\.3,1\)/)
   assert.match(styles, /\.service-price\{margin:7px 0;padding:16px 18px;border:1px solid var\(--line\);border-radius:18px/)
