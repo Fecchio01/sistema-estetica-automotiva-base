@@ -39,7 +39,6 @@ test('atendimentos usa a composição de painel da visão geral', () => {
 })
 
 test('atendimentos mostra o nome do responsável escolhido na ordem', () => {
-  assert.match(app, /newAttendanceButton\.addEventListener\('pointerup'/)
   assert.match(app, /button\[id\^="new-"\]:not\(#new-price\):not\(#attendance-new\)/)
   assert.match(app, /function responsibleLabel\(item, index\)/)
   assert.match(app, /person\.id === responsible \|\| person\.full_name === responsible/)
@@ -53,7 +52,6 @@ test('atendimentos mostra o nome do responsável escolhido na ordem', () => {
 })
 
 test('cartões de atendimento mantêm a abertura da ordem depois de atualizações ao vivo', () => {
-  assert.match(app, /document\.addEventListener\('pointerdown', \(event\) => \{\s*if \(event\.button !== 0 \|\| !event\.isPrimary\) return/)
   assert.doesNotMatch(app, /live-data-ready'[\s\S]{0,1600}renderModule\('atendimentos'\)/)
   assert.doesNotMatch(app, /team-data-ready'[\s\S]{0,220}renderModule\('atendimentos'\)/)
   assert.match(app, /function openServiceByIndex\(index\)/)

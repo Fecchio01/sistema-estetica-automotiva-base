@@ -293,6 +293,23 @@ function openServicePriceModal(service = null) {
   form.querySelector('.primary-button').textContent = service ? 'Salvar alterações' : 'Salvar serviço';
   openModal('service-price-modal');
 }
+let attendanceSignature = '';
+function refreshAttendances() {
+  if (!document.querySelector('#generic-section:not(.hidden)') || document.querySelector('#generic-action')?.dataset.module !== 'atendimentos') return;
+  const signature = JSON.stringify(services);
+  if (signature === attendanceSignature) return;
+  const summary = document.querySelector('.attendance-summary');
+  const query = document.querySelector('#attendance-search')?.value || '';
+  const filter = document.querySelector('.attendance-filters .active')?.dataset.filter || 'todos';
+  renderModule('atendimentos');
+  // Preserve the hovered indicators while refreshing the order list.
+  if (summary) document.querySelector('.attendance-summary')?.replaceWith(summary);
+  refreshGlobalCounts();
+  const search = document.querySelector('#attendance-search');
+  search.value = query;
+  document.querySelector(`.attendance-filters [data-filter="${filter}"]`)?.click();
+  search.dispatchEvent(new Event('input'));
+}
 function renderModule(section, navigationToken = currentNavigationToken) {
   const copy = moduleCopy[section] || moduleCopy.atendimentos;
   document.querySelector('#generic-eyebrow').textContent = copy[0];
@@ -379,17 +396,20 @@ function renderModule(section, navigationToken = currentNavigationToken) {
     content.querySelectorAll('.attendance-item').forEach((row) => { const detailCell = row.children[1]; const statusCell = document.createElement('div'); statusCell.className = 'attendance-status'; statusCell.appendChild(detailCell.querySelector('.status-pill')); row.insertBefore(statusCell, detailCell); detailCell.className = 'attendance-stage-cell'; const stage = document.createElement('small'); stage.className = 'attendance-stage'; stage.textContent = stageNames[serviceStates[Number(row.dataset.serviceIndex)].stage]; row.querySelector('.attendance-service').before(stage); });
     const filterButtons = content.querySelectorAll('.filter-tab');
     const attendanceItems = content.querySelectorAll('.attendance-item');
-    filterButtons.forEach((filter) => filter.addEventListener('click', () => { filterButtons.forEach((button) => button.classList.remove('active')); filter.classList.add('active'); attendanceItems.forEach((item) => { item.classList.toggle('filtered-out', filter.dataset.filter !== 'todos' && item.dataset.status !== filter.dataset.filter); }); }));
-    content.querySelector('#attendance-search').addEventListener('input', (event) => { const query = event.target.value.toLowerCase(); attendanceItems.forEach((item) => item.classList.toggle('filtered-out', !item.textContent.toLowerCase().includes(query))); });
+    attendanceSignature = JSON.stringify(services);
+    attendanceItems.forEach((row) => { const tone = services[Number(row.dataset.serviceIndex)].tone; row.dataset.status = tone === 'in-progress' ? 'andamento' : tone === 'ready' ? 'prontos' : 'outros'; });
+    const applyFilters = () => {
+      const filter = content.querySelector('.filter-tab.active')?.dataset.filter || 'todos';
+      const query = content.querySelector('#attendance-search').value.trim().toLocaleLowerCase('pt-BR');
+      attendanceItems.forEach((item) => item.classList.toggle('filtered-out', (filter !== 'todos' && item.dataset.status !== filter) || !item.textContent.toLocaleLowerCase('pt-BR').includes(query)));
+    };
+    filterButtons.forEach((filter) => filter.addEventListener('click', () => { filterButtons.forEach((button) => button.classList.remove('active')); filter.classList.add('active'); applyFilters(); }));
+    content.querySelector('#attendance-search').addEventListener('input', applyFilters);
     const newAttendanceButton = content.querySelector('#attendance-new');
     const openNewAttendance = () => openModal('service-modal');
-    newAttendanceButton.addEventListener('pointerup', (event) => {
-      if (event.button !== 0) return;
+    newAttendanceButton.addEventListener('click', (event) => {
       event.preventDefault();
       openNewAttendance();
-    });
-    newAttendanceButton.addEventListener('click', (event) => {
-      if (event.detail === 0) openNewAttendance();
     });
   } else {
     content.innerHTML = `<div class="module-grid"><div class="module-panel"><div class="module-toolbar"><h2>Ordens de serviço</h2><input placeholder="Buscar cliente ou placa" /></div>${services.map((item, index) => `<button class="data-line" data-service-index="${index}"><div><b>${item.client} · ${item.vehicle}</b><small>${item.service} · ${item.time}</small></div><span class="status-pill ${item.tone}">${item.status}</span></button>`).join('')}</div><div class="module-panel"><h2>Resumo da operação</h2><div class="data-line"><div><b>${getServiceCounts().active}</b><small>Em atendimento</small></div><span class="status-pill in-progress">Hoje</span></div><div class="data-line"><div><b>${getServiceCounts().ready}</b><small>Prontos para retirada</small></div><span class="status-pill ready">Avisar</span></div></div></div>`;
@@ -529,6 +549,7 @@ function syncStage() {
   const names = stageNames;
   const active = services[activeServiceIndex];
   const state = serviceStates[activeServiceIndex];
+  if (!active || !state) return;
   state.stage = stageIndex;
   active.currentStage = stageIndex;
   if (state.deliveryStatus === 'delivered') state.status = 'delivered';
@@ -539,6 +560,10 @@ function syncStage() {
   active.tone = state.status === 'delivered' ? 'delivered' : state.status;
   document.querySelectorAll('.timeline').forEach((timeline) => timeline.querySelectorAll('.timeline-item').forEach((item, index) => { item.classList.toggle('done', index < stageIndex); item.classList.toggle('current', index === stageIndex); item.querySelector('span').textContent = index < stageIndex ? '✓' : `0${index + 1}`; item.querySelector('b').textContent = names[index]; }));
   const detail = document.querySelector('#detail-modal');
+  detail.querySelector('.detail-modal > .eyebrow').textContent = `ORDEM DE SERVIÇO ${active.orderId ? '#' + active.orderId.slice(0, 8).toUpperCase() : ''}`;
+  detail.querySelector('.detail-modal > h2').textContent = active.vehicle;
+  detail.querySelector('.detail-modal > .muted').textContent = `${active.client} · ${active.service}`;
+  detail.querySelector('.stage small').textContent = `Equipe responsável: ${responsibleLabel(active, activeServiceIndex)}`;
   const estimate = serviceEstimates[activeServiceIndex] || { date: '', time: '' };
   const estimateText = formatEstimate(activeServiceIndex);
   const estimateLabel = detail.querySelector('#detail-estimate-label');
@@ -839,12 +864,6 @@ document.addEventListener('click', (event) => {
   event.preventDefault();
   openServiceByIndex(row.dataset.serviceIndex);
 });
-document.addEventListener('pointerdown', (event) => {
-  if (event.button !== 0 || !event.isPrimary) return;
-  const row = event.target.closest?.('.attendance-item[data-service-index]');
-  if (!row) return;
-  openServiceByIndex(row.dataset.serviceIndex);
-});
 function renderDashboardOrganization() {
   const dashboard = document.querySelector('#dashboard-section');
   if (!dashboard) return;
@@ -903,16 +922,26 @@ function showToast(message) { const toast = document.querySelector('#toast'); to
 document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.addEventListener('click', (event) => { if (event.target === backdrop) backdrop.classList.add('hidden'); }));
 document.addEventListener('live-data-ready', (event) => {
   const { services: liveServices, clients: liveClients, states, postSaleFollowUps } = event.detail;
+  const activeOrderId = services[activeServiceIndex]?.orderId;
+  const localDetails = new Map(services.filter((item) => item.orderId).map((item) => {
+    const index = services.indexOf(item);
+    return [item.orderId, { estimate: serviceEstimates[index], milestones: serviceMilestones[index], photos: servicePhotos[index] }];
+  }));
   if (postSaleFollowUps) globalThis.__postSaleFollowUps = postSaleFollowUps;
   services.splice(0, services.length, ...liveServices);
   clients.splice(0, clients.length, ...liveClients);
   serviceStates.splice(0, serviceStates.length, ...states);
-  serviceEstimates.splice(0, serviceEstimates.length, ...liveServices.map(() => ({ date: '', time: '' })));
-  serviceMilestones.splice(0, serviceMilestones.length, ...liveServices.map(() => ({ received: '', evaluated: '' })));
-  servicePhotos.splice(0, servicePhotos.length, ...liveServices.map(() => []));
+  serviceEstimates.splice(0, serviceEstimates.length, ...liveServices.map((item) => localDetails.get(item.orderId)?.estimate || { date: '', time: '' }));
+  serviceMilestones.splice(0, serviceMilestones.length, ...liveServices.map((item) => localDetails.get(item.orderId)?.milestones || { received: '', evaluated: '' }));
+  servicePhotos.splice(0, servicePhotos.length, ...liveServices.map((item) => localDetails.get(item.orderId)?.photos || []));
+  const nextIndex = services.findIndex((item) => item.orderId === activeOrderId);
+  activeServiceIndex = Math.max(0, nextIndex);
+  stageIndex = serviceStates[activeServiceIndex]?.stage || 0;
+  if (nextIndex < 0) closeModal('detail-modal');
   refreshServiceList();
   refreshGlobalCounts();
   renderDashboardOrganization();
+  refreshAttendances();
   if (document.querySelector('#clients-section:not(.hidden)')) renderClients();
   const genericAction = document.querySelector('#generic-action');
   if (document.querySelector('#generic-section:not(.hidden)') && ['faturamento', 'relatorios'].includes(genericAction?.dataset.module)) renderModule(genericAction.dataset.module);

@@ -2,6 +2,13 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { getEmployeeOrders } from '../src/employee-orders.js'
 
+test('perfil ausente nunca recebe ordens sem responsável', () => {
+  const services = [{ orderId: 'unassigned' }, { responsibleId: null }, { responsibleId: '' }]
+  for (const profile of [{}, null, { id: '', full_name: '' }]) {
+    assert.deepEqual(getEmployeeOrders(services, profile), [])
+  }
+})
+
 test('filtra somente as ordens atribuídas ao funcionário autenticado', () => {
   const services = [
     { orderId: 'order-1', responsibleId: 'employee-1', client: 'Cliente 1' },

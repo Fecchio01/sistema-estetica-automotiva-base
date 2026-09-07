@@ -9,6 +9,7 @@ export const PORTAL_STAGES = [
 const STAGE_BY_STATUS = {
   scheduled: 0,
   in_progress: 2,
+  ready_for_pickup: 4,
   completed: 4,
   cancelled: 0,
 }

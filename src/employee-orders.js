@@ -1,3 +1,4 @@
 export function getEmployeeOrders(services = [], profile = {}) {
-  return services.filter((service) => service.responsibleId === profile.id || service.responsibleId === profile.full_name)
+  const identities = [profile?.id, profile?.full_name].filter((value) => typeof value === 'string' && value.trim())
+  return services.filter((service) => identities.includes(service.responsibleId))
 }

@@ -13,4 +13,5 @@ test('mantém as cinco etapas do portal antigo', () => {
   assert.equal(getPortalStageIndex('scheduled'), 0)
   assert.equal(getPortalStageIndex('in_progress'), 2)
   assert.equal(getPortalStageIndex('completed'), 4)
+  assert.equal(getPortalStageIndex('ready_for_pickup'), 4)
 })

@@ -36,10 +36,18 @@ function normalizeAdministratorLabels() {
 }
 
 async function refreshResponsibleOptions() {
-  const { data, error } = await supabase.from('profiles').select('id, full_name, role').eq('active', true).order('full_name')
-  if (error || !data?.length) return
-  globalThis.__teamProfiles = data
-  document.dispatchEvent(new CustomEvent('team-data-ready'))
+  const companyId = globalThis.__sessionProfile?.company_id
+  if (!companyId) return
+  const { data, error } = await supabase.from('profiles').select('id, full_name, role').eq('company_id', companyId).eq('active', true).order('full_name')
+  if (error || companyId !== globalThis.__sessionProfile?.company_id) return
+  const changed = JSON.stringify(globalThis.__teamProfiles) !== JSON.stringify(data || [])
+  globalThis.__teamProfiles = data || []
+  applyResponsibleOptions()
+  if (changed) document.dispatchEvent(new CustomEvent('team-data-ready'))
+}
+
+function applyResponsibleOptions() {
+  const data = globalThis.__teamProfiles || []
   const signature = data.map((profile) => `${profile.full_name}:${profile.role}`).join('|')
   const options = data.map((profile) => `<option value="${escapeHtml(profile.full_name)}">${escapeHtml(profile.full_name)} · ${escapeHtml(roleLabel(profile.role))}</option>`).join('')
   document.querySelectorAll('select[name="responsible"]').forEach((select) => {
@@ -64,6 +72,7 @@ async function refreshTeamList(extraProfile = null) {
   if (extraProfile?.id && extraProfile.company_id === companyId && extraProfile.active && !profiles.some((profile) => profile.id === extraProfile.id)) profiles.unshift(extraProfile)
   list.innerHTML = profiles.map((profile) => `<div class="permission-item"><span class="avatar">${escapeHtml(profile.full_name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase())}</span><div><b>${escapeHtml(profile.full_name)}</b><small>Acesso ativo</small></div><span class="role-tag">${escapeHtml(roleLabel(profile.role))}</span>${profile.role === 'administrator' ? '' : `<button class="text-button danger-button" data-team-delete="${escapeHtml(profile.id)}">Apagar</button>`}</div>`).join('') || '<p class="muted">Nenhum funcionário cadastrado.</p>'
   list.setAttribute('aria-busy', 'false')
+  await refreshResponsibleOptions()
 }
 
 async function deleteEmployee(profileId, button) {
@@ -92,7 +101,8 @@ setTimeout(refreshTeamList, 0)
 document.addEventListener('auth-ready', refreshTeamList)
 document.addEventListener('auth-ready', refreshResponsibleOptions)
 document.addEventListener('auth-ready', normalizeAdministratorLabels)
-const responsibleObserver = new MutationObserver(() => refreshResponsibleOptions())
+// DOM changes only populate new selects from the cache; never query the network.
+const responsibleObserver = new MutationObserver(applyResponsibleOptions)
 responsibleObserver.observe(document.body, { childList: true, subtree: true })
 const labelObserver = new MutationObserver(normalizeAdministratorLabels)
 labelObserver.observe(document.body, { childList: true, subtree: true })

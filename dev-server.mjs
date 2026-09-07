@@ -1,7 +1,8 @@
 import { createServer } from 'node:http'
 import { readFile, stat } from 'node:fs/promises'
-import { extname, join, normalize } from 'node:path'
+import { extname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { resolvePublicFile } from './src/local-server-path.js'
 import { buildEvolutionConfig, evolutionRequest, findEvolutionConnectionState, findEvolutionInstance, sendEvolutionText } from './src/evolution-api.js'
 import { buildAutomaticReply } from './src/whatsapp-auto-reply.js'
 import { normalizeEvolutionEvent } from './src/whatsapp-inbox.js'
@@ -10,6 +11,8 @@ import { buildChatsRequest, buildContactsRequest, buildMediaRequest, buildMessag
 import { createServerSupabaseClient, runPostSaleAutomation } from './src/post-sale-automation.js'
 
 const root = fileURLToPath(new URL('.', import.meta.url))
+const portArgument = process.argv.indexOf('--port')
+const localPort = Number(portArgument >= 0 ? process.argv[portArgument + 1] : process.env.PORT || 4174)
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.mjs': 'application/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8' }
 const contactNameCache = new Map()
 const autoReplySeen = new Set()
@@ -390,11 +393,11 @@ createServer(async (request, response) => {
     }
     const isPortalRoute = pathname.startsWith('/portal/') && pathname.split('/').filter(Boolean).length === 2
     const relative = pathname === '/' || isPortalRoute ? 'index.html' : pathname.replace(/^[/\\]+/, '')
-    const filePath = normalize(join(root, relative))
-    if (!filePath.startsWith(normalize(root))) throw new Error('forbidden')
+    const filePath = resolvePublicFile(root, relative)
+    if (!filePath) throw new Error('forbidden')
     const fileStat = await stat(filePath)
     if (!fileStat.isFile()) throw new Error('not found')
     response.writeHead(200, { 'Content-Type': types[extname(filePath)] ?? 'application/octet-stream', 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' })
     response.end(await readFile(filePath))
   } catch { response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); response.end('not found') }
-}).listen(Number(process.env.PORT || 4174), () => { console.log(`Atelier OS local server: http://127.0.0.1:${Number(process.env.PORT || 4174)}/`); startPostSaleAutomation() })
+}).listen(localPort, '127.0.0.1', function () { console.log(`Atelier OS local server: http://127.0.0.1:${this.address().port}/`); startPostSaleAutomation() })
