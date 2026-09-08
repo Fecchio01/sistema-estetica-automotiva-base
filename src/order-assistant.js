@@ -3,6 +3,14 @@ export function chooseVehicle(vehicles = [], selectedId = '') {
   return vehicles.length === 1 ? vehicles[0].id : ''
 }
 
+export function findTodayBooking(services = [], clientId, vehicleId, now = new Date()) {
+  if (!clientId || !vehicleId) return null
+  const day = value => new Intl.DateTimeFormat('en-CA', {timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value))
+  const today=day(now)
+  const candidates=services.filter(order=>order.clientId===clientId && order.vehicleId===vehicleId && order.orderStatus==='scheduled' && !order.receivedAt && order.scheduledAt && Number.isFinite(new Date(order.scheduledAt).getTime()) && day(order.scheduledAt)===today)
+  return candidates.length===1 ? candidates[0] : null
+}
+
 export function repeatOrderValues(record, catalog = []) {
   const vehicles = record?.vehicles || []
   const latest = [...(record?.orders || [])]

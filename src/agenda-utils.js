@@ -1,3 +1,4 @@
+import { durationForServices } from './workflow-data.js'
 const saoPauloFormatter = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' })
 
 export function getWeekStart(value = new Date()) {
@@ -32,7 +33,7 @@ export function buildScheduledAt(dateValue, timeValue, current = new Date()) {
 
 export function buildBookingPayload(input, profile) {
   if (!profile?.company_id || !input?.clientId || !input?.vehicleId || !input?.responsibleId || !input?.service || !input?.scheduledAt) throw new Error('Preencha todos os dados da reserva.')
-  return { company_id: profile.company_id, client_id: input.clientId, vehicle_id: input.vehicleId, responsible_id: input.responsibleId, status: 'scheduled', scheduled_at: input.scheduledAt, service_description: input.service.trim(), ...(Number.isFinite(input.totalAmount) ? { total_amount: input.totalAmount } : {}) }
+  return { company_id: profile.company_id, client_id: input.clientId, vehicle_id: input.vehicleId, responsible_id: input.responsibleId, status: 'scheduled', scheduled_at: input.scheduledAt, service_description: input.service.trim(), ...(durationForServices(globalThis.__serviceCatalog || [], [input.service]) ? {service_duration_minutes:durationForServices(globalThis.__serviceCatalog, [input.service])} : {}), ...(Number.isFinite(input.totalAmount) ? { total_amount: input.totalAmount } : {}) }
 }
 
 export function dateKey(value) {

@@ -10,7 +10,7 @@ export async function loadAgendaData(profile, rangeStart, rangeEnd, client) {
   if (!profile?.company_id) return { orders: [], clients: [], vehicles: [], people: [] }
   client = await resolveClient(client)
   const [ordersResult, clientsResult, vehiclesResult, peopleResult] = await Promise.all([
-    client.from('work_orders').select('id, client_id, vehicle_id, responsible_id, status, scheduled_at, service_description, total_amount').eq('company_id', profile.company_id).gte('scheduled_at', rangeStart.toISOString()).lt('scheduled_at', rangeEnd.toISOString()).order('scheduled_at', { ascending: true }),
+    client.from('work_orders').select('id, client_id, vehicle_id, responsible_id, status, received_at, scheduled_at, service_description, total_amount').eq('company_id', profile.company_id).gte('scheduled_at', rangeStart.toISOString()).lt('scheduled_at', rangeEnd.toISOString()).order('scheduled_at', { ascending: true }),
     client.from('clients').select('id, full_name, phone').eq('company_id', profile.company_id).eq('active', true).order('full_name', { ascending: true }),
     client.from('vehicles').select('id, client_id, make, model, license_plate').eq('company_id', profile.company_id).order('model', { ascending: true }),
     client.from('profiles').select('id, full_name, role, active').eq('company_id', profile.company_id).eq('active', true).order('full_name', { ascending: true }),
@@ -23,7 +23,7 @@ export async function loadAgendaData(profile, rangeStart, rangeEnd, client) {
 export async function createBooking(profile, input, client) {
   client = await resolveClient(client)
   const payload = buildBookingPayload(input, profile)
-  const { data, error } = await client.from('work_orders').insert(payload).select('id, client_id, vehicle_id, responsible_id, status, scheduled_at, service_description, total_amount').single()
+  const { data, error } = await client.from('work_orders').insert(payload).select('id, client_id, vehicle_id, responsible_id, status, received_at, scheduled_at, service_description, total_amount').single()
   if (error) throw new Error(error.message?.includes('work_orders') ? 'Não foi possível reservar esse horário.' : 'Não foi possível salvar a reserva.')
   return data
 }

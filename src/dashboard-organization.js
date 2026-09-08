@@ -138,6 +138,7 @@ export function buildDashboardAttentionMarkup(model) {
     unassigned: 'Sem responsável',
     stale: 'Operação parada há mais de 3h',
     pickup_waiting: 'Retirada aguardando há mais de 24h',
+    estimate_overdue: 'Previsão de entrega ultrapassada',
     photos_missing: 'Fotos faltando',
     post_sale_due: 'Pós-venda vencido',
   }

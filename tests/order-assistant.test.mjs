@@ -1,7 +1,17 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { chooseVehicle, repeatOrderValues, orderDraftKey, validOrderDraft } from '../src/order-assistant.js'
+import { chooseVehicle, repeatOrderValues, orderDraftKey, validOrderDraft, findTodayBooking } from '../src/order-assistant.js'
 import { buildBookingPayload } from '../src/agenda-utils.js'
+
+test('reaproveita só reserva única do cliente e veículo no dia local, sem adivinhar entre duas',()=>{
+  const now=new Date('2026-09-08T01:00:00Z') // ainda dia 7 em São Paulo
+  const booking={orderId:'one',clientId:'c',vehicleId:'v',orderStatus:'scheduled',scheduledAt:'2026-09-07T20:00:00Z'}
+  assert.equal(findTodayBooking([booking],'c','v',now)?.orderId,'one')
+  assert.equal(findTodayBooking([booking],'c','outro',now),null)
+  assert.equal(findTodayBooking([booking,{...booking,orderId:'two'}],'c','v',now),null)
+  assert.equal(findTodayBooking([{...booking,receivedAt:'2026-09-07T20:00:00Z'}],'c','v',now),null)
+  assert.equal(findTodayBooking([{...booking,scheduledAt:'2026-09-08T12:00:00Z'}],'c','v',now),null)
+})
 
 test('seleciona veículo único e preserva escolha explícita sem adivinhar entre vários', () => {
   assert.equal(chooseVehicle([{id:'a'}]),'a')

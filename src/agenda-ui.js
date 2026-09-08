@@ -1,3 +1,4 @@
+import { checkInBooking } from './workflow-data.js'
 import { createBooking, deleteBooking, loadAgendaData } from './agenda-data.js'
 import { buildScheduledAt, dateKey, getAgendaReferenceSlots, getWeekDays, getWeekStart } from './agenda-utils.js'
 
@@ -20,7 +21,7 @@ function orderMarkup(order, data) {
   const vehicle = data.vehicles.find((item) => item.id === order.vehicle_id)
   const person = data.people.find((item) => item.id === order.responsible_id)
   const time = new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  return `<article class="calendar-event calendar-event-card"><div class="calendar-event-topline"><time>${time}</time><span class="calendar-event-status">Agendado</span></div><b>${escapeHtml(clientName(data, order.client_id))}</b><span>${escapeHtml(vehicle ? vehicleLabel(vehicle) : 'Veículo')}</span><small>${escapeHtml(order.service_description)} · Responsável: ${escapeHtml(person?.full_name || 'Não atribuído')}</small><button type="button" class="calendar-event-delete" data-delete-order="${escapeHtml(order.id)}">Apagar agendamento</button></article>`
+  return `<article class="calendar-event calendar-event-card"><div class="calendar-event-topline"><time>${time}</time><span class="calendar-event-status">${order.received_at ? 'Recebido' : ({scheduled:'Agendado',in_progress:'Em andamento',ready_for_pickup:'Pronto',completed:'Entregue',cancelled:'Cancelado'}[order.status] || order.status)}</span></div><b>${escapeHtml(clientName(data, order.client_id))}</b><span>${escapeHtml(vehicle ? vehicleLabel(vehicle) : 'Veículo')}</span><small>${escapeHtml(order.service_description)} · Responsável: ${escapeHtml(person?.full_name || 'Não atribuído')}</small>${order.status === 'scheduled' && !order.received_at ? `<button type="button" class="outline-button" data-check-in="${escapeHtml(order.id)}">Registrar chegada</button>` : ''}<button type="button" class="calendar-event-delete" data-delete-order="${escapeHtml(order.id)}">Apagar agendamento</button></article>`
 }
 
 function renderGrid(root) {
@@ -32,6 +33,11 @@ function renderGrid(root) {
   const heading = `${days[0].getDate()} a ${days[6].getDate()} de ${monthFormatter.format(days[0])}`
   root.innerHTML = `<div class="agenda-live-shell"><div class="agenda-toolbar"><div><p class="eyebrow">AGENDA REAL</p><h2>Semana de ${escapeHtml(heading)}</h2><small class="agenda-sync-status"><span class="sync-dot ${state.loading ? 'is-loading' : ''}"></span>${state.loading ? 'Sincronizando agenda...' : 'Sincronizada em tempo real.'}</small></div><div class="agenda-navigation"><button class="outline-button" data-agenda-nav="previous">← Semana anterior</button><button class="outline-button" data-agenda-nav="today">Hoje</button><button class="outline-button" data-agenda-nav="next">Próxima semana →</button></div></div><div class="calendar-grid agenda-live-grid" data-live-agenda="true">${days.map((day) => { const orders = ordersByDay.get(dateKey(day)) || []; const loadLabel = orders.length ? `${orders.length} ${orders.length === 1 ? 'reserva' : 'reservas'}` : `${referenceSlots.length} janelas`; const slotMarkup = referenceSlots.map((slot) => `<div class="calendar-slot"><time>${slot}</time><span>Disponível</span></div>`).join(''); return `<div class="calendar-day"><div class="calendar-day-heading"><strong>${escapeHtml(formatDay(day))}</strong><small class="calendar-day-load ${orders.length ? 'has-orders' : ''}">${loadLabel}</small></div><div class="calendar-day-body">${orders.map((order) => orderMarkup(order, data)).join('')}${slotMarkup}</div></div>` }).join('')}</div><p class="agenda-empty-state ${data.orders.length ? 'hidden' : ''}"><span class="empty-state-mark">+</span><span><b>Nenhuma reserva nesta semana</b><small>As janelas exibidas são referências; os horários reais dependem da configuração da empresa.</small></span></p></div>`
   root.querySelectorAll('[data-agenda-nav]').forEach((button) => button.addEventListener('click', () => { const action = button.dataset.agendaNav; state.weekStart = action === 'today' ? getWeekStart() : addDays(state.weekStart, action === 'previous' ? -7 : 7); refreshAgenda(root) }))
+  root.querySelectorAll('[data-check-in]').forEach(button=>button.addEventListener('click',async()=>{
+    button.disabled=true
+    try{await checkInBooking(button.dataset.checkIn);document.dispatchEvent(new CustomEvent('live-data-refresh-requested'));await refreshAgenda(root)}
+    catch(error){button.disabled=false;globalThis.showToast?.(error.message)}
+  }))
   root.querySelectorAll('[data-delete-order]').forEach((button) => button.addEventListener('click', async (event) => {
     event.stopPropagation()
     if (!(await globalThis.__requestConfirmation?.('booking'))) return

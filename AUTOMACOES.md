@@ -1,5 +1,17 @@
 # Automações operacionais
 
+## Integração comercial e prazos
+
+Orçamentos e catálogo agora ficam no Supabase, separados por empresa. Salvar e editar uma proposta conserva seu identificador. Aprovar executa uma transação que cria uma única ordem, copia os serviços e desconto, escolhe o funcionário ativo com menos ordens abertas e vincula a ordem à proposta. Repetir a aprovação retorna a mesma ordem. Sem funcionário ativo, a ordem fica com quem aprovou. A aprovação registra pagamento pendente; carregar a tela não quita pagamentos nem recalcula preços históricos.
+
+Cada estética define a duração dos próprios serviços no campo “Duração prevista (minutos)”, disponível no cadastro e na edição. Não foram impostos tempos aos serviços existentes. Quando todos os serviços selecionados têm duração, o sistema soma os tempos e calcula a previsão a partir da entrada ou do horário reservado. É uma estimativa de duração corrida: não agenda intervalos de almoço, expedientes ou capacidade de boxes. A previsão pode ser ajustada manualmente; esse ajuste é preservado na chegada e mostrado no portal do cliente. Mudanças posteriores no catálogo não alteram preços e durações já registrados na ordem/proposta.
+
+Na agenda, “Registrar chegada” aproveita a própria ordem da reserva. No novo atendimento, uma reserva única do cliente e veículo para hoje aparece como opção para registrar a chegada sem duplicar o cadastro. Em caso de duas reservas compatíveis, a escolha continua na agenda. O check-in é idempotente e cancela o lembrete de chegada que ficou obsoleto.
+
+Alertas operacionais consideram a última mudança de etapa e sinalizam previsão ultrapassada; reservas futuras não são marcadas como operação parada. Retirada aguardando usa o instante em que o veículo ficou pronto.
+
+Validação adicional: testes transacionais de aprovação repetida, desconto, pagamento pendente, check-in repetido e preservação de prazo manual em `tests/commercial-workflow-regression.sql`. No navegador foram verificados criação/recarga/edição de orçamento e cadastro/recarga de serviço com duração. Os dois registros temporários foram arquivados após os testes. A função client-portal foi atualizada para devolver previsão, etapa e o veículo exato da ordem.
+
 ## Atendimento e agenda
 
 Ao selecionar um cliente, o veículo único é preenchido automaticamente. Se houver vários, a escolha continua explícita. O responsável com menos ordens abertas é sugerido; escolhas manuais são preservadas.

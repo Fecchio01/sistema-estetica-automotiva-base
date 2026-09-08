@@ -3,6 +3,7 @@ const DAY = 24 * 60 * 60 * 1000
 const STALE_MINUTES = 180
 
 const validDate = (value) => {
+  if (!value) return null
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? null : date
 }
@@ -43,14 +44,18 @@ export function buildOperationalAutomationModel(input = {}, now = new Date()) {
     if (!isActive(service)) return
     const orderId = service.orderId || service.id || null
     const scheduledAt = validDate(service.scheduledAt)
-    const createdAt = validDate(service.createdAt)
+    const createdAt = validDate(service.lastStageChangedAt || service.receivedAt || service.createdAt)
+    const readyAt = validDate(service.readyAt)
+    const expectedAt = validDate(service.expectedCompletionAt)
     const status = String(service.orderStatus || service.status || '').toLowerCase()
     const base = { orderId, client: service.client || 'Cliente', vehicle: service.vehicle || 'Veículo' }
 
     if (scheduledAt && scheduledAt >= current && scheduledAt.getTime() - current.getTime() <= DAY) alerts.push({ ...base, type: 'appointment_soon', scheduledAt: scheduledAt.toISOString() })
     if (!service.responsibleId) alerts.push({ ...base, type: 'unassigned' })
-    if (createdAt && status !== 'ready_for_pickup' && Math.floor((current.getTime() - createdAt.getTime()) / 60000) >= STALE_MINUTES) alerts.push({ ...base, type: 'stale', openedAt: createdAt.toISOString() })
-    if (status === 'ready_for_pickup' && createdAt && current.getTime() - createdAt.getTime() >= DAY) alerts.push({ ...base, type: 'pickup_waiting', readySince: createdAt.toISOString() })
+    const futureBooking = status === 'scheduled' && scheduledAt > current && !service.receivedAt
+    if (!futureBooking && expectedAt && expectedAt < current && status !== 'ready_for_pickup') alerts.push({...base,type:'estimate_overdue',expectedAt:expectedAt.toISOString()})
+    if (!futureBooking && createdAt && status !== 'ready_for_pickup' && Math.floor((current.getTime() - createdAt.getTime()) / 60000) >= STALE_MINUTES) alerts.push({ ...base, type: 'stale', openedAt: createdAt.toISOString() })
+    if (status === 'ready_for_pickup' && readyAt && current.getTime() - readyAt.getTime() >= DAY) alerts.push({ ...base, type: 'pickup_waiting', readySince: readyAt.toISOString() })
 
     if (Array.isArray(service.checklistPhotos)) {
       const missing = missingChecklistStages(service.checklistPhotos)

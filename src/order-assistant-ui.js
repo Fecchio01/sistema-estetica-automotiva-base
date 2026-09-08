@@ -1,4 +1,5 @@
-import { orderDraftKey, repeatOrderValues, validOrderDraft } from './order-assistant.js'
+import { orderDraftKey, repeatOrderValues, validOrderDraft, findTodayBooking } from './order-assistant.js'
+import { checkInBooking } from './workflow-data.js'
 import { totalForCatalogServices } from './service-catalog.js'
 
 const selectedServices = (form) => [...form.querySelectorAll('[name="services"]:checked')].map((item) => item.value)
@@ -44,6 +45,26 @@ export function refreshOrderAssistant(form) {
     })
   }
   const names = selectedServices(form)
+  let bookingButton=panel.querySelector('[data-use-booking]')
+  if(!bookingButton){
+    bookingButton=document.createElement('button');bookingButton.type='button';bookingButton.className='outline-button';bookingButton.dataset.useBooking=''
+    panel.prepend(bookingButton)
+    bookingButton.addEventListener('click',async()=>{
+      const booking=findTodayBooking(globalThis.__liveServices || [],form.elements.clientId.value,form.elements.vehicleId.value)
+      if(!booking)return
+      bookingButton.disabled=true
+      try{
+        const order=await checkInBooking(booking.orderId)
+        clearOrderDraft();form.reset();document.querySelector('#service-modal').classList.add('hidden')
+        globalThis.__addLiveWorkOrder?.(order)
+        document.dispatchEvent(new CustomEvent('live-data-refresh-requested'))
+      }catch(error){panel.querySelector('[data-draft-status]').textContent=error.message}
+      finally{bookingButton.disabled=false}
+    })
+  }
+  const booking=findTodayBooking(globalThis.__liveServices || [],form.elements.clientId.value,form.elements.vehicleId.value)
+  bookingButton.hidden=!booking
+  if(booking)bookingButton.textContent=`Reserva de hoje: ${booking.service}. Registrar chegada usando esta ordem`
   panel.querySelector('[data-order-total]').textContent = `Total: ${totalForCatalogServices(globalThis.__serviceCatalog || [], names).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`
   panel.querySelector('[data-order-help]').textContent = 'Valor calculado pelo catálogo atual. O responsável é sugerido pela quantidade de ordens abertas; você pode trocar.'
   panel.querySelector('[data-repeat-order]').disabled = !repeatOrderValues(recordFor(form), globalThis.__serviceCatalog || [])

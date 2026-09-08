@@ -1,7 +1,6 @@
 import { supabase } from './supabase-client.js'
 import { ensureDefaultMessageTemplates, loadPostSaleFollowUps, syncPostSalePlans } from './post-sale.js'
 import { buildDeliveryTransition, buildStageTransition, stageForOrder } from './work-order-state.js'
-import { findMissingOrderAmounts, findOrdersAwaitingPaymentMigration } from './order-pricing.js'
 import { buildOperationalAutomationModel } from './operational-automation.js'
 
 const statusMap = {
@@ -23,7 +22,7 @@ export function buildLiveService(order, clientRecords = [], teamProfiles = globa
   const responsibleProfile = teamProfiles.find((item) => item.id === order?.responsible_id || item.full_name === order?.responsible_id)
   const status = statusMap[order?.status] ?? statusMap.scheduled
   const createdAt = order?.created_at || new Date().toISOString()
-  return { initials: initials(record?.name), clientId: order.client_id, client: record?.name || 'Cliente', vehicle: vehicleLabel(vehicle), vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status || 'scheduled', currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'paid', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(createdAt).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id, responsibleName: responsibleProfile?.full_name || '' }
+  return { initials: initials(record?.name), clientId: order.client_id, client: record?.name || 'Cliente', vehicle: vehicleLabel(vehicle), vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status || 'scheduled', currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'paid', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(createdAt).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id, responsibleName: responsibleProfile?.full_name || '', receivedAt: order.received_at, expectedCompletionAt: order.expected_completion_at, lastStageChangedAt: order.last_stage_changed_at, readyAt: order.ready_at }
 }
 
 function publishLiveData(services, clientRecords, postSaleFollowUps = globalThis.__postSaleFollowUps || []) {
@@ -42,7 +41,7 @@ async function loadLiveData(profile) {
   const [clientsResult, vehiclesResult, ordersResult, peopleResult] = await Promise.all([
     supabase.from('clients').select('id, full_name, phone, created_at').eq('company_id', profile.company_id).eq('active', true).order('created_at', { ascending: false }),
     supabase.from('vehicles').select('id, client_id, make, model, license_plate').eq('company_id', profile.company_id),
-    supabase.from('work_orders').select('id, client_id, vehicle_id, responsible_id, status, current_stage, payment_status, scheduled_at, created_at, completed_at, service_description, total_amount').eq('company_id', profile.company_id).order('created_at', { ascending: false }),
+    supabase.from('work_orders').select('id, client_id, vehicle_id, responsible_id, status, current_stage, payment_status, scheduled_at, created_at, completed_at, service_description, total_amount, received_at, expected_completion_at, service_duration_minutes, last_stage_changed_at, ready_at').eq('company_id', profile.company_id).order('created_at', { ascending: false }),
     supabase.from('profiles').select('id, full_name, role').eq('company_id', profile.company_id).eq('active', true).order('full_name'),
   ])
   if (clientsResult.error || vehiclesResult.error || ordersResult.error) {
@@ -52,16 +51,6 @@ async function loadLiveData(profile) {
   }
   const teamProfiles = peopleResult?.data || []
   globalThis.__teamProfiles = teamProfiles
-  const missingAmounts = findMissingOrderAmounts(ordersResult.data ?? [], globalThis.__serviceCatalog || [])
-  if (missingAmounts.length) {
-    await Promise.all(missingAmounts.map(({ id, totalAmount }) => supabase.from('work_orders').update({ total_amount: totalAmount }).eq('id', id).eq('company_id', profile.company_id)))
-    ;(ordersResult.data ?? []).forEach((order) => { const match = missingAmounts.find((item) => item.id === order.id); if (match) order.total_amount = match.totalAmount })
-  }
-  const awaitingPaymentMigration = findOrdersAwaitingPaymentMigration(ordersResult.data ?? [])
-  if (awaitingPaymentMigration.length) {
-    await Promise.all(awaitingPaymentMigration.map((id) => supabase.from('work_orders').update({ payment_status: 'paid' }).eq('id', id).eq('company_id', profile.company_id)))
-    ;(ordersResult.data ?? []).forEach((order) => { if (awaitingPaymentMigration.includes(order.id)) order.payment_status = 'paid' })
-  }
   const clientsById = new Map((clientsResult.data ?? []).map((client) => [client.id, client]))
   const vehiclesById = new Map((vehiclesResult.data ?? []).map((vehicle) => [vehicle.id, vehicle]))
   const services = (ordersResult.data ?? []).map((order) => {
@@ -70,7 +59,7 @@ async function loadLiveData(profile) {
     const status = statusMap[order.status] ?? statusMap.scheduled
     const vehicleText = vehicleLabel(vehicle)
     const responsibleProfile = teamProfiles.find((item) => item.id === order.responsible_id || item.full_name === order.responsible_id)
-    return { initials: initials(client?.full_name), clientId: order.client_id, client: client?.full_name || 'Cliente', vehicle: vehicleText, vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status, currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'paid', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(order.created_at).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt: order.created_at, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id, responsibleName: responsibleProfile?.full_name || '' }
+    return { initials: initials(client?.full_name), clientId: order.client_id, client: client?.full_name || 'Cliente', vehicle: vehicleText, vehicleId: order.vehicle_id, service: order.service_description || 'Serviço não informado', status: status.label, tone: status.tone, orderStatus: order.status, currentStage: stageForOrder(order), paymentStatus: order.payment_status || 'paid', time: order.scheduled_at ? `Entrada ${new Date(order.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : `Criado ${new Date(order.created_at).toLocaleDateString('pt-BR')}`, scheduledAt: order.scheduled_at, completedAt: order.completed_at, createdAt: order.created_at, amount: Number(order.total_amount || 0), orderId: order.id, responsibleId: order.responsible_id, responsibleName: responsibleProfile?.full_name || '', receivedAt: order.received_at, expectedCompletionAt: order.expected_completion_at, lastStageChangedAt: order.last_stage_changed_at, readyAt: order.ready_at }
   })
   const clientRecords = (clientsResult.data ?? []).map((client) => {
     const vehicle = (vehiclesResult.data ?? []).find((item) => item.client_id === client.id)
@@ -131,3 +120,10 @@ function subscribeToLiveData(profile) {
 
 document.addEventListener('auth-ready', (event) => { loadLiveData(event.detail); subscribeToLiveData(event.detail) })
 document.addEventListener('live-data-refresh-requested', () => globalThis.__reloadLiveData?.())
+globalThis.__saveOrderEstimate=async(orderId,value)=>{
+  const profile=globalThis.__sessionProfile
+  const {data,error}=await supabase.from('work_orders').update({expected_completion_at:value,estimate_is_manual:true}).eq('id',orderId).eq('company_id',profile.company_id).select('id').maybeSingle()
+  if(error)throw Error(error.message)
+  if(!data)throw Error('Ordem indisponível para atualizar a previsão.')
+  await loadLiveData(profile)
+}

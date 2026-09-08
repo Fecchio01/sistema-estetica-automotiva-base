@@ -8,7 +8,7 @@ test('identifica agenda próxima, ordem sem responsável, operação parada e re
   const services = [
     { orderId: 'soon', client: 'Jorge', orderStatus: 'scheduled', scheduledAt: '2026-09-05T12:00:00.000Z', createdAt: '2026-09-04T14:00:00.000Z', checklistPhotos: [{ stage: 'received' }, { stage: 'assessment' }, { stage: 'execution' }, { stage: 'inspection' }, { stage: 'delivery' }] },
     { orderId: 'stale', client: 'Artur', orderStatus: 'in_progress', createdAt: '2026-09-04T10:00:00.000Z', checklistPhotos: [{ stage: 'received' }, { stage: 'assessment' }, { stage: 'execution' }, { stage: 'inspection' }, { stage: 'delivery' }] },
-    { orderId: 'pickup', client: 'Luna', orderStatus: 'ready_for_pickup', createdAt: '2026-09-03T10:00:00.000Z', checklistPhotos: [{ stage: 'received' }, { stage: 'assessment' }, { stage: 'execution' }, { stage: 'inspection' }, { stage: 'delivery' }] },
+    { orderId: 'pickup', client: 'Luna', orderStatus: 'ready_for_pickup', readyAt: '2026-09-03T10:00:00.000Z', createdAt: '2026-09-03T10:00:00.000Z', checklistPhotos: [{ stage: 'received' }, { stage: 'assessment' }, { stage: 'execution' }, { stage: 'inspection' }, { stage: 'delivery' }] },
   ]
 
   const result = buildOperationalAutomationModel({ services }, now)

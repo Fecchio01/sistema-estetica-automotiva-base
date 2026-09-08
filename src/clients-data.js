@@ -1,3 +1,5 @@
+import { durationForServices } from './workflow-data.js'
+
 async function resolveClient(client) {
   if (client) return client
   const module = await import('./supabase-client.js')
@@ -63,8 +65,8 @@ export async function createWorkOrder(profile, input, client) {
   const services = normalizeServiceNames(input)
   if (!profile?.company_id || !input?.clientId || !input?.vehicleId || !input?.responsibleId || !services.length) throw new Error('Preencha cliente, veículo, responsável e pelo menos um serviço.')
   const scheduledAt = Object.prototype.hasOwnProperty.call(input, 'scheduledAt') ? input.scheduledAt : null
-  const payload = { ...(input.id ? { id: input.id } : {}), company_id: profile.company_id, client_id: input.clientId, vehicle_id: input.vehicleId, responsible_id: input.responsibleId, status: input.status || 'scheduled', current_stage: Number.isInteger(Number(input.currentStage)) ? Number(input.currentStage) : 0, payment_status: input.paymentStatus || 'paid', scheduled_at: scheduledAt, service_description: services.join(', '), total_amount: Number(input.totalAmount || 0) }
-  const fields = 'id, client_id, vehicle_id, responsible_id, status, current_stage, payment_status, scheduled_at, created_at, completed_at, service_description, total_amount'
+  const payload = { ...(input.id ? { id: input.id } : {}), company_id: profile.company_id, client_id: input.clientId, vehicle_id: input.vehicleId, responsible_id: input.responsibleId, status: input.status || 'scheduled', service_duration_minutes: durationForServices(globalThis.__serviceCatalog || [], services), current_stage: Number.isInteger(Number(input.currentStage)) ? Number(input.currentStage) : 0, payment_status: input.paymentStatus || 'paid', scheduled_at: scheduledAt, service_description: services.join(', '), total_amount: Number(input.totalAmount || 0) }
+  const fields = 'id, client_id, vehicle_id, responsible_id, status, current_stage, payment_status, scheduled_at, created_at, completed_at, service_description, total_amount, expected_completion_at, received_at, last_stage_changed_at, ready_at'
   const { data, error } = await client.from('work_orders').insert(payload).select(fields).single()
   if (error && input.id && error.code === '23505') {
     const { data: existing, error: lookupError } = await client.from('work_orders').select(fields).eq('id', input.id).maybeSingle()

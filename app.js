@@ -257,30 +257,28 @@ function renderClients() {
   records.forEach((record) => record.addEventListener('click', () => openClientFicha(Number(record.dataset.clientIndex))));
   section.querySelector('#client-new-record').addEventListener('click', () => openModal('new-client-modal'));
 }
+function escapeCatalogText(value) { return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function openServicePriceModal(service = null) {
   let modal = document.querySelector('#service-price-modal');
   if (!modal) {
-    document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop hidden" id="service-price-modal"><div class="modal"><button class="close-button" data-close="service-price-modal">×</button><p class="eyebrow">CATÁLOGO DA EMPRESA</p><h2>Novo serviço</h2><p class="muted">Cadastre um serviço para que a equipe possa selecioná-lo nos atendimentos.</p><form id="service-price-form"><label>Nome do serviço<input name="name" required placeholder="Ex.: Lavagem técnica" /></label><label>Descrição<input name="description" required placeholder="Ex.: Limpeza externa e proteção rápida" /></label><label>Preço<input name="price" required placeholder="Ex.: 180" /></label><div class="form-actions"><button type="button" class="outline-button" data-close="service-price-modal">Cancelar</button><button class="primary-button">Salvar serviço</button></div></form></div></div>`);
+    document.body.insertAdjacentHTML('beforeend', `<div class="modal-backdrop hidden" id="service-price-modal"><div class="modal"><button class="close-button" data-close="service-price-modal">×</button><p class="eyebrow">CATÁLOGO DA EMPRESA</p><h2>Novo serviço</h2><p class="muted">Cadastre um serviço para que a equipe possa selecioná-lo nos atendimentos.</p><form id="service-price-form"><label>Nome do serviço<input name="name" required placeholder="Ex.: Lavagem técnica" /></label><label>Descrição<input name="description" required placeholder="Ex.: Limpeza externa e proteção rápida" /></label><label>Preço<input name="price" type="number" min="0" step="0.01" required placeholder="Ex.: 180" /></label><label>Duração prevista (minutos)<input name="durationMinutes" type="number" min="1" max="10080" placeholder="Informe para calcular a previsão automaticamente" /></label><div class="form-actions"><button type="button" class="outline-button" data-close="service-price-modal">Cancelar</button><button class="primary-button">Salvar serviço</button></div></form></div></div>`);
     modal = document.querySelector('#service-price-modal');
     modal.querySelectorAll('[data-close]').forEach((button) => button.addEventListener('click', () => closeModal(button.dataset.close)));
-    modal.querySelector('#service-price-form').addEventListener('submit', (event) => {
+    modal.querySelector('#service-price-form').addEventListener('submit', async (event) => {
       event.preventDefault();
-      const data = new FormData(event.currentTarget);
+      const form = event.currentTarget;
+      const data = new FormData(form);
       const price = Number(String(data.get('price') || '').replace(',', '.')) || 0;
-      const changes = { name: data.get('name'), description: data.get('description'), price };
+      const changes = { name: data.get('name'), description: data.get('description'), price, durationMinutes: Number(data.get('durationMinutes')) || null };
       const editingId = event.currentTarget.dataset.serviceId;
-      if (editingId) {
-        if (globalThis.__updateServiceInCatalog) globalThis.__updateServiceInCatalog(editingId, changes);
-        else globalThis.__serviceCatalog = getCatalog().map((item) => item.id === editingId ? { ...item, ...changes } : item);
-      } else {
-        const newService = { id: `custom-${Date.now()}`, ...changes };
-        serviceCatalogExtras.push(newService);
-        globalThis.__serviceCatalog = [...getCatalog(), newService].filter((item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index);
-      }
+      const button=form.querySelector('.primary-button');button.disabled=true;
+      try { await globalThis.__saveServiceInCatalog(editingId,changes); }
+      catch(error){showToast(error.message);return}
+      finally{button.disabled=false}
       closeModal('service-price-modal');
       showSection('servicos');
       showToast(editingId ? 'Serviço atualizado no catálogo.' : 'Serviço adicionado ao catálogo.');
-      event.currentTarget.reset();
+      form.reset();
     });
   }
   const form = modal.querySelector('#service-price-form');
@@ -290,6 +288,7 @@ function openServicePriceModal(service = null) {
   form.elements.name.value = service?.name || '';
   form.elements.description.value = service?.description || '';
   form.elements.price.value = service?.price ?? '';
+  form.elements.durationMinutes.value = service?.durationMinutes ?? '';
   form.querySelector('.primary-button').textContent = service ? 'Salvar alterações' : 'Salvar serviço';
   openModal('service-price-modal');
 }
@@ -341,7 +340,7 @@ function renderModule(section, navigationToken = currentNavigationToken) {
   } else if (section === 'servicos') {
     content.innerHTML = `<div class="module-grid"><div class="module-panel"><div class="module-toolbar"><h2>Serviços oferecidos</h2><button class="outline-button" id="new-price">+ Novo serviço</button></div><div id="service-catalog-list"></div></div><div class="module-panel"><h2>Como o catálogo é usado</h2><p class="muted">A equipe seleciona os serviços na criação do orçamento. Os mesmos dados aparecem para o cliente antes da aprovação.</p><div class="mini-notice"><span class="status-dot green"></span><div><b>Catálogo ativo</b><small>Preços podem ser alterados sem mudar o histórico de ordens.</small></div></div></div></div>`;
     const catalogList = content.querySelector('#service-catalog-list');
-    const renderCatalog = () => { catalogList.innerHTML = getCatalog().map((item) => `<div class="service-price" data-service-catalog-id="${item.id}"><div><b>${item.name}</b><small>${item.description}</small></div><div class="service-price-actions"><span>R$ ${Number(item.price).toLocaleString('pt-BR')}</span><button type="button" class="text-button danger-button" data-service-delete="${item.id}">Apagar</button></div></div>`).join('') || '<p class="dashboard-empty">Nenhum serviço cadastrado.</p>'; catalogList.querySelectorAll('.service-price').forEach((row) => row.addEventListener('click', (event) => { if (event.target.closest('[data-service-delete]')) return; openServicePriceModal(getCatalog().find((item) => item.id === row.dataset.serviceCatalogId)); })); catalogList.querySelectorAll('[data-service-delete]').forEach((button) => button.addEventListener('click', async () => { if (!(await globalThis.__requestConfirmation?.('service'))) return; globalThis.__removeServiceFromCatalog?.(button.dataset.serviceDelete); if (!globalThis.__removeServiceFromCatalog) { const index = serviceCatalogExtras.findIndex((item) => item.id === button.dataset.serviceDelete); if (index >= 0) serviceCatalogExtras.splice(index, 1); } renderCatalog(); showToast('Serviço removido do catálogo.'); })); };
+    const renderCatalog = () => { catalogList.innerHTML = getCatalog().map((item) => `<div class="service-price" data-service-catalog-id="${escapeCatalogText(item.id)}"><div><b>${escapeCatalogText(item.name)}</b><small>${escapeCatalogText(item.description)}</small><small>${item.durationMinutes ? `Duração prevista: ${item.durationMinutes} min` : 'Duração não definida'}</small></div><div class="service-price-actions"><span>R$ ${Number(item.price).toLocaleString('pt-BR')}</span><button type="button" class="text-button danger-button" data-service-delete="${escapeCatalogText(item.id)}">Apagar</button></div></div>`).join('') || '<p class="dashboard-empty">Nenhum serviço cadastrado.</p>'; catalogList.querySelectorAll('.service-price').forEach((row) => row.addEventListener('click', (event) => { if (event.target.closest('[data-service-delete]')) return; openServicePriceModal(getCatalog().find((item) => item.id === row.dataset.serviceCatalogId)); })); catalogList.querySelectorAll('[data-service-delete]').forEach((button) => button.addEventListener('click', async () => { if (!(await globalThis.__requestConfirmation?.('service'))) return; try { await globalThis.__removeServiceFromCatalog?.(button.dataset.serviceDelete); } catch(error){showToast(error.message);return} if (!globalThis.__removeServiceFromCatalog) { const index = serviceCatalogExtras.findIndex((item) => item.id === button.dataset.serviceDelete); if (index >= 0) serviceCatalogExtras.splice(index, 1); } renderCatalog(); showToast('Serviço removido do catálogo.'); })); };
     renderCatalog();
   } else if (section === 'conversas') {
     content.innerHTML = `<div class="module-grid"><div class="module-panel conversation-panel"><div class="module-toolbar"><h2>Conversas recentes</h2><span class="status-pill in-progress">${getServiceCounts().total} ordens com link</span></div>${services.map((item, index) => `<button class="data-line conversation-row" data-service-index="${index}"><div><b>${item.client}</b><small>${item.vehicle} · ${item.status}</small></div><span class="text-button">Abrir ordem</span></button>`).join('') || '<p class="dashboard-empty">Nenhuma conversa vinculada ainda.</p>'}</div><div class="module-panel"><h2>Fila de retorno</h2><p class="muted">Use o status da ordem para priorizar quem precisa de resposta.</p><div class="data-line"><div><b>${getServiceCounts().active}</b><small>Em atendimento</small></div><span class="status-pill in-progress">Acompanhar</span></div><div class="data-line"><div><b>${getServiceCounts().ready}</b><small>Prontos para retirada</small></div><span class="status-pill ready">Avisar</span></div></div></div>`;
@@ -532,12 +531,14 @@ function addEstimateEditor() {
   detail.querySelector('#confirm-delivery').addEventListener('click', async () => { const state = serviceStates[activeServiceIndex]; if (state.status !== 'ready' || !['administrator', 'reception'].includes(globalThis.__activeRole)) return; state.deliveryStatus = 'delivered'; state.deliveryAt = getCurrentEntryData().received; syncStage(); try { await persistOrderTransition(activeServiceIndex, 'completed', 4); showToast('Entrega confirmada e atendimento finalizado.'); } catch (error) { showToast(error.message || 'Não foi possível confirmar a entrega.'); } });
   detail.querySelector('#cancel-delivery').addEventListener('click', async () => { serviceStates[activeServiceIndex].deliveryStatus = null; stageIndex = serviceStates[activeServiceIndex].stage; syncStage(); try { await persistOrderTransition(activeServiceIndex, 'ready_for_pickup', 4); showToast('Entrega cancelada. O veículo voltou para retirada.'); } catch (error) { showToast(error.message || 'Não foi possível cancelar a entrega.'); } });
   detail.querySelector('#delete-order').addEventListener('click', async () => { if (!(await globalThis.__requestConfirmation?.('order'))) return; const deleted = services[activeServiceIndex]; const deletedClient = deleted.client; try { if (deleted.orderId && globalThis.__deleteLiveWorkOrder) await globalThis.__deleteLiveWorkOrder(deleted.orderId); else removeService(activeServiceIndex); closeModal('detail-modal'); showToast(`Ordem de ${deletedClient} apagada do sistema.`); } catch (error) { showToast(error.message || 'Não foi possível apagar a ordem.'); } });
-  detail.querySelector('#save-estimate').addEventListener('click', () => {
-    const estimate = serviceEstimates[activeServiceIndex];
-    estimate.date = detail.querySelector('#estimate-date').value;
-    estimate.time = detail.querySelector('#estimate-time').value;
-    syncStage();
-    showToast(estimate.date && estimate.time ? 'Previsão atualizada e compartilhada com o cliente.' : 'Previsão removida. Defina uma data e um horário quando estiver pronto.');
+  detail.querySelector('#save-estimate').addEventListener('click', async () => {
+    const date=detail.querySelector('#estimate-date').value, time=detail.querySelector('#estimate-time').value;
+    if(Boolean(date)!==Boolean(time)){showToast('Preencha data e horário.');return}
+    const value=date&&time ? new Date(date+'T'+time+':00').toISOString() : null;
+    const button=detail.querySelector('#save-estimate');button.disabled=true;
+    try { await globalThis.__saveOrderEstimate(services[activeServiceIndex].orderId,value); syncStage();showToast('Previsão salva.'); }
+    catch(error){showToast(error.message)}
+    finally{button.disabled=false}
   });
 }
 addEstimateEditor();
@@ -931,7 +932,7 @@ document.addEventListener('live-data-ready', (event) => {
   services.splice(0, services.length, ...liveServices);
   clients.splice(0, clients.length, ...liveClients);
   serviceStates.splice(0, serviceStates.length, ...states);
-  serviceEstimates.splice(0, serviceEstimates.length, ...liveServices.map((item) => localDetails.get(item.orderId)?.estimate || { date: '', time: '' }));
+  serviceEstimates.splice(0, serviceEstimates.length, ...liveServices.map((item) => { const value=item.expectedCompletionAt; if(!value)return {date:'',time:''}; const date=new Date(value); return {date:date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0'),time:String(date.getHours()).padStart(2,'0')+':'+String(date.getMinutes()).padStart(2,'0')}; }));
   serviceMilestones.splice(0, serviceMilestones.length, ...liveServices.map((item) => localDetails.get(item.orderId)?.milestones || { received: '', evaluated: '' }));
   servicePhotos.splice(0, servicePhotos.length, ...liveServices.map((item) => localDetails.get(item.orderId)?.photos || []));
   const nextIndex = services.findIndex((item) => item.orderId === activeOrderId);

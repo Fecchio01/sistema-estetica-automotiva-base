@@ -41,5 +41,5 @@ test('soma o preço do catálogo para os serviços escolhidos no atendimento', (
 test('catálogo abre o mesmo modal com os dados do serviço para edição', () => {
   assert.match(app, /function openServicePriceModal\(service = null\)/)
   assert.match(app, /form\.dataset\.serviceId = service\?\.id \|\| ''/)
-  assert.match(app, /if \(globalThis\.__updateServiceInCatalog\) globalThis\.__updateServiceInCatalog\(editingId, changes\)/)
+  assert.match(app, /await globalThis\.__saveServiceInCatalog\(editingId,changes\)/)
 })
