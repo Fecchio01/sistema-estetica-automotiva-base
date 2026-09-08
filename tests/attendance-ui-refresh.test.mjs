@@ -38,3 +38,11 @@ test('apagar uma ordem ao vivo usa o DELETE do Supabase', async () => {
   assert.match(live, /from\('work_orders'\)\.delete\(\)/)
   assert.match(app, /globalThis\.__deleteLiveWorkOrder\(deleted\.orderId\)/)
 })
+
+test('painel do funcionário abre o card real e mantém as ações de etapa', async () => {
+  const app = await readFile(new URL('../app.js', import.meta.url), 'utf8')
+  assert.match(app, /openEmployeeLiveOrder\(button\.dataset\.liveOrder\)/)
+  assert.match(app, /renderEmployeeOrder\(index\)/)
+  assert.match(app, /id=\"employee-advance\"/)
+  assert.match(app, /id=\"employee-back-stage\"/)
+})

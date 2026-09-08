@@ -674,20 +674,24 @@ function bindEmployeeOrderActions(portal) {
   }));
   portal.querySelectorAll('.employee-action[data-live-order]').forEach((button) => button.addEventListener('click', (event) => {
     event.stopPropagation();
-    const order = (globalThis.__liveServices || []).find((item) => item.orderId === button.dataset.liveOrder);
-    if (!order) return;
-    let index = services.findIndex((item) => item.orderId === order.orderId);
-    if (index < 0) {
-      index = services.push(order) - 1;
-      serviceStates.push({ stage: order.tone === 'delivered' || order.tone === 'ready' ? 4 : order.tone === 'in-progress' ? 2 : 0, status: order.tone === 'delivered' ? 'delivered' : order.tone === 'ready' ? 'ready' : order.tone === 'in-progress' ? 'in-progress' : 'received', deliveryStatus: order.tone === 'delivered' ? 'delivered' : null, responsible: order.responsibleId || 'Não atribuído' });
-      serviceEstimates.push({ date: order.scheduledAt ? new Date(order.scheduledAt).toISOString().slice(0, 10) : '', time: order.scheduledAt ? new Date(order.scheduledAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '' });
-      serviceMilestones.push({ received: order.time, evaluated: '' });
-      servicePhotos.push([]);
-    }
-    activeServiceIndex = index;
-    stageIndex = serviceStates[index].stage;
-    renderEmployeeOrder(index);
+    openEmployeeLiveOrder(button.dataset.liveOrder);
   }));
+}
+
+function openEmployeeLiveOrder(orderId) {
+  const order = (globalThis.__liveServices || []).find((item) => item.orderId === orderId);
+  if (!order) return;
+  let index = services.findIndex((item) => item.orderId === order.orderId);
+  if (index < 0) {
+    index = services.push(order) - 1;
+    serviceStates.push({ stage: order.currentStage ?? (order.tone === 'delivered' || order.tone === 'ready' ? 4 : order.tone === 'in-progress' ? 2 : 0), status: order.tone === 'delivered' ? 'delivered' : order.tone === 'ready' ? 'ready' : order.tone === 'in-progress' ? 'in-progress' : 'received', deliveryStatus: order.tone === 'delivered' ? 'delivered' : null, responsible: order.responsibleId || 'Não atribuído' });
+    serviceEstimates.push({ date: order.expectedCompletionAt ? new Date(order.expectedCompletionAt).toISOString().slice(0, 10) : '', time: order.expectedCompletionAt ? new Date(order.expectedCompletionAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '' });
+    serviceMilestones.push({ received: order.time, evaluated: '' });
+    servicePhotos.push([]);
+  }
+  activeServiceIndex = index;
+  stageIndex = serviceStates[index].stage;
+  renderEmployeeOrder(index);
 }
 const employeePortal = document.querySelector('.employee-portal');
 if (employeePortal) {
@@ -754,7 +758,7 @@ function renderEmployeeDashboard() {
   const orderMarkup = dashboard.orders.map((item) => `<button type="button" class="employee-dashboard-order" data-live-order="${safe(item.orderId)}"><span class="vehicle-mark" aria-hidden="true"></span><span class="employee-dashboard-order-copy"><b>${safe(item.client)}</b><small>${safe(item.vehicle)} · ${safe(item.service)}</small></span><span class="status-pill ${safe(item.tone)}">${safe(item.status)}</span><span class="dashboard-arrow">→</span></button>`).join('') || '<p class="employee-empty">Nenhuma ordem atribuída a este funcionário.</p>';
   const agendaMarkup = agenda.map((item) => `<div class="employee-dashboard-agenda-item"><span class="employee-dashboard-time">${safe(item.time?.replace('Entrada ', '') || '—')}</span><span><b>${safe(item.client)}</b><small>${safe(item.vehicle)} · ${safe(item.service)}</small></span><span class="status-pill ${safe(item.tone)}">${safe(item.status)}</span></div>`).join('') || '<p class="employee-empty">Nenhum horário previsto para as ordens atribuídas.</p>';
   roleScreenContent.innerHTML = `<section class="employee-dashboard"><div class="employee-dashboard-heading"><div><p class="eyebrow">PAINEL OPERACIONAL</p><h1>${globalThis.__timeGreeting?.() || 'Bom dia'}, ${safe(profile.full_name || 'funcionário')}.</h1><p class="muted">Acompanhe suas ordens, etapas e horários em uma única visão.</p></div><span class="role-tag">Funcionário</span></div><div class="employee-dashboard-metrics"><div><b>${String(dashboard.metrics.active).padStart(2, '0')}</b><small>Em atendimento</small></div><div><b>${String(dashboard.metrics.ready).padStart(2, '0')}</b><small>Prontos para retirada</small></div><div><b>${String(dashboard.metrics.total).padStart(2, '0')}</b><small>Ordens atribuídas</small></div></div><div class="employee-dashboard-grid"><section class="employee-dashboard-panel"><div class="employee-dashboard-panel-heading"><div><p class="eyebrow">OPERAÇÃO</p><h2>Ordens do momento</h2></div><span class="dashboard-count">${String(dashboard.metrics.total).padStart(2, '0')}</span></div><p class="muted">Serviços vinculados ao seu acesso no sistema.</p><div class="employee-dashboard-order-list">${orderMarkup}</div></section><section class="employee-dashboard-panel"><div class="employee-dashboard-panel-heading"><div><p class="eyebrow">AGENDA</p><h2>Hoje</h2></div><span class="dashboard-count">${String(agenda.length).padStart(2, '0')}</span></div><p class="muted">Horários relacionados às suas ordens.</p><div class="employee-dashboard-agenda-list">${agendaMarkup}</div></section></div><div class="employee-dashboard-note"><b>Seu espaço de trabalho</b><span>Abra uma ordem para atualizar etapas, adicionar fotos, registrar observações e marcar a retirada.</span></div></section>`;
-  roleScreenContent.querySelectorAll('[data-live-order]').forEach((button) => button.addEventListener('click', () => { const order = dashboard.orders.find((item) => item.orderId === button.dataset.liveOrder); if (order) showToast(`Ordem de ${order.client} selecionada.`); }));
+  roleScreenContent.querySelectorAll('[data-live-order]').forEach((button) => button.addEventListener('click', () => openEmployeeLiveOrder(button.dataset.liveOrder)));
 }
 function showRoleScreen(role) {
   const isEmployee = role === 'employee';
@@ -774,7 +778,7 @@ function showRoleScreen(role) {
   if (!isEmployee) addClientPhotos(source);
   if (serviceStates[activeServiceIndex]) syncStage();
   roleScreen.classList.remove('hidden');
-  roleScreenContent.querySelectorAll('.employee-action:not([data-service-index])').forEach((button) => button.addEventListener('click', () => showToast(`${button.dataset.action}: ação registrada no sistema.`)));
+  roleScreenContent.querySelectorAll('.employee-action:not([data-service-index]):not([data-live-order])').forEach((button) => button.addEventListener('click', () => showToast(`${button.dataset.action}: ação registrada no sistema.`)));
   const newService = roleScreenContent.querySelector('#reception-new-service');
   if (newService) newService.addEventListener('click', () => renderEmployeeForm('attendance'));
   const newClient = roleScreenContent.querySelector('#reception-new-client');
