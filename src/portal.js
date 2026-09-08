@@ -18,7 +18,7 @@ if (isClientPortalPath(window.location.pathname)) {
   const content = portal.querySelector('#public-portal-content')
   const endpoint = `https://qqrbfpdenhhellgbgimo.supabase.co/functions/v1/client-portal?token=${encodeURIComponent(token)}`
   fetch(endpoint).then(async (response) => { const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Link inválido.')
-    const statusLabel = { scheduled: 'Recebido', in_progress: 'Em andamento', ready_for_pickup: 'Pronto para retirada', completed: 'Finalizado', cancelled: 'Cancelado' }[data.order.status] || 'Em acompanhamento'
+    const statusLabel = { scheduled: 'Recebido', in_progress: 'Em andamento', ready_for_pickup: 'Pronto para retirada', completed: 'Entregue', cancelled: 'Cancelado' }[data.order.status] || 'Em acompanhamento'
     const vehicle = data.vehicle ? `${data.vehicle.make} ${data.vehicle.model}${data.vehicle.licensePlate ? ` · ${data.vehicle.licensePlate}` : ''}` : 'Veículo não informado'
     const currentStage = Number.isInteger(data.order.currentStage) && data.order.currentStage >= 0 && data.order.currentStage <= 4 ? data.order.currentStage : getPortalStageIndex(data.order.status)
     const timeline = PORTAL_STAGES.map((stage, index) => {

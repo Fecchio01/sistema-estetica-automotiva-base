@@ -8,7 +8,7 @@ const statusMap = {
   in_progress: { label: 'Em andamento', tone: 'in-progress', state: 'in-progress' },
   awaiting_approval: { label: 'Em andamento', tone: 'in-progress', state: 'in-progress' },
   ready_for_pickup: { label: 'Pronto para retirada', tone: 'ready', state: 'ready' },
-  completed: { label: 'Finalizado', tone: 'delivered', state: 'delivered' },
+  completed: { label: 'Entregue', tone: 'delivered', state: 'delivered' },
   cancelled: { label: 'Cancelado', tone: 'received', state: 'delivered' },
 }
 

@@ -10,7 +10,7 @@ const roleLabel = (role) => ({ administrator: 'Administrador(a)', reception: 'Re
 const announce = (message) => { const toast = document.querySelector('#toast'); if (!toast) return; toast.textContent = message; toast.classList.remove('hidden'); toast.classList.add('show'); setTimeout(() => toast.classList.add('hidden'), 3500) }
 const profile = () => globalThis.__sessionProfile
 
-const historyStatusLabel = (status) => ({ scheduled: 'Agendado', in_progress: 'Em andamento', awaiting_approval: 'Aguardando aprovação', ready_for_pickup: 'Pronto para retirada', completed: 'Finalizado', cancelled: 'Cancelado' }[status] || status || 'Agendado')
+const historyStatusLabel = (status) => ({ scheduled: 'Agendado', in_progress: 'Em andamento', awaiting_approval: 'Aguardando aprovação', ready_for_pickup: 'Pronto para retirada', completed: 'Entregue', cancelled: 'Cancelado' }[status] || status || 'Agendado')
 const historyDate = (order) => order.completedAt || order.completed_at || order.createdAt || order.created_at
 const historyService = (order) => order.service || order.service_description
 const historyAmount = (order) => order.amount ?? order.total_amount
