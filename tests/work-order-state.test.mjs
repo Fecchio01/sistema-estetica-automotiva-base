@@ -39,7 +39,7 @@ test('monta atualização da etapa e histórico com o mesmo evento', () => {
       company_id: 'company-1',
       work_order_id: 'order-1',
       changed_by: 'user-1',
-      from_status: 'in_progress',
+      from_status: null,
       to_status: 'in_progress',
       comment: 'Polimento concluído',
     },

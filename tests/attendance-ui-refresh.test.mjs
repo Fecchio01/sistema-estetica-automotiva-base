@@ -41,8 +41,12 @@ test('apagar uma ordem ao vivo usa o DELETE do Supabase', async () => {
 
 test('painel do funcionário abre o card real e mantém as ações de etapa', async () => {
   const app = await readFile(new URL('../app.js', import.meta.url), 'utf8')
+  const migration = await readFile(new URL('../supabase/migrations/20260908_allow_ready_status_in_stage_history.sql', import.meta.url), 'utf8')
+  const state = await readFile(new URL('../src/work-order-state.js', import.meta.url), 'utf8')
   assert.match(app, /openEmployeeLiveOrder\(button\.dataset\.liveOrder\)/)
   assert.match(app, /renderEmployeeOrder\(index\)/)
   assert.match(app, /id=\"employee-advance\"/)
   assert.match(app, /id=\"employee-back-stage\"/)
+  assert.match(migration, /ready_for_pickup/g)
+  assert.match(state, /input\.fromStatus === toStatus/)
 })

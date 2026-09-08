@@ -35,9 +35,13 @@ function buildHistory({ companyId, orderId, changedBy, fromStatus, toStatus, com
 export function buildStageTransition(input = {}) {
   const toStage = normalizeStage(input.toStage)
   const toStatus = statusForStage(toStage)
+  // Execution and inspection intentionally share `in_progress`. The history
+  // table requires different status values, so represent an intra-status
+  // stage change as a new stage event without repeating the previous status.
+  const fromStatus = input.fromStatus === toStatus ? null : input.fromStatus
   return {
     orderPatch: { status: toStatus, current_stage: toStage },
-    history: buildHistory({ ...input, toStatus }),
+    history: buildHistory({ ...input, fromStatus, toStatus }),
   }
 }
 
