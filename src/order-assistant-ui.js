@@ -83,7 +83,6 @@ export function restoreOrderDraft(form) {
   if (draft.requestId) form.dataset.requestId = draft.requestId
   form.querySelectorAll('[name="services"][type="checkbox"]').forEach((input) => { input.checked = draft.services.includes(input.value) })
   refreshOrderAssistant(form)
-  form.querySelector('[data-draft-status]').textContent = 'Rascunho recuperado. Confira os dados antes de criar.'
 }
 
 document.addEventListener('change', (event) => {
