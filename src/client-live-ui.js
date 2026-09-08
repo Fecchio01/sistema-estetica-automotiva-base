@@ -10,9 +10,20 @@ const roleLabel = (role) => ({ administrator: 'Administrador(a)', reception: 'Re
 const announce = (message) => { const toast = document.querySelector('#toast'); if (!toast) return; toast.textContent = message; toast.classList.remove('hidden'); toast.classList.add('show'); setTimeout(() => toast.classList.add('hidden'), 3500) }
 const profile = () => globalThis.__sessionProfile
 
+const historyStatusLabel = (status) => ({ scheduled: 'Agendado', in_progress: 'Em andamento', awaiting_approval: 'Aguardando aprovação', ready_for_pickup: 'Pronto para retirada', completed: 'Finalizado', cancelled: 'Cancelado' }[status] || status || 'Agendado')
+const historyDate = (order) => order.completedAt || order.completed_at || order.createdAt || order.created_at
+const historyService = (order) => order.service || order.service_description
+const historyAmount = (order) => order.amount ?? order.total_amount
+
 function clientHistoryMarkup(record) {
   const orders = record?.orders || []
-  return orders.length ? orders.map((order) => `<div class="client-history-row"><div><b>${escapeHtml(order.service_description || 'Serviço não informado')}</b><small>${order.created_at ? new Date(order.created_at).toLocaleString('pt-BR') : 'Data não informada'} · ${escapeHtml(order.status || 'Agendado')}</small></div><strong>${Number(order.total_amount || 0) ? `R$ ${Number(order.total_amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Sem valor'}</strong></div>`).join('') : '<p class="dashboard-empty">Nenhum serviço registrado para este cliente.</p>'
+  return orders.length ? orders.map((order) => {
+    const date = historyDate(order)
+    const amount = historyAmount(order)
+    const formattedDate = date && !Number.isNaN(new Date(date).getTime()) ? new Date(date).toLocaleDateString('pt-BR') : 'Data não informada'
+    const formattedAmount = amount !== null && amount !== undefined && Number.isFinite(Number(amount)) ? `R$ ${Number(amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Valor não informado'
+    return `<div class="client-history-row"><div><b>${escapeHtml(historyService(order) || 'Serviço não informado')}</b><small>${formattedDate} · ${escapeHtml(historyStatusLabel(order.orderStatus || order.status))}</small></div><strong>${formattedAmount}</strong></div>`
+  }).join('') : '<p class="dashboard-empty">Nenhum serviço registrado para este cliente.</p>'
 }
 
 function showClientDetails(record) {

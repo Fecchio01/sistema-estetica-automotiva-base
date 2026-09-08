@@ -14,14 +14,14 @@ export function findTodayBooking(services = [], clientId, vehicleId, now = new D
 export function repeatOrderValues(record, catalog = []) {
   const vehicles = record?.vehicles || []
   const latest = [...(record?.orders || [])]
-    .filter((order) => !['cancelled', 'scheduled'].includes(order.orderStatus || order.status))
+    .filter((order) => !['cancelled', 'scheduled'].includes(String(order.orderStatus || order.status || '').toLowerCase()))
     .sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0))[0]
   if (!latest) return null
-  const description = latest.service || latest.service_description || ''
+  const description = String(latest.service || latest.service_description || '').trim()
   // Match complete catalog names, including names containing commas.
   let remaining = description
   const services = []
-  const names = catalog.map((item) => item.name).sort((a, b) => b.length - a.length)
+  const names = catalog.map((item) => String(item.name || '').trim()).filter(Boolean).sort((a, b) => b.length - a.length)
   while (remaining) {
     const name = names.find((name) => remaining === name || remaining.startsWith(name + ', '))
     if (!name) return null

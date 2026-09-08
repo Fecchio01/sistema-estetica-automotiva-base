@@ -26,6 +26,10 @@ test('retorno usa último atendimento válido e catálogo atual, inclusive nome 
   assert.deepEqual(repeatOrderValues(record,[{name:'Lavagem, cera'},{name:'Polimento'}]),{vehicleId:'v',services:['Lavagem, cera','Polimento']})
   assert.equal(repeatOrderValues(record,[{name:'Polimento'}]),null)
 })
+test('repetir serviço aceita ordens reais normalizadas ou vindas diretamente do banco', () => {
+  const record = { vehicles: [{ id: 'v' }], orders: [{ status: 'completed', created_at: '2026-09-07', service_description: 'Lavagem', vehicle_id: 'v' }] }
+  assert.deepEqual(repeatOrderValues(record, [{ name: 'Lavagem' }]), { vehicleId: 'v', services: ['Lavagem'] })
+})
 test('rascunho é isolado por empresa e usuário e rejeita dados obsoletos', () => {
   assert.notEqual(orderDraftKey({company_id:'a',id:'x'}),orderDraftKey({company_id:'b',id:'x'}))
   assert.equal(orderDraftKey({}),null)

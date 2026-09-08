@@ -21,7 +21,12 @@ test('permite criar atendimentos consecutivos e atualiza a lista sem recarregar'
 })
 
 test('mantém o histórico da ficha do cliente dentro do modal', async () => {
+  const ui = await readFile(new URL('../src/client-live-ui.js', import.meta.url), 'utf8')
   const css = await readFile(new URL('../styles.css', import.meta.url), 'utf8')
+  assert.match(ui, /order\.service \|\| order\.service_description/)
+  assert.match(ui, /order\.completedAt \|\| order\.completed_at \|\| order\.createdAt \|\| order\.created_at/)
+  assert.match(ui, /order\.amount \?\? order\.total_amount/)
+  assert.match(ui, /historyStatusLabel/)
   assert.match(css, /\.client-details-modal\{width:min\(100%,880px\)/)
   assert.match(css, /\.client-details-grid\{grid-template-columns:minmax\(0,\.8fr\) minmax\(0,1\.2fr\)\}/)
 })
