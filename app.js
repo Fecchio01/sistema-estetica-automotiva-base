@@ -493,6 +493,7 @@ function refreshClientPhotos() {
 }
 document.querySelectorAll('.client-portal').forEach(addClientPhotos);
 let stageIndex = serviceStates[0].stage;
+let employeeStageTransitionBusy = false;
 function removeService(index) {
   if (!services[index]) return;
   services.splice(index, 1);
@@ -653,9 +654,60 @@ function renderEmployeeOrder(index) {
   roleScreenContent.querySelectorAll('.employee-stage-photo').forEach((button) => button.addEventListener('click', () => { selectedPhotoStage = button.dataset.photoStage; roleScreenContent.querySelector('#employee-photo-input').click(); }));
   roleScreenContent.querySelector('#employee-photo-input').addEventListener('change', (event) => { servicePhotos[index].push(...Array.from(event.target.files).map((file) => ({ url: URL.createObjectURL(file), name: file.name, stage: selectedPhotoStage }))); refreshClientPhotos(); renderEmployeeOrder(index); showToast('Foto adicionada à etapa e ao portal do cliente.'); });
   const advance = roleScreenContent.querySelector('#employee-advance');
-  if (advance) advance.addEventListener('click', async () => { activeServiceIndex = index; stageIndex = Math.min(4, state.stage + 1); syncStage(); try { await persistOrderTransition(index, stageIndex === 4 ? 'ready_for_pickup' : 'in_progress', stageIndex); renderEmployeeOrder(index); showToast('Etapa atualizada para toda a equipe.'); } catch (error) { showToast(error.message || 'Não foi possível salvar a etapa.'); } });
+  if (advance) advance.addEventListener('click', async () => {
+    if (employeeStageTransitionBusy) return;
+    employeeStageTransitionBusy = true;
+    const previousStage = state.stage;
+    const previousStatus = state.status;
+    const previousDeliveryStatus = state.deliveryStatus;
+    advance.disabled = true;
+    if (backStage) backStage.disabled = true;
+    activeServiceIndex = index;
+    stageIndex = Math.min(4, previousStage + 1);
+    syncStage();
+    try {
+      await persistOrderTransition(index, stageIndex === 4 ? 'ready_for_pickup' : 'in_progress', stageIndex);
+      renderEmployeeOrder(index);
+      showToast('Etapa atualizada para toda a equipe.');
+    } catch (error) {
+      state.stage = previousStage;
+      state.status = previousStatus;
+      state.deliveryStatus = previousDeliveryStatus;
+      stageIndex = previousStage;
+      syncStage();
+      showToast(error.message || 'Não foi possível salvar a etapa.');
+    } finally {
+      employeeStageTransitionBusy = false;
+    }
+  });
   const backStage = roleScreenContent.querySelector('#employee-back-stage');
-  if (backStage) backStage.addEventListener('click', async () => { activeServiceIndex = index; stageIndex = Math.max(0, state.stage - 1); state.deliveryStatus = null; syncStage(); try { await persistOrderTransition(index, stageIndex === 0 ? 'scheduled' : 'in_progress', stageIndex); renderEmployeeOrder(index); showToast('Etapa anterior restaurada.'); } catch (error) { showToast(error.message || 'Não foi possível salvar a etapa.'); } });
+  if (backStage) backStage.addEventListener('click', async () => {
+    if (employeeStageTransitionBusy) return;
+    employeeStageTransitionBusy = true;
+    const previousStage = state.stage;
+    const previousStatus = state.status;
+    const previousDeliveryStatus = state.deliveryStatus;
+    backStage.disabled = true;
+    if (advance) advance.disabled = true;
+    activeServiceIndex = index;
+    stageIndex = Math.max(0, previousStage - 1);
+    state.deliveryStatus = null;
+    syncStage();
+    try {
+      await persistOrderTransition(index, stageIndex === 0 ? 'scheduled' : 'in_progress', stageIndex);
+      renderEmployeeOrder(index);
+      showToast('Etapa anterior restaurada.');
+    } catch (error) {
+      state.stage = previousStage;
+      state.status = previousStatus;
+      state.deliveryStatus = previousDeliveryStatus;
+      stageIndex = previousStage;
+      syncStage();
+      showToast(error.message || 'Não foi possível salvar a etapa.');
+    } finally {
+      employeeStageTransitionBusy = false;
+    }
+  });
   const delivery = roleScreenContent.querySelector('#employee-delivery');
   if (delivery) delivery.addEventListener('click', async () => { if (state.status !== 'ready') return; state.deliveryStatus = 'delivered'; state.deliveryAt = getCurrentEntryData().received; activeServiceIndex = index; stageIndex = 4; syncStage(); try { await persistOrderTransition(index, 'completed', 4); renderEmployeeOrder(index); showToast('Entrega registrada às ' + state.deliveryAt + '.'); } catch (error) { showToast(error.message || 'Não foi possível confirmar a entrega.'); } });
   const cancelDelivery = roleScreenContent.querySelector('#employee-cancel-delivery');
