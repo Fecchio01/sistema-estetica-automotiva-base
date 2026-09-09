@@ -243,11 +243,11 @@ async function loadState({ loadMessages = true } = {}) {
   } else if (state.selectedId) {
     const result = await supabase.from('whatsapp_messages').select('*').eq('company_id', state.profile.company_id).eq('conversation_id', state.selectedId).order('sent_at', { ascending: true })
     state.messages = result.data ?? []
-    for (const message of state.messages) {
-      if (!message.media_path) continue
+    await Promise.all(state.messages.map(async (message) => {
+      if (!message.media_path) return
       const signed = await supabase.storage.from('whatsapp-media').createSignedUrl(message.media_path, 3600)
       message.media_url = signed.data?.signedUrl ?? ''
-    }
+    }))
   } else state.messages = []
   state.loading = false
 }
@@ -439,7 +439,7 @@ function bindMessageActions(container) {
   }))
 }
 
-function bindInbox(container) {
+function bindInbox(container, isCurrent = () => true) {
   bindConversationButtons(container)
   bindMessageActions(container)
   container.querySelector('#whatsapp-refresh-connection')?.addEventListener('click', () => refreshConnection(container))
@@ -454,9 +454,11 @@ function bindInbox(container) {
   const search = container.querySelector('#whatsapp-search')
   search?.addEventListener('input', (event) => applyConversationSearch(container, event.target.value))
   applyConversationSearch(container, search?.value || '')
-  refreshConnection(container)
   if (state.connectionTimer) clearInterval(state.connectionTimer)
-  state.connectionTimer = setInterval(() => refreshConnection(container), 5000)
+  state.connectionTimer = setInterval(() => {
+    if (!isCurrent()) { clearInterval(state.connectionTimer); state.connectionTimer = null; return }
+    if (!document.hidden) refreshConnection(container)
+  }, 5000)
 }
 
 async function refreshLocalInbox(container) {
@@ -504,7 +506,7 @@ async function renderInbox(container, isCurrent = () => true) {
   const searchQuery = container.querySelector('#whatsapp-search')?.value || ''
   if (!canUseWhatsAppInbox(state.profile)) { container.innerHTML = '<div class="module-panel"><p class="dashboard-empty">A central de conversas está disponível somente para administradora e recepção.</p></div>'; return }
   container.innerHTML = state.connectionOnly ? connectionOnlyMarkup() : inboxMarkup()
-  bindInbox(container)
+  bindInbox(container, isCurrent)
   const messageList = container.querySelector('.whatsapp-message-list')
   if (messageList) { messageList.dataset.messageSignature = messageSignature(state.messages); messageList.scrollTop = messageList.scrollHeight }
   const conversationList = container.querySelector('.whatsapp-conversation-list')
@@ -515,11 +517,27 @@ async function renderInbox(container, isCurrent = () => true) {
 
 export async function renderWhatsAppInbox(container, isCurrent = () => true) {
   const nextProfile = globalThis.__sessionProfile
-  if (state.profile?.company_id !== nextProfile?.company_id) state.messageCache.clear()
+  if (state.profile?.company_id !== nextProfile?.company_id) {
+    state.messageCache.clear()
+    state.conversations = []
+    state.messages = []
+    state.selectedId = null
+    state.connectionOnly = false
+  }
   state.profile = nextProfile
-  try { const connectionResponse = await fetch('/api/whatsapp/connection', { cache: 'no-store' }); const connection = await connectionResponse.json(); state.connectionOnly = !['open', 'connected'].includes(String(connection.state || '').toLowerCase()) } catch { state.connectionOnly = true }
+  if (state.refreshTimer) { clearInterval(state.refreshTimer); state.refreshTimer = null }
   loadReadState()
   loadHiddenMessageState()
+  state.loading = true
+  await renderInbox(container, isCurrent)
+  if (!canUseWhatsAppInbox(state.profile) || !isCurrent()) return
+  try {
+    const connectionResponse = await fetch('/api/whatsapp/connection', { cache: 'no-store', signal: AbortSignal.timeout(5000) })
+    const connection = await connectionResponse.json()
+    if (!isCurrent()) return
+    state.connectionOnly = !['open', 'connected'].includes(String(connection.state || '').toLowerCase())
+  } catch { if (!isCurrent()) return; state.connectionOnly = true }
+  state.loading = false
   if (state.connectionOnly) { state.conversations = []; state.messages = []; state.selectedId = null; if (state.refreshTimer) clearInterval(state.refreshTimer); if (state.channel) { const supabase = await getSupabase(); await supabase.removeChannel(state.channel); state.channel = null }; await renderInbox(container, isCurrent); return }
   await loadState({ loadMessages: false })
   if (!isCurrent()) return
@@ -536,22 +554,25 @@ export async function renderWhatsAppInbox(container, isCurrent = () => true) {
     const supabase = await getSupabase()
     state.channel = supabase.channel(`whatsapp-inbox-${state.profile.company_id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_conversations', filter: `company_id=eq.${state.profile.company_id}` }, async () => {
+        if (!isCurrent()) return
         if (state.localMode) return refreshLocalInbox(container)
         if (state.actionBusy || state.polling) return
         state.polling = true
-        try { await loadState(); await renderInbox(container) } finally { state.polling = false }
+        try { await loadState(); await renderInbox(container, isCurrent) } finally { state.polling = false }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_messages', filter: `company_id=eq.${state.profile.company_id}` }, async () => {
+        if (!isCurrent()) return
         if (state.localMode) return refreshLocalInbox(container)
         if (state.actionBusy || state.polling) return
         state.polling = true
-        try { await loadState(); await renderInbox(container) } finally { state.polling = false }
+        try { await loadState(); await renderInbox(container, isCurrent) } finally { state.polling = false }
       })
       .subscribe()
     if (state.refreshTimer) clearInterval(state.refreshTimer)
     state.refreshTimer = setInterval(async () => {
-      if (!state.localMode) return
-      await refreshLocalInbox(container)
+      if (!isCurrent()) { clearInterval(state.refreshTimer); state.refreshTimer = null; return }
+      if (!state.localMode || document.hidden) return
+      await refreshLocalInbox(container).catch(() => {})
     }, 2000)
 }
 }
