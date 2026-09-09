@@ -1,0 +1,540 @@
+/* ==========================================================================
+   REDESIGN — Visão geral (desktop)
+   Direção diferente: os 4 indicadores passam a ser uma única faixa
+   contínua (dividida por linhas finas) em vez de 4 caixas separadas;
+   o painel de acompanhamento ganha um tom próprio para se diferenciar
+   do painel principal. Escopado a #dashboard-section.
+   ========================================================================== */
+#dashboard-section{
+  --db-line:#e4ebe5;
+  --db-shadow:0 8px 22px rgba(29,55,42,.05);
+  --db-muted:#748375;
+}
+
+#dashboard-section > .page-heading{
+  align-items:flex-end!important;
+  margin-bottom:32px!important;
+}
+#dashboard-section > .page-heading .eyebrow{
+  font-size:11px!important;font-weight:700!important;letter-spacing:.1em!important;color:var(--db-muted)!important;
+}
+#dashboard-section > .page-heading h1{
+  margin:8px 0 8px!important;font-size:30px!important;letter-spacing:-.025em!important;
+}
+#dashboard-section > .page-heading .muted{
+  max-width:460px!important;font-size:13px!important;line-height:1.55!important;
+}
+
+/* Indicadores como uma única faixa, sem cartões repetidos. */
+#dashboard-section .metric-grid{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:0!important;border:1px solid var(--db-line)!important;border-radius:18px!important;
+  background:#fff!important;box-shadow:var(--db-shadow)!important;margin-bottom:32px!important;
+  overflow:hidden!important;
+}
+#dashboard-section .metric-grid .metric-block{
+  background:transparent!important;border:0!important;border-right:1px solid var(--db-line)!important;
+  border-radius:0!important;padding:22px 24px!important;
+  transition:background .25s cubic-bezier(.16,1,.3,1)!important;
+}
+#dashboard-section .metric-grid .metric-block:hover{background:#f5f9f6!important}
+@media(prefers-reduced-motion:reduce){#dashboard-section .metric-grid .metric-block{transition:none!important}}
+#dashboard-section .metric-grid .metric-block:last-child{border-right:0!important}
+#dashboard-section .metric-grid .metric-block span{
+  font-size:11px!important;font-weight:600!important;color:var(--db-muted)!important;letter-spacing:.01em!important;
+}
+#dashboard-section .metric-grid .metric-block strong{
+  display:block!important;margin:10px 0 4px!important;font:600 26px 'Space Grotesk'!important;
+  letter-spacing:-.02em!important;color:var(--ink)!important;
+}
+#dashboard-section .metric-grid .metric-block small{color:#94a198!important;font-size:11px!important}
+
+/* Painéis principais: leve diferença de tom entre o painel de trabalho e o de acompanhamento. */
+#dashboard-section .dashboard-overview-primary-grid{gap:16px!important;margin-bottom:32px!important}
+#dashboard-section .dashboard-recent-panel{
+  border-radius:20px!important;padding:28px!important;box-shadow:var(--db-shadow)!important;
+}
+#dashboard-section .dashboard-followup-panel{
+  border-radius:20px!important;padding:28px!important;background:var(--accent-soft)!important;border-color:transparent!important;
+}
+#dashboard-section .dashboard-followup-panel .panel-heading .eyebrow{color:var(--accent)!important}
+#dashboard-section .dashboard-followup-panel .progress-track{background:rgba(29,104,77,.14)!important}
+#dashboard-section .dashboard-followup-panel .mini-notice{
+  background:transparent!important;border:0!important;border-top:1px solid rgba(29,104,77,.16)!important;
+  border-radius:0!important;padding:16px 0!important;margin:4px 0 2px!important;
+}
+#dashboard-section .dashboard-followup-panel .status-dot.green{box-shadow:0 0 0 3px rgba(29,104,77,.14)!important}
+#dashboard-section .dashboard-followup-panel .secondary-button{
+  width:100%!important;border-radius:12px!important;border-color:rgba(29,104,77,.25)!important;
+  background:#fff!important;font-weight:600!important;
+}
+
+/* Painel "Operação de hoje": itens numerados em vez de linhas soltas. */
+#dashboard-section .dashboard-recent-panel .service-list{counter-reset:svc}
+#dashboard-section .dashboard-recent-panel .service-row{
+  position:relative!important;padding-left:52px!important;
+}
+#dashboard-section .dashboard-recent-panel .service-row::before{
+  counter-increment:svc;content:counter(svc,decimal-leading-zero)!important;
+  position:absolute!important;left:16px!important;top:16px!important;
+  font:600 11px 'Space Grotesk'!important;color:#9fb0a5!important;letter-spacing:.02em!important;
+}
+
+/* Painéis de organização: cabeçalho com número do grupo, mais editorial. */
+#dashboard-section .dashboard-panel{position:relative!important}
+#dashboard-section .dashboard-panel-heading{display:flex!important;align-items:baseline!important;gap:10px!important}
+#dashboard-section .dashboard-panel-heading>div::before{
+  content:"";width:7px!important;height:7px!important;border-radius:50%!important;background:var(--accent)!important;
+  display:inline-block!important;margin-right:8px!important;vertical-align:middle!important;
+}
+#dashboard-section .dashboard-recent-panel .panel-heading,
+#dashboard-section .dashboard-followup-panel .panel-heading{margin-bottom:20px!important}
+#dashboard-section .dashboard-recent-panel .service-list{gap:8px!important}
+#dashboard-section .dashboard-recent-panel .service-row{border-radius:14px!important;padding:16px 16px 16px 52px!important}
+
+/* Painéis de organização: cantos consistentes, sem sombra pesada repetida. */
+#dashboard-section .dashboard-organization{gap:16px!important;margin-top:4px!important}
+#dashboard-section .dashboard-panel{border-radius:20px!important;padding:26px!important;box-shadow:var(--db-shadow)!important}
+#dashboard-section .dashboard-panel-heading h2{font-size:18px!important;letter-spacing:-.015em!important}
+#dashboard-section .dashboard-panel .eyebrow{font-weight:700!important;letter-spacing:.08em!important}
+#dashboard-section .dashboard-panel > .muted{margin:6px 0 18px!important;font-size:12.5px!important;line-height:1.55!important}
+#dashboard-section .dashboard-paddock-row,
+#dashboard-section .dashboard-attention-item,
+#dashboard-section .dashboard-timeline-item{border-radius:14px!important}
+@media(max-width:1100px){#dashboard-section .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}#dashboard-section .metric-grid .metric-block:nth-child(2){border-right:0!important}#dashboard-section .metric-grid .metric-block:nth-child(odd){border-right:1px solid var(--db-line)!important}#dashboard-section .metric-grid .metric-block:nth-child(n+3){border-top:1px solid var(--db-line)!important}}
+
+/* Entrada suave da Visão geral: cabeçalho, indicadores e painéis aparecem
+   em sequência curta, uma única vez ao carregar. */
+@keyframes redesign-dash-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:no-preference){
+  #dashboard-section > .page-heading{animation:redesign-dash-in .4s cubic-bezier(.16,1,.3,1) both}
+  #dashboard-section .metric-grid .metric-block{animation:redesign-dash-in .4s cubic-bezier(.16,1,.3,1) both}
+  #dashboard-section .metric-grid .metric-block:nth-child(1){animation-delay:.05s}
+  #dashboard-section .metric-grid .metric-block:nth-child(2){animation-delay:.09s}
+  #dashboard-section .metric-grid .metric-block:nth-child(3){animation-delay:.13s}
+  #dashboard-section .metric-grid .metric-block:nth-child(4){animation-delay:.17s}
+  #dashboard-section .dashboard-recent-panel{animation:redesign-dash-in .45s cubic-bezier(.16,1,.3,1) .18s both}
+  #dashboard-section .dashboard-followup-panel{animation:redesign-dash-in .45s cubic-bezier(.16,1,.3,1) .22s both}
+  #dashboard-section .dashboard-panel{animation:redesign-dash-in .45s cubic-bezier(.16,1,.3,1) both}
+  #dashboard-section .dashboard-organization .dashboard-panel:nth-child(1){animation-delay:.26s}
+  #dashboard-section .dashboard-organization .dashboard-panel:nth-child(2){animation-delay:.3s}
+  #dashboard-section .dashboard-organization .dashboard-panel:nth-child(3){animation-delay:.34s}
+  #dashboard-section .dashboard-organization .dashboard-panel:nth-child(4){animation-delay:.38s}
+}
+@media(prefers-reduced-motion:reduce){
+  #dashboard-section > .page-heading,#dashboard-section .metric-grid .metric-block,
+  #dashboard-section .dashboard-recent-panel,#dashboard-section .dashboard-followup-panel,
+  #dashboard-section .dashboard-panel{animation:none!important}
+}
+
+/* ==========================================================================
+   REDESIGN — Atendimentos
+   Mesmo padrão da Visão geral: resumo como faixa única (não 3 caixas
+   escuras separadas), painel com cantos e sombra consistentes, cabeçalho
+   da lista com mais respiro.
+   ========================================================================== */
+.attendances-shell{--at-line:#e4ebe5;--at-shadow:0 8px 22px rgba(29,55,42,.05)}
+.attendances-shell .attendance-summary{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:0!important;background:#fff!important;border:1px solid var(--at-line)!important;
+  border-radius:18px!important;box-shadow:var(--at-shadow)!important;overflow:hidden!important;
+}
+.attendances-shell .attendance-summary>div{
+  min-height:auto!important;background:transparent!important;border:0!important;
+  border-right:1px solid var(--at-line)!important;border-radius:0!important;
+  padding:22px 24px!important;box-shadow:none!important;transform:none!important;
+  transition:box-shadow .2s ease,transform .2s ease!important;
+}
+.attendances-shell .attendance-summary>div:hover{
+  box-shadow:var(--at-shadow)!important;transform:translateY(-2px)!important;
+}
+
+/* ==========================================================================
+   REDESIGN — Orçamentos
+   Mesma faixa única de indicadores, com o mesmo hover das outras telas.
+   ========================================================================== */
+.quote-preview-metrics{
+  --qt-line:#e4ebe5;--qt-shadow:0 8px 22px rgba(29,55,42,.05);
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:0!important;background:#fff!important;border:1px solid var(--qt-line)!important;
+  border-radius:18px!important;box-shadow:var(--qt-shadow)!important;overflow:hidden!important;
+}
+.quote-preview-metrics>div{
+  border:0!important;border-right:1px solid var(--qt-line)!important;border-radius:0!important;
+  background:transparent!important;padding:22px 24px!important;
+  transition:box-shadow .2s ease,transform .2s ease!important;
+}
+.quote-preview-metrics>div:last-child{border-right:0!important}
+.quote-preview-metrics>div:hover{box-shadow:var(--qt-shadow)!important;transform:translateY(-2px)!important}
+.quote-preview-metrics span{color:#748375!important}
+.quote-preview-metrics strong{font:600 26px 'Space Grotesk'!important;letter-spacing:-.02em!important}
+
+/* ==========================================================================
+   REDESIGN — Modal "Criar orçamento"
+   Versão aprovada: lista vertical de serviços e resumo como painel
+   escuro fixo à direita, como um recibo lateral.
+   ========================================================================== */
+.quote-preview-modal-wide{border-radius:24px!important;padding:0!important;overflow:auto!important}
+.quote-preview-modal-wide .quote-preview-modal-heading{padding:34px 34px 22px!important;margin:0!important;border-bottom:1px solid #e4ebe5!important}
+.quote-preview-modal-wide .quote-preview-modal-heading .eyebrow{font-size:10.5px!important;font-weight:700!important;letter-spacing:.09em!important;color:#748375!important}
+.quote-preview-modal-wide .quote-preview-modal-heading h2{font-size:24px!important;margin:10px 0 6px!important;letter-spacing:-.025em!important}
+.quote-preview-modal-close{top:34px!important;right:34px!important}
+
+.quote-preview-modal-wide .quote-preview-form{margin:0!important;gap:0!important}
+.quote-form-layout{grid-template-columns:minmax(0,1fr) 260px!important;gap:0!important;align-items:stretch!important}
+.quote-form-main{padding:30px 34px!important;gap:22px!important}
+
+.quote-form-grid{grid-template-columns:1fr 1fr!important}
+
+.quote-service-grid{display:grid!important;grid-template-columns:1fr!important;gap:0!important;border-top:1px solid #e4ebe5!important}
+.quote-service-card{
+  grid-template-columns:24px minmax(0,1fr) auto!important;min-height:0!important;
+  padding:14px 4px!important;border:0!important;border-bottom:1px solid #e4ebe5!important;
+  border-radius:0!important;background:transparent!important;
+}
+.quote-service-card:has(input:checked){background:transparent!important;box-shadow:none!important;transform:none!important}
+.quote-service-card-check{border-radius:50%!important;width:20px!important;height:20px!important}
+.quote-service-card-action{display:none!important}
+.quote-service-card::before{content:none!important}
+
+.quote-form-field input[name="discount"]{max-width:160px!important}
+
+.quote-form-summary{
+  position:static!important;height:100%!important;border-radius:0!important;border:0!important;
+  background:#132a1f!important;padding:30px 26px!important;display:block!important;
+}
+.quote-form-summary .eyebrow{display:block!important;color:#8fb39d!important}
+.quote-form-summary h3{display:block!important;color:#fff!important}
+.quote-summary-items{display:grid!important;color:#b9cdc0!important}
+.quote-summary-items b{color:#fff!important}
+.quote-summary-total{border-top-color:rgba(255,255,255,.15)!important;color:#b9cdc0!important}
+.quote-summary-total strong{color:#fff!important;font:700 16px 'Space Grotesk'!important}
+
+.quote-preview-note{
+  border-top:1px solid #e4ebe5!important;border-radius:0!important;background:transparent!important;
+  margin:0 34px!important;padding:16px 0 0!important;color:#8a6b2d!important;
+}
+.quote-preview-form>.form-actions,.quote-preview-modal .form-actions{
+  border-top:1px solid #e4ebe5!important;padding:20px 34px!important;margin:6px 0 0!important;
+}
+
+/* ==========================================================================
+   REDESIGN — Modal "Registrar atendimento"
+   Mesma linguagem do recibo lateral do orçamento: cabeçalho com divisor,
+   e o resumo (.order-assistant) como uma faixa escura de destaque.
+   ========================================================================== */
+#service-modal .modal{border-radius:24px!important;padding:34px!important}
+#service-modal .modal>.eyebrow{font-size:10.5px!important;font-weight:700!important;letter-spacing:.09em!important;color:#748375!important}
+#service-modal .modal>h2{font-size:24px!important;margin:10px 0 6px!important;letter-spacing:-.025em!important}
+#service-modal .modal>.muted{padding-bottom:22px!important;margin-bottom:4px!important;border-bottom:1px solid #e4ebe5!important}
+
+.order-assistant{
+  border:0!important;border-radius:16px!important;background:#132a1f!important;padding:18px!important;
+  display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;
+}
+.order-assistant [data-order-total]{color:#fff!important;font:700 18px 'Space Grotesk'!important}
+.order-assistant .form-actions{margin:0!important;gap:8px!important}
+.order-assistant .outline-button{background:transparent!important;border-color:rgba(255,255,255,.3)!important;color:#fff!important}
+.order-assistant .text-button{color:#9cc7ab!important}
+.order-assistant [data-use-booking]{width:100%!important;margin-bottom:4px!important}
+
+/* Serviços em lista vertical, mesma lógica do orçamento (linhas, não grade). */
+[data-service-choices]{display:grid!important;grid-template-columns:1fr!important;gap:0!important;border-top:1px solid #e4ebe5!important;margin:4px 0 18px!important}
+.service-choice{
+  border:0!important;border-bottom:1px solid #e4ebe5!important;border-radius:0!important;
+  padding:14px 4px!important;background:transparent!important;
+}
+.service-choice:has(input:checked){background:transparent!important}
+.service-choice input{flex:none!important;width:16px!important;height:16px!important;margin:0!important}
+.service-choice span{flex:1!important}
+
+/* ==========================================================================
+   REDESIGN — Agenda
+   Grade da semana com 7 colunas reais (a base assumia 5), com rolagem
+   horizontal suave em telas menores em vez de cortar o conteúdo.
+   ========================================================================== */
+.agenda-live-grid{
+  grid-template-columns:repeat(7,minmax(150px,1fr))!important;
+  overflow-x:auto!important;padding-bottom:2px!important;
+}
+.agenda-live-grid .calendar-day{min-width:0!important}
+.calendar-day-load{white-space:nowrap!important}
+@media(max-width:1100px){.agenda-live-grid{grid-auto-flow:column!important;grid-template-columns:repeat(7,190px)!important}}
+
+/* ==========================================================================
+   REDESIGN — Clientes e veículos
+   Mesma faixa única de indicadores (era 3 caixas separadas), diretório
+   com cantos e sombra consistentes.
+   ========================================================================== */
+.main-content .client-summary{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:0!important;border:1px solid #cee0d1!important;border-radius:18px!important;
+  background:#fff!important;box-shadow:0 8px 22px rgba(29,55,42,.05)!important;overflow:hidden!important;
+}
+.main-content .client-summary>div{
+  background:transparent!important;border:0!important;border-right:1px solid #cee0d1!important;
+  border-radius:0!important;padding:22px 24px!important;box-shadow:none!important;transform:none!important;
+  transition:box-shadow .2s ease,transform .2s ease!important;
+}
+.main-content .client-summary>div:last-child{border-right:0!important}
+.main-content .client-summary>div:hover{box-shadow:0 8px 22px rgba(29,55,42,.05)!important;transform:translateY(-2px)!important}
+.main-content .client-summary span{color:#748375!important;font-size:11px!important;font-weight:600!important}
+.main-content .client-summary strong{font:600 26px 'Space Grotesk'!important;letter-spacing:-.02em!important;color:var(--ink)!important}
+
+.main-content .client-directory{border-radius:20px!important;box-shadow:0 8px 22px rgba(29,55,42,.05)!important}
+.main-content .directory-toolbar{padding:20px 22px!important}
+.main-content .client-directory-heading{padding:16px 20px!important;font-size:10.5px!important;font-weight:700!important;letter-spacing:.06em!important}
+.main-content .client-record{padding:16px 20px!important;transition:background .15s ease!important}
+.main-content .client-record:hover{background:#f5f9f6!important}
+
+/* ==========================================================================
+   REDESIGN — Ficha do cliente
+   Redesign drástico: modal em duas colunas — perfil escuro à esquerda
+   (avatar, nome, contato) e conteúdo (veículos + histórico) à direita,
+   em vez do grid de texto simples.
+   ========================================================================== */
+.client-details-modal{
+  border-radius:24px!important;padding:0!important;overflow:hidden!important;position:relative!important;
+  display:grid!important;grid-template-columns:260px minmax(0,1fr)!important;
+  grid-template-rows:auto auto auto 1fr auto!important;
+  max-height:min(600px,calc(100vh - 40px))!important;
+}
+.client-details-modal::before{
+  content:""!important;grid-column:1/2!important;grid-row:1/6!important;background:#132a1f!important;
+}
+.client-details-modal>.close-button{position:absolute!important;top:24px!important;right:24px!important;z-index:2!important;background:rgba(255,255,255,.12)!important;color:#fff!important}
+.client-details-modal>.close-button:hover{background:rgba(255,255,255,.22)!important;color:#fff!important}
+
+.client-details-modal>.eyebrow{
+  grid-column:1!important;grid-row:1!important;padding:34px 26px 0!important;color:#8fb39d!important;
+  font-size:10.5px!important;font-weight:700!important;letter-spacing:.09em!important;
+}
+.client-details-modal>h2{
+  grid-column:1!important;grid-row:2!important;padding:0 26px!important;margin:12px 0 4px!important;
+  color:#fff!important;font-size:22px!important;
+}
+.client-details-modal>.muted{
+  grid-column:1!important;grid-row:3!important;padding:0 26px!important;margin:0!important;
+  color:#8fb39d!important;font-size:12px!important;line-height:1.5!important;
+}
+.client-details-modal>.client-details-grid{
+  grid-column:2!important;grid-row:1/5!important;grid-template-columns:1fr!important;
+  gap:26px!important;padding:34px 34px 0!important;overflow-y:auto!important;align-content:start!important;
+}
+.client-details-modal>.form-actions{
+  grid-column:2!important;grid-row:5!important;border-top:1px solid #e4ebe5!important;
+  padding:20px 34px!important;margin:0!important;
+}
+.client-details-grid section h3{font-size:15px!important;letter-spacing:-.01em!important;margin-bottom:10px!important}
+.client-details-grid .data-line{border-radius:12px!important;padding:12px 14px!important;background:#fafcfa!important;border:1px solid #e4ebe5!important;margin-bottom:8px!important}
+
+/* ==========================================================================
+   REDESIGN — Fluidez geral
+   Entrada suave para todos os modais, transições consistentes em botões,
+   linhas e navegação nas telas que redesenhamos.
+   ========================================================================== */
+@keyframes redesign-modal-in{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:no-preference){
+  .modal-backdrop:not(.hidden) .modal,
+  .modal-backdrop:not(.hidden) .client-details-modal,
+  .modal-backdrop:not(.hidden) .quote-preview-modal{
+    animation:redesign-modal-in .22s cubic-bezier(.16,1,.3,1) both;
+  }
+}
+.modal-backdrop{transition:opacity .16s ease!important}
+
+.nav-item{transition:background .2s cubic-bezier(.16,1,.3,1),color .2s cubic-bezier(.16,1,.3,1),transform .2s cubic-bezier(.16,1,.3,1)!important}
+.nav-item:hover{transform:translateX(2px)!important}
+@media(prefers-reduced-motion:reduce){.nav-item:hover{transform:none!important}}
+.primary-button,.outline-button,.secondary-button,.text-button{
+  transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease!important;
+}
+.primary-button:hover{transform:translateY(-1px)}
+.primary-button:active,.outline-button:active,.secondary-button:active{transform:translateY(0) scale(.98)}
+
+.service-choice,.quote-service-card{transition:background .16s ease,border-color .16s ease!important}
+.client-record,.attendance-item,.service-row{transition:background .16s ease,transform .18s ease,box-shadow .18s ease!important}
+.calendar-slot,.calendar-event-card{transition:background .16s ease,border-color .16s ease,transform .18s ease!important}
+.calendar-slot:hover,.calendar-event-card:hover{transform:translateY(-2px)!important}
+@media(prefers-reduced-motion:reduce){
+  .modal-backdrop:not(.hidden) .modal,.modal-backdrop:not(.hidden) .client-details-modal,.modal-backdrop:not(.hidden) .quote-preview-modal{animation:none!important}
+  .primary-button:hover,.calendar-slot:hover,.calendar-event-card:hover{transform:none!important}
+}
+
+/* ==========================================================================
+   REDESIGN — Gráficos interativos
+   As barras "crescem" quando aparecem e reagem ao passar o mouse
+   (destaque de cor + leve escala), em vez de ficarem estáticas.
+   ========================================================================== */
+@keyframes redesign-bar-grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.dashboard-chart-bar,.billing-bar-track span,.dashboard-flow-segment{
+  transform-origin:left center!important;
+}
+@media(prefers-reduced-motion:no-preference){
+  .dashboard-chart-bar,.billing-bar-track span{animation:redesign-bar-grow .6s cubic-bezier(.16,1,.3,1) both!important}
+  .dashboard-flow-segment{animation:redesign-bar-grow .5s cubic-bezier(.16,1,.3,1) both!important}
+  .dashboard-summary-bar-track i{animation:redesign-bar-grow .6s cubic-bezier(.16,1,.3,1) both!important;transform-origin:left center!important}
+  .dashboard-financial-column span{animation:redesign-bar-grow-y .5s cubic-bezier(.16,1,.3,1) both!important;transform-origin:bottom center!important}
+}
+@keyframes redesign-bar-grow-y{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.dashboard-summary-bar-track i,.dashboard-financial-column span{transition:filter .16s ease!important;cursor:pointer!important}
+.dashboard-summary-bar-track i:hover,.dashboard-financial-column span:hover{filter:brightness(1.12)!important}
+
+/* Correção — "Atenção operacional": os 6 cartões estavam todos no mesmo
+   verde-claro (sem distinção) e a grade ficava desigual na última linha. */
+#dashboard-section .dashboard-attention-grid{
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr))!important;gap:12px!important;
+}
+#dashboard-section .dashboard-attention-block{
+  background:#fff!important;border:1px solid #cee0d1!important;border-radius:16px!important;
+  padding:20px 22px!important;box-shadow:0 8px 22px rgba(29,55,42,.05)!important;
+}
+#dashboard-section .dashboard-attention-heading{border-bottom-color:#e4ebe5!important;padding-bottom:10px!important}
+#dashboard-section .dashboard-attention-item{border-bottom-color:#e4ebe5!important;padding:12px 4px!important;gap:14px!important}
+#dashboard-section .dashboard-attention-item strong{flex:none!important}
+#dashboard-section .dashboard-attention-item span{min-width:0!important}
+#dashboard-section .dashboard-attention-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))!important}
+#dashboard-section .dashboard-attention-heading>span{
+  background:#e2f0e8!important;border:0!important;border-radius:999px!important;
+  color:var(--accent)!important;font-weight:700!important;min-width:22px!important;padding:2px 8px!important;
+}
+
+/* Correção definitiva: várias regras legadas conflitantes faziam o hover do
+   "Panorama da operação" travar/pular. Uma única regra final decide o estado. */
+.main-content .dashboard-summary-service,
+.main-content .dashboard-summary-metric,
+.main-content .dashboard-summary-metric-card{
+  animation:none!important;transform:none!important;
+  transition:box-shadow .2s cubic-bezier(.16,1,.3,1),background .2s cubic-bezier(.16,1,.3,1)!important;
+}
+.main-content .dashboard-summary-service::before,
+.main-content .dashboard-summary-metric::before,
+.main-content .dashboard-summary-metric-card::before{display:none!important;content:none!important}
+.main-content .dashboard-summary-service:hover,
+.main-content .dashboard-summary-metric:hover,
+.main-content .dashboard-summary-metric-card:hover{
+  animation:none!important;transform:none!important;background:#fff!important;
+  box-shadow:0 8px 22px rgba(29,55,42,.07)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .main-content .dashboard-summary-service,.main-content .dashboard-summary-metric,.main-content .dashboard-summary-metric-card{transition:none!important}
+}
+
+/* ==========================================================================
+   REDESIGN — Transições por seção
+   Entrada suave de listas, filtros e seleção sem deslocar o layout.
+   ========================================================================== */
+@keyframes redesign-row-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:no-preference){
+  .attendance-item,.client-record,.service-choice,.quote-service-card,.permission-item,
+  .whatsapp-conversation,.post-sale-step,.dashboard-attention-item,.dashboard-timeline-item,
+  .dashboard-paddock-row,.service-price{animation:redesign-row-in .3s ease both}
+  .attendance-item:nth-child(2),.client-record:nth-child(2),.permission-item:nth-child(2),.whatsapp-conversation:nth-child(2),.post-sale-step:nth-child(2),.service-price:nth-child(2){animation-delay:.03s}
+  .attendance-item:nth-child(3),.client-record:nth-child(3),.permission-item:nth-child(3),.whatsapp-conversation:nth-child(3),.post-sale-step:nth-child(3),.service-price:nth-child(3){animation-delay:.06s}
+  .attendance-item:nth-child(4),.client-record:nth-child(4),.permission-item:nth-child(4),.whatsapp-conversation:nth-child(4),.post-sale-step:nth-child(4),.service-price:nth-child(4){animation-delay:.09s}
+  .attendance-item:nth-child(n+5),.client-record:nth-child(n+5),.permission-item:nth-child(n+5),.whatsapp-conversation:nth-child(n+5),.post-sale-step:nth-child(n+5),.service-price:nth-child(n+5){animation-delay:.12s}
+}
+@media(prefers-reduced-motion:reduce){
+  .attendance-item,.client-record,.service-choice,.quote-service-card,.permission-item,
+  .whatsapp-conversation,.post-sale-step,.dashboard-attention-item,.dashboard-timeline-item,
+  .dashboard-paddock-row,.service-price{animation:none!important}
+}
+
+/* Filtros (Atendimentos) e período (Faturamento) mudam de estado com transição curta. */
+.filter-tab{transition:background .16s ease,color .16s ease!important}
+.filter-tab span{transition:color .16s ease!important}
+.billing-period-toolbar [data-billing-period]{transition:background .16s ease,color .16s ease!important}
+
+/* Conversas: seleção destacada sem re-animar a lista inteira. */
+.whatsapp-conversation{transition:background .16s ease!important}
+.whatsapp-conversation.active{background:#edf5ee!important}
+
+/* Equipe e serviços: hover limitado a fundo/sombra, sem deslocamento permanente. */
+.permission-item{transition:background .16s ease,box-shadow .16s ease!important}
+.permission-item:hover{background:#f5f9f6!important}
+
+/* Pós-venda: mudança de status com transição curta. */
+.post-sale-step .status-pill{transition:background .16s ease,color .16s ease!important}
+
+/* Configurações: switches já têm transição própria; feedback de salvar. */
+@keyframes redesign-save-pulse{0%{opacity:0;transform:translateY(4px)}100%{opacity:1;transform:none}}
+.settings-save-row .muted,.auth-message{animation:redesign-save-pulse .25s ease both}
+@media(prefers-reduced-motion:reduce){.settings-save-row .muted,.auth-message{animation:none!important}}
+
+/* Agenda: destaque discreto para o dia atual. */
+.calendar-day.is-today{border-color:#9bc6aa!important;box-shadow:0 0 0 2px #cee0d1 inset!important}
+.calendar-day.is-today .calendar-day-heading strong{color:var(--accent)!important}
+
+/* ==========================================================================
+   REDESIGN — Serviços e preços
+   Mesmo padrão dos outros módulos: painéis com cantos e sombra
+   consistentes, linhas de serviço com respiro, aviso sem caixa branca solta.
+   ========================================================================== */
+.module-panel{border-radius:20px!important;box-shadow:0 8px 22px rgba(29,55,42,.05)!important;padding:26px!important}
+.module-toolbar{padding-bottom:18px!important;margin-bottom:18px!important;flex-wrap:wrap!important;gap:10px!important}
+.module-toolbar h2{white-space:nowrap!important}
+@media(max-width:1050px){.module-grid{grid-template-columns:1fr!important}}
+.service-price{border-radius:16px!important;padding:16px 18px!important}
+.service-price small{margin-top:3px!important}
+.mini-notice{
+  background:transparent!important;border:0!important;border-top:1px solid #e4ebe5!important;
+  border-radius:0!important;padding:16px 0 0!important;margin-top:18px!important;
+}
+
+/* Faixa de indicadores no topo de Serviços e preços, igual à Visão geral. */
+#service-catalog-stats{
+  margin-bottom:22px!important;border:1px solid #cee0d1!important;border-radius:18px!important;
+  box-shadow:0 8px 22px rgba(29,55,42,.05)!important;background:#fff!important;
+}
+#service-catalog-stats .metric-block{
+  background:transparent!important;border:0!important;border-right:1px solid #cee0d1!important;
+  border-radius:0!important;padding:22px 24px!important;box-shadow:none!important;
+  transition:box-shadow .2s ease,transform .2s ease!important;
+}
+#service-catalog-stats .metric-block:last-child{border-right:0!important}
+#service-catalog-stats .metric-block:hover{box-shadow:0 8px 22px rgba(29,55,42,.05)!important;transform:translateY(-2px)!important}
+#service-catalog-stats .metric-block span{color:#748375!important;font-size:11px!important;font-weight:600!important}
+#service-catalog-stats .metric-block strong{display:block!important;margin:10px 0 4px!important;font:600 26px 'Space Grotesk'!important;letter-spacing:-.02em!important;color:var(--ink)!important;white-space:nowrap!important}
+#service-catalog-stats .metric-block{min-width:0!important}
+#service-catalog-stats .metric-block span{white-space:nowrap!important}
+@media(max-width:1300px){#service-catalog-stats .metric-block strong{font-size:21px!important}}
+#service-catalog-stats .metric-block small{color:#94a198!important;font-size:11px!important}
+
+/* Cartões de serviço com hover consistente, em vez de linhas planas. */
+.service-price{transition:box-shadow .2s ease,transform .2s ease!important}
+.service-price:hover{box-shadow:0 8px 22px rgba(29,55,42,.05)!important;transform:translateY(-2px)!important}
+
+/* Serviços oferecidos: preço em destaque, duração como selo, apagar só aparece no hover. */
+.service-price{align-items:center!important}
+.service-price b{font-size:14px!important;letter-spacing:-.01em!important}
+.service-price small:nth-of-type(2){
+  display:inline-block!important;margin-top:6px!important;padding:3px 9px!important;
+  border-radius:999px!important;background:#f2f7f3!important;color:#5f6f64!important;font-size:10px!important;
+}
+.service-price-actions{flex-direction:column!important;align-items:flex-end!important;gap:6px!important}
+.service-price-actions span{font:600 20px 'Space Grotesk'!important;letter-spacing:-.02em!important;color:var(--ink)!important;white-space:nowrap!important}
+.service-price-actions .danger-button{opacity:0!important;transition:opacity .16s ease!important}
+.service-price:hover .danger-button,.service-price:focus-within .danger-button{opacity:1!important}
+.billing-bar-track span{transition:filter .16s ease,transform .16s ease!important}
+.billing-bar-row:hover .billing-bar-track span{filter:brightness(1.12)!important}
+.dashboard-chart-bar{cursor:pointer!important;transition:filter .16s ease,width .35s ease!important}
+.dashboard-chart-bar:hover{filter:brightness(1.12)!important}
+.dashboard-flow-segment{cursor:pointer!important}
+.billing-bar-row{border-radius:10px!important;transition:background .16s ease!important;padding:4px 6px!important;margin:0 -6px!important}
+.billing-bar-row:hover{background:#f5f9f6!important}
+@media(prefers-reduced-motion:reduce){.dashboard-chart-bar,.billing-bar-track span,.dashboard-flow-segment,.dashboard-summary-bar-track i,.dashboard-financial-column span{animation:none!important}}
+
+.attendances-shell .attendance-summary>div:last-child{border-right:0!important}
+.attendances-shell .attendance-summary span{color:var(--db-muted,#748375)!important;font-size:11px!important;font-weight:600!important}
+.attendances-shell .attendance-summary small{color:#94a198!important}
+.attendances-shell .attendance-summary b{color:var(--ink)!important;font:600 26px 'Space Grotesk'!important;margin:10px 0 4px!important}
+.attendances-shell .attendance-summary>div::before{content:none!important}
+
+.attendances-shell .attendance-toolbar{border-radius:16px!important;box-shadow:var(--at-shadow)!important}
+.attendances-shell .attendance-list{border-radius:20px!important;box-shadow:var(--at-shadow)!important;border-color:var(--at-line)!important}
+.attendances-shell .attendance-list-heading{
+  background:#fafcfa!important;padding:16px 20px!important;font-size:10.5px!important;
+  font-weight:700!important;letter-spacing:.06em!important;color:var(--db-muted,#748375)!important;
+}
+.attendances-shell .attendance-item{padding:16px 20px!important;border-radius:0!important}
+.attendances-shell .attendance-item:hover{box-shadow:none!important;background:#f5f9f6!important}
